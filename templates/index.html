@@ -469,7 +469,7 @@
         var color = roleColors[currentRole] || '#2563eb';
         document.documentElement.style.setProperty('--role-color', color);
         var btn = document.getElementById('templateManageBtn');
-        btn.style.display = (currentRole === 'nurse') ? 'inline-block' : 'none';
+        btn.style.display = 'inline-block';  // 所有角色都显示模板管理按钮
     }
 
     function loadTemplates(roleId) {
@@ -976,7 +976,24 @@
     }
 
     // ===== 模板管理 =====
+    var roleModalTitles = {
+        doctor: '&#128203; 医生病历模板管理',
+        nurse: '&#128221; 护理量表模板管理',
+        researcher: '&#128202; 科研数据模板管理'
+    };
+    var roleFormLabels = {
+        doctor: { name: '模板名称', namePh: '如: 门诊病历模板', fields: '提取字段（每行一个）', fieldsPh: '主诉\n现病史\n体格检查\n诊断\n治疗方案', showScore: false },
+        nurse: { name: '模板名称', namePh: '如: 跌倒后再评估表', fields: '提取字段（每行一个）', fieldsPh: '患者姓名\n评估日期\n压疮部位\n皮肤状态\nBraden评分\n护理措施', showScore: true },
+        researcher: { name: '模板名称', namePh: '如: 心血管研究数据模板', fields: '提取字段（每行一个）', fieldsPh: '入组时间\n主要终点事件\n随访日期\n血压\n血脂\n用药情况', showScore: false }
+    };
+
     function openTemplateModal() {
+        var cfg = roleFormLabels[currentRole] || roleFormLabels.nurse;
+        document.querySelector('#templateModal .modal-header h2').innerHTML = roleModalTitles[currentRole] || roleModalTitles.nurse;
+        document.querySelector('#templateModal .modal-header p').textContent = '管理系统内置模板与自定义模板';
+        document.getElementById('newTplName').placeholder = cfg.namePh;
+        document.getElementById('newTplFields').placeholder = cfg.fieldsPh;
+        document.getElementById('newTplScore').parentElement.style.display = cfg.showScore ? 'block' : 'none';
         document.getElementById('templateModal').classList.add('active');
         loadTemplateList();
     }
@@ -984,7 +1001,7 @@
     function closeTemplateModal() { document.getElementById('templateModal').classList.remove('active'); }
 
     function loadTemplateList() {
-        fetch('/api/templates/nurse')
+        fetch('/api/templates/' + currentRole)
         .then(function(r) { return r.json(); })
         .then(function(data) {
             if (data.status !== 'success') return;
@@ -1009,7 +1026,7 @@
         fetch('/api/templates', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ role_id: 'nurse', template_name: name, fields: fields, include_score: includeScore })
+            body: JSON.stringify({ role_id: currentRole, template_name: name, fields: fields, include_score: includeScore })
         })
         .then(function(r) { return r.json(); })
         .then(function(d) {
@@ -1018,7 +1035,7 @@
                 document.getElementById('newTplName').value = '';
                 document.getElementById('newTplFields').value = '';
                 loadTemplateList();
-                loadTemplates('nurse');
+                loadTemplates(currentRole);
             } else showToast(d.msg, 'error');
         });
     }
@@ -1028,7 +1045,7 @@
         fetch('/api/templates/' + id, { method: 'DELETE' })
         .then(function(r) { return r.json(); })
         .then(function(d) {
-            if (d.status === 'success') { showToast('已删除', 'success'); loadTemplateList(); loadTemplates('nurse'); }
+            if (d.status === 'success') { showToast('已删除', 'success'); loadTemplateList(); loadTemplates(currentRole); }
             else showToast(d.msg, 'error');
         });
     }
