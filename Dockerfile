@@ -4,9 +4,8 @@ WORKDIR /home/user/app
 
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt -i https://mirrors.aliyun.com/pypi/simple/
+RUN pip install --no-cache-dir PyMuPDF -i https://mirrors.aliyun.com/pypi/simple/ || echo "PyMuPDF install skipped, PDF support disabled"
 
-COPY app.py .
-COPY templates/ templates/
-COPY static/ static/
+COPY . .
 
 ENTRYPOINT ["python", "-u", "app.py"]
