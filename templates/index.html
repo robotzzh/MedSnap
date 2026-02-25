@@ -639,7 +639,7 @@
         var layout = result.display_layout || 'table';
         var roleId = result.role_id || currentRole;
 
-        if (roleId === 'nurse' && (layout === 'scale' || layout === 'card')) {
+        if (roleId === 'nurse') {
             body.innerHTML = renderNurseLayout(data, conf, result.template_name);
         } else if (roleId === 'doctor') {
             body.innerHTML = renderDoctorLayout(data, conf);
@@ -703,6 +703,7 @@
             for (var rk in ri) { h += '<tr><td>' + esc(rk) + '</td><td>' + esc(fv(ri[rk])) + '</td></tr>'; }
             h += '</tbody></table>';
         }
+        if (!h) h = renderGenericTable(data, conf);
         return h;
     }
 
