@@ -72,12 +72,16 @@ if HAS_DASHSCOPE and DASHSCOPE_API_KEY:
 
 ALLOWED_EXTENSIONS = {'jpg', 'jpeg', 'png', 'bmp', 'tiff', 'pdf'}
 ALLOWED_AUDIO_EXTENSIONS = {'wav', 'mp3', 'aac', 'amr', 'opus', 'm4a', 'flac'}
+ALLOWED_TEXT_EXTENSIONS = {'txt', 'doc', 'docx'}
 
 def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
 def is_audio_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_AUDIO_EXTENSIONS
+
+def is_text_file(filename):
+    return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_TEXT_EXTENSIONS
 
 
 # ========== 角色与模板配置 ==========
@@ -592,9 +596,14 @@ def init_db():
     # 检查是否需要加新列（兼容旧数据库）
     existing_cols = {row[1] for row in c.execute("PRAGMA table_info(medical_records)").fetchall()}
     for col in ['role_id', 'template_id', 'extracted_data', 'confidence_data',
-                'source_type', 'audio_transcript', 'qualitative_data']:
+                'source_type', 'audio_transcript', 'qualitative_data',
+                'module_type', 'text_source', 'analysis_type']:
         if col not in existing_cols:
             c.execute(f"ALTER TABLE medical_records ADD COLUMN {col} TEXT")
+
+    # 迁移旧记录的module_type
+    c.execute("UPDATE medical_records SET module_type='image_ocr' WHERE module_type IS NULL AND (source_type='image' OR source_type IS NULL)")
+    c.execute("UPDATE medical_records SET module_type='voice_input' WHERE module_type IS NULL AND source_type='audio'")
 
     conn.commit()
     conn.close()
@@ -882,6 +891,316 @@ def qualitative_analysis(transcript_text):
     return parse_ai_response(response.choices[0].message.content)
 
 
+# ========== 文本文件解析与预处理 ==========
+
+def _parse_text_file(file_path):
+    """解析txt/docx文件为纯文本"""
+    ext = os.path.splitext(file_path)[1].lower()
+
+    if ext == '.txt':
+        for encoding in ['utf-8', 'gbk', 'gb2312', 'utf-16', 'latin-1']:
+            try:
+                with open(file_path, 'r', encoding=encoding) as f:
+                    return f.read()
+            except (UnicodeDecodeError, UnicodeError):
+                continue
+        raise Exception("无法识别文本文件编码，请使用UTF-8编码保存")
+
+    elif ext == '.docx':
+        try:
+            import docx
+        except ImportError:
+            raise Exception("python-docx 库未安装，请运行 pip install python-docx")
+        doc = docx.Document(file_path)
+        text_parts = []
+        for para in doc.paragraphs:
+            if para.text.strip():
+                text_parts.append(para.text)
+        for table in doc.tables:
+            for row in table.rows:
+                row_text = ' | '.join(cell.text.strip() for cell in row.cells if cell.text.strip())
+                if row_text:
+                    text_parts.append(row_text)
+        return '\n'.join(text_parts)
+
+    elif ext == '.doc':
+        raise Exception("不支持旧版.doc格式，请将文件另存为.docx后重新上传")
+
+    else:
+        raise Exception(f"不支持的文本格式: {ext}")
+
+
+def _preprocess_text(text):
+    """文本预处理：标准化格式"""
+    if not text:
+        return ''
+    text = text.replace('\r\n', '\n').replace('\r', '\n')
+    text = re.sub(r'[ \t]+', ' ', text)
+    text = re.sub(r'\n{3,}', '\n\n', text)
+    return text.strip()
+
+
+# ========== 增强版质性研究分析 ==========
+
+QUALITATIVE_TYPE_HINTS = {
+    'interview': {
+        'cn': '深度访谈',
+        'hints': '患者体验、疾病认知、治疗态度、就医过程、心理感受',
+        'coding': '症状描述、情感表达、医患沟通、治疗依从性、生活影响'
+    },
+    'focus_group': {
+        'cn': '焦点小组',
+        'hints': '群体共识、争议点、互动模式、观点演变、关键事件',
+        'coding': '观点类别、互动类型、共识差异、关键事件、群体动态'
+    },
+    'observation': {
+        'cn': '观察记录',
+        'hints': '行为模式、环境因素、非语言信息、事件序列、场景特征',
+        'coding': '行为类型、场景因素、时间特征、主体角色、环境条件'
+    }
+}
+
+PROMPT_QUALITATIVE_ENHANCED = """你是临床定性研究专家。请对以下{analysis_type_cn}转录文本进行深度定性分析。
+
+输出JSON格式:
+{{
+  "themes": ["主题1", "主题2", "主题3"],
+  "keywords": ["关键词1", "关键词2", "关键词3"],
+  "codes": [
+    {{"code": "编码类别1", "segments": ["相关文本片段1", "片段2"]}},
+    {{"code": "编码类别2", "segments": ["片段3", "片段4"]}}
+  ],
+  "sentiment": "积极/中性/消极",
+  "summary": "2-3句话分析总结",
+  "concept_network": [
+    {{"source": "概念A", "target": "概念B", "relation": "因果关系"}},
+    {{"source": "概念C", "target": "概念D", "relation": "并列关系"}}
+  ]
+}}
+
+分析要求:
+1. 主题分析: 识别3-5个核心讨论主题（关注: {analysis_hints}）
+2. 关键词提取: 医学/情感/行为关键词10-15个
+3. 编码分类: 按以下类别编码文本: {coding_categories}
+4. 概念关联: 识别概念间的因果/并列/对立关系(3-6组)
+5. 情感判断: 整体情感倾向
+
+转录文本:
+{transcript}
+
+只输出JSON，不要输出任何其他内容。"""
+
+
+def qualitative_analysis_enhanced(transcript_text, analysis_type='interview'):
+    """增强版质性分析：支持多种分析类型，含概念网络"""
+    type_info = QUALITATIVE_TYPE_HINTS.get(analysis_type, QUALITATIVE_TYPE_HINTS['interview'])
+    prompt = PROMPT_QUALITATIVE_ENHANCED.format(
+        analysis_type_cn=type_info['cn'],
+        analysis_hints=type_info['hints'],
+        coding_categories=type_info['coding'],
+        transcript=transcript_text
+    )
+    response = client.chat.completions.create(
+        model=MODEL_NAME,
+        messages=[{'role': 'user', 'content': prompt}],
+        temperature=0.3,
+        max_tokens=3000
+    )
+    return parse_ai_response(response.choices[0].message.content)
+
+
+# ========== 数据分析模块 ==========
+
+def _extract_nested_field(data, field_path):
+    """递归提取嵌套字段值，支持点分路径如 demographics.年龄"""
+    parts = field_path.split('.', 1)
+    if not isinstance(data, dict):
+        return None
+    val = data.get(parts[0])
+    if len(parts) == 1:
+        return val
+    return _extract_nested_field(val, parts[1])
+
+
+def _collect_field_paths(data, prefix=''):
+    """递归收集JSON中所有叶子字段路径"""
+    paths = []
+    if isinstance(data, dict):
+        for k, v in data.items():
+            if k in ('confidence',):
+                continue
+            full = f"{prefix}.{k}" if prefix else k
+            if isinstance(v, dict):
+                paths.extend(_collect_field_paths(v, full))
+            elif isinstance(v, list):
+                if v and isinstance(v[0], dict):
+                    paths.extend(_collect_field_paths(v[0], full + '[]'))
+                else:
+                    paths.append(full)
+            else:
+                paths.append(full)
+    return paths
+
+
+def _is_numeric(val):
+    """判断值是否可转换为数值"""
+    if val is None:
+        return False
+    try:
+        float(val)
+        return True
+    except (ValueError, TypeError):
+        return False
+
+
+def analyze_structured_data(record_ids, fields, analysis_type='descriptive'):
+    """对选中记录的结构化数据进行统计分析，返回统计量和ECharts配置"""
+    conn = get_db()
+    c = conn.cursor()
+    placeholders = ','.join(['?'] * len(record_ids))
+    c.execute(f'SELECT extracted_data, create_time FROM medical_records WHERE id IN ({placeholders})',
+              record_ids)
+    rows = c.fetchall()
+    conn.close()
+
+    # 收集每个字段的数值
+    field_values = {f: [] for f in fields}
+    time_series = {f: [] for f in fields}
+
+    for row in rows:
+        if not row['extracted_data']:
+            continue
+        data = json.loads(row['extracted_data'])
+        create_time = row['create_time'] or ''
+        for field in fields:
+            val = _extract_nested_field(data, field)
+            if _is_numeric(val):
+                field_values[field].append(float(val))
+                time_series[field].append({'time': create_time, 'value': float(val)})
+
+    # 计算统计量
+    stats = {}
+    for field, values in field_values.items():
+        if not values:
+            stats[field] = {'count': 0, 'msg': '无有效数值'}
+            continue
+        arr = np.array(values)
+        stats[field] = {
+            'count': len(values),
+            'mean': round(float(np.mean(arr)), 2),
+            'median': round(float(np.median(arr)), 2),
+            'std': round(float(np.std(arr)), 2),
+            'min': round(float(np.min(arr)), 2),
+            'max': round(float(np.max(arr)), 2),
+            'q1': round(float(np.percentile(arr, 25)), 2),
+            'q3': round(float(np.percentile(arr, 75)), 2)
+        }
+
+    # 生成ECharts配置
+    chart_configs = []
+    valid_fields = [f for f in fields if field_values[f]]
+
+    if analysis_type == 'descriptive' and valid_fields:
+        # 柱状图：各字段均值对比
+        chart_configs.append({
+            'title': {'text': '字段均值对比', 'left': 'center'},
+            'tooltip': {'trigger': 'axis'},
+            'xAxis': {'type': 'category', 'data': [f.split('.')[-1] for f in valid_fields],
+                       'axisLabel': {'rotate': 30}},
+            'yAxis': {'type': 'value', 'name': '均值'},
+            'series': [{
+                'data': [stats[f]['mean'] for f in valid_fields],
+                'type': 'bar',
+                'itemStyle': {'color': '#2563eb'},
+                'label': {'show': True, 'position': 'top'}
+            }],
+            'grid': {'bottom': 80}
+        })
+
+        # 箱线图：分布概览
+        if len(valid_fields) <= 8:
+            boxplot_data = []
+            for f in valid_fields:
+                s = stats[f]
+                boxplot_data.append([s['min'], s['q1'], s['median'], s['q3'], s['max']])
+            chart_configs.append({
+                'title': {'text': '数据分布（箱线图）', 'left': 'center'},
+                'tooltip': {'trigger': 'item'},
+                'xAxis': {'type': 'category', 'data': [f.split('.')[-1] for f in valid_fields],
+                           'axisLabel': {'rotate': 30}},
+                'yAxis': {'type': 'value'},
+                'series': [{
+                    'type': 'boxplot',
+                    'data': boxplot_data,
+                    'itemStyle': {'color': '#dbeafe', 'borderColor': '#2563eb'}
+                }],
+                'grid': {'bottom': 80}
+            })
+
+    elif analysis_type == 'trend' and valid_fields:
+        # 折线图：按时间趋势
+        series_list = []
+        colors = ['#2563eb', '#059669', '#d97706', '#dc2626', '#7c3aed']
+        for i, f in enumerate(valid_fields):
+            sorted_ts = sorted(time_series[f], key=lambda x: x['time'])
+            series_list.append({
+                'name': f.split('.')[-1],
+                'type': 'line',
+                'data': [item['value'] for item in sorted_ts],
+                'smooth': True,
+                'itemStyle': {'color': colors[i % len(colors)]}
+            })
+        all_times = sorted(set(
+            item['time'] for f in valid_fields for item in time_series[f]
+        ))
+        chart_configs.append({
+            'title': {'text': '时间趋势分析', 'left': 'center'},
+            'tooltip': {'trigger': 'axis'},
+            'legend': {'data': [f.split('.')[-1] for f in valid_fields], 'bottom': 0},
+            'xAxis': {'type': 'category', 'data': all_times, 'axisLabel': {'rotate': 45}},
+            'yAxis': {'type': 'value'},
+            'series': series_list,
+            'grid': {'bottom': 80}
+        })
+
+    elif analysis_type == 'distribution' and valid_fields:
+        # 直方图：频次分布（取第一个字段）
+        f = valid_fields[0]
+        values = field_values[f]
+        n_bins = min(10, max(3, len(values) // 2))
+        hist_counts, bin_edges = np.histogram(values, bins=n_bins)
+        bin_labels = [f"{bin_edges[i]:.1f}-{bin_edges[i+1]:.1f}" for i in range(len(hist_counts))]
+        chart_configs.append({
+            'title': {'text': f'{f.split(".")[-1]} 频次分布', 'left': 'center'},
+            'tooltip': {'trigger': 'axis'},
+            'xAxis': {'type': 'category', 'data': bin_labels, 'axisLabel': {'rotate': 30}},
+            'yAxis': {'type': 'value', 'name': '频次'},
+            'series': [{
+                'data': [int(c) for c in hist_counts],
+                'type': 'bar',
+                'itemStyle': {'color': '#059669'}
+            }],
+            'grid': {'bottom': 80}
+        })
+
+        # 饼图：分段占比
+        if len(valid_fields) == 1:
+            pie_data = [{'name': bin_labels[i], 'value': int(hist_counts[i])}
+                        for i in range(len(hist_counts)) if hist_counts[i] > 0]
+            chart_configs.append({
+                'title': {'text': f'{f.split(".")[-1]} 分段占比', 'left': 'center'},
+                'tooltip': {'trigger': 'item', 'formatter': '{b}: {c} ({d}%)'},
+                'series': [{
+                    'type': 'pie',
+                    'radius': ['40%', '70%'],
+                    'data': pie_data,
+                    'label': {'formatter': '{b}\n{d}%'}
+                }]
+            })
+
+    return {'statistics': stats, 'charts': chart_configs}
+
+
 # ========== Excel 导出 ==========
 def generate_excel(data_list):
     """多角色Excel导出，不同角色放不同Sheet"""
@@ -1154,6 +1473,7 @@ def upload_and_recognize():
 
     role_id = request.form.get('role_id', 'researcher')
     template_id = request.form.get('template_id', 'tpl_researcher_default')
+    module_type = request.form.get('module_type', '')  # 由前端指定
 
     # 查询模板Prompt
     conn = get_db()
@@ -1220,12 +1540,12 @@ def upload_and_recognize():
                     c = conn.cursor()
                     c.execute('''INSERT INTO medical_records
                         (id, case_number, original_filename, role_id, template_id,
-                         extracted_data, confidence_data, raw_text, create_time, source_type)
-                        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'image')''',
+                         extracted_data, confidence_data, raw_text, create_time, source_type, module_type)
+                        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'image', ?)''',
                         (record_id, case_number, file.filename, role_id, template_id,
                          json.dumps(data, ensure_ascii=False),
                          json.dumps(confidence_data, ensure_ascii=False),
-                         raw_text, create_time))
+                         raw_text, create_time, module_type or 'image_ocr'))
                     conn.commit()
                     conn.close()
 
@@ -1237,6 +1557,7 @@ def upload_and_recognize():
                         "template_name": template_name,
                         "display_layout": display_layout,
                         "source_type": "image",
+                        "module_type": module_type or "image_ocr",
                         "data": data,
                         "confidence": confidence_data,
                         "create_time": create_time
@@ -1294,8 +1615,8 @@ def _process_audio_file(audio_path, filename, role_id, template_id,
         c.execute('''INSERT INTO medical_records
             (id, case_number, original_filename, role_id, template_id,
              extracted_data, confidence_data, raw_text, create_time,
-             source_type, audio_transcript, qualitative_data)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'audio', ?, ?)''',
+             source_type, audio_transcript, qualitative_data, module_type)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'audio', ?, ?, 'voice_input')''',
             (record_id, case_number, filename, role_id, template_id,
              json.dumps(data, ensure_ascii=False),
              json.dumps(confidence_data, ensure_ascii=False),
@@ -1323,17 +1644,309 @@ def _process_audio_file(audio_path, filename, role_id, template_id,
         return {"error": f"音频处理失败: {str(e)}"}
 
 
+@app.route('/upload_text', methods=['POST'])
+def upload_text():
+    """文本输入模块：处理粘贴文本或txt/docx文件上传"""
+    role_id = request.form.get('role_id', 'researcher')
+    template_id = request.form.get('template_id', 'tpl_researcher_default')
+    text_content = request.form.get('text_content', '').strip()
+
+    # 查询模板
+    conn = get_db()
+    c = conn.cursor()
+    c.execute("SELECT ai_prompt, template_name, display_layout FROM extraction_templates WHERE template_id=?",
+              (template_id,))
+    tpl_row = c.fetchone()
+    conn.close()
+
+    if not tpl_row:
+        return jsonify({"status": "error", "msg": "模板不存在"})
+
+    ai_prompt = tpl_row['ai_prompt']
+    template_name = tpl_row['template_name']
+    display_layout = tpl_row['display_layout']
+
+    results = []
+    errors = []
+
+    # 模式1：直接粘贴文本
+    if text_content:
+        try:
+            processed_text = _preprocess_text(text_content)
+            if len(processed_text) < 5:
+                return jsonify({"status": "error", "msg": "文本内容过短，请输入更多内容"})
+
+            data, raw_text = extract_from_transcript(processed_text, ai_prompt)
+            if "error" in data:
+                return jsonify({"status": "error", "msg": data.get('error', '文本提取失败')})
+
+            case_number = f"TEXT_{datetime.now().strftime('%Y%m%d')}_{uuid.uuid4().hex[:6].upper()}"
+            record_id = str(uuid.uuid4())
+            create_time = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+            confidence_data = data.pop('confidence', {})
+
+            conn = get_db()
+            c = conn.cursor()
+            c.execute('''INSERT INTO medical_records
+                (id, case_number, original_filename, role_id, template_id,
+                 extracted_data, confidence_data, raw_text, create_time,
+                 source_type, module_type, text_source)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'text', 'text_input', ?)''',
+                (record_id, case_number, '粘贴文本', role_id, template_id,
+                 json.dumps(data, ensure_ascii=False),
+                 json.dumps(confidence_data, ensure_ascii=False),
+                 raw_text, create_time, processed_text))
+            conn.commit()
+            conn.close()
+
+            results.append({
+                "id": record_id,
+                "case_number": case_number,
+                "filename": "粘贴文本",
+                "role_id": role_id,
+                "template_name": template_name,
+                "display_layout": display_layout,
+                "source_type": "text",
+                "module_type": "text_input",
+                "text_source": processed_text,
+                "data": data,
+                "confidence": confidence_data,
+                "create_time": create_time
+            })
+        except Exception as e:
+            errors.append(f"文本处理失败: {str(e)}")
+
+    # 模式2：文件上传
+    files = request.files.getlist('files')
+    for file in files:
+        if not file or file.filename == '':
+            continue
+        if not is_text_file(file.filename):
+            errors.append(f"不支持的格式: {file.filename}")
+            continue
+
+        file_ext = os.path.splitext(file.filename)[1].lower()
+        temp_name = f"{uuid.uuid4().hex}{file_ext}"
+        file_path = os.path.join(app.config['UPLOAD_FOLDER'], temp_name)
+        file.save(file_path)
+
+        try:
+            raw_file_text = _parse_text_file(file_path)
+            processed_text = _preprocess_text(raw_file_text)
+            if len(processed_text) < 5:
+                errors.append(f"{file.filename}: 文件内容过短或为空")
+                continue
+
+            data, raw_text = extract_from_transcript(processed_text, ai_prompt)
+            if "error" in data:
+                errors.append(f"{file.filename}: {data.get('error', '提取失败')}")
+                continue
+
+            case_number = f"TEXT_{datetime.now().strftime('%Y%m%d')}_{uuid.uuid4().hex[:6].upper()}"
+            record_id = str(uuid.uuid4())
+            create_time = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+            confidence_data = data.pop('confidence', {})
+
+            conn = get_db()
+            c = conn.cursor()
+            c.execute('''INSERT INTO medical_records
+                (id, case_number, original_filename, role_id, template_id,
+                 extracted_data, confidence_data, raw_text, create_time,
+                 source_type, module_type, text_source)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'text', 'text_input', ?)''',
+                (record_id, case_number, file.filename, role_id, template_id,
+                 json.dumps(data, ensure_ascii=False),
+                 json.dumps(confidence_data, ensure_ascii=False),
+                 raw_text, create_time, processed_text))
+            conn.commit()
+            conn.close()
+
+            results.append({
+                "id": record_id,
+                "case_number": case_number,
+                "filename": file.filename,
+                "role_id": role_id,
+                "template_name": template_name,
+                "display_layout": display_layout,
+                "source_type": "text",
+                "module_type": "text_input",
+                "text_source": processed_text,
+                "data": data,
+                "confidence": confidence_data,
+                "create_time": create_time
+            })
+        except Exception as e:
+            errors.append(f"{file.filename}: {str(e)}")
+        finally:
+            try:
+                if os.path.exists(file_path):
+                    os.remove(file_path)
+            except Exception:
+                pass
+
+    if not results and not errors:
+        return jsonify({"status": "error", "msg": "请输入文本或上传文件"})
+
+    return jsonify({
+        "status": "success" if results else "error",
+        "results": results,
+        "errors": errors,
+        "msg": f"成功处理 {len(results)} 份" + (f"，{len(errors)} 份失败" if errors else "")
+    })
+
+
+@app.route('/qualitative_analyze', methods=['POST'])
+def qualitative_analyze():
+    """质性研究模块：独立的质性分析入口"""
+    analysis_type = request.form.get('analysis_type', 'interview')
+    text_content = request.form.get('text_content', '').strip()
+
+    results = []
+    errors = []
+    transcript_text = ''
+    source_filename = ''
+
+    # 模式1：音频文件 → 转录 → 分析
+    files = request.files.getlist('files')
+    for file in files:
+        if not file or file.filename == '':
+            continue
+
+        file_ext = os.path.splitext(file.filename)[1].lower()
+        temp_name = f"{uuid.uuid4().hex}{file_ext}"
+        file_path = os.path.join(app.config['UPLOAD_FOLDER'], temp_name)
+        file.save(file_path)
+
+        try:
+            if is_audio_file(file.filename):
+                transcript_result = transcribe_audio(file_path)
+                transcript_text = transcript_result['text']
+                source_filename = file.filename
+            elif is_text_file(file.filename):
+                raw_text = _parse_text_file(file_path)
+                transcript_text = _preprocess_text(raw_text)
+                source_filename = file.filename
+            else:
+                errors.append(f"不支持的格式: {file.filename}，请上传音频或文本文件")
+                continue
+
+            if len(transcript_text) < 10:
+                errors.append(f"{file.filename}: 内容过短，无法进行质性分析")
+                continue
+
+            qual_result = qualitative_analysis_enhanced(transcript_text, analysis_type)
+
+            case_number = f"QUAL_{datetime.now().strftime('%Y%m%d')}_{uuid.uuid4().hex[:6].upper()}"
+            record_id = str(uuid.uuid4())
+            create_time = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+
+            conn = get_db()
+            c = conn.cursor()
+            c.execute('''INSERT INTO medical_records
+                (id, case_number, original_filename, role_id, template_id,
+                 extracted_data, raw_text, create_time,
+                 source_type, module_type, audio_transcript, qualitative_data, analysis_type)
+                VALUES (?, ?, ?, NULL, NULL, NULL, NULL, ?, ?, 'qualitative', ?, ?, ?)''',
+                (record_id, case_number, source_filename, create_time,
+                 'audio' if is_audio_file(file.filename) else 'text',
+                 transcript_text,
+                 json.dumps(qual_result, ensure_ascii=False),
+                 analysis_type))
+            conn.commit()
+            conn.close()
+
+            results.append({
+                "id": record_id,
+                "case_number": case_number,
+                "filename": source_filename,
+                "source_type": "audio" if is_audio_file(file.filename) else "text",
+                "module_type": "qualitative",
+                "analysis_type": analysis_type,
+                "transcript": transcript_text,
+                "qualitative_analysis": qual_result,
+                "create_time": create_time
+            })
+        except Exception as e:
+            errors.append(f"{file.filename}: {str(e)}")
+        finally:
+            try:
+                if os.path.exists(file_path):
+                    os.remove(file_path)
+            except Exception:
+                pass
+
+    # 模式2：直接粘贴文本
+    if text_content and not results:
+        try:
+            processed_text = _preprocess_text(text_content)
+            if len(processed_text) < 10:
+                return jsonify({"status": "error", "msg": "文本内容过短，无法进行质性分析"})
+
+            qual_result = qualitative_analysis_enhanced(processed_text, analysis_type)
+
+            case_number = f"QUAL_{datetime.now().strftime('%Y%m%d')}_{uuid.uuid4().hex[:6].upper()}"
+            record_id = str(uuid.uuid4())
+            create_time = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+
+            conn = get_db()
+            c = conn.cursor()
+            c.execute('''INSERT INTO medical_records
+                (id, case_number, original_filename, role_id, template_id,
+                 extracted_data, raw_text, create_time,
+                 source_type, module_type, audio_transcript, qualitative_data, analysis_type)
+                VALUES (?, ?, ?, NULL, NULL, NULL, NULL, ?, 'text', 'qualitative', ?, ?, ?)''',
+                (record_id, case_number, '粘贴文本', create_time,
+                 processed_text,
+                 json.dumps(qual_result, ensure_ascii=False),
+                 analysis_type))
+            conn.commit()
+            conn.close()
+
+            results.append({
+                "id": record_id,
+                "case_number": case_number,
+                "filename": "粘贴文本",
+                "source_type": "text",
+                "module_type": "qualitative",
+                "analysis_type": analysis_type,
+                "transcript": processed_text,
+                "qualitative_analysis": qual_result,
+                "create_time": create_time
+            })
+        except Exception as e:
+            errors.append(f"质性分析失败: {str(e)}")
+
+    if not results and not errors:
+        return jsonify({"status": "error", "msg": "请上传文件或输入文本"})
+
+    return jsonify({
+        "status": "success" if results else "error",
+        "results": results,
+        "errors": errors,
+        "msg": f"成功分析 {len(results)} 份" + (f"，{len(errors)} 份失败" if errors else "")
+    })
+
+
 @app.route('/records', methods=['GET'])
 def get_records():
     role_id = request.args.get('role_id', None)
+    module_type = request.args.get('module_type', None)
     conn = get_db()
     c = conn.cursor()
+
+    conditions = []
+    params = []
     if role_id:
-        c.execute('''SELECT id, case_number, original_filename, role_id, template_id, create_time, source_type
-            FROM medical_records WHERE role_id=? ORDER BY create_time DESC''', (role_id,))
-    else:
-        c.execute('''SELECT id, case_number, original_filename, role_id, template_id, create_time, source_type
-            FROM medical_records ORDER BY create_time DESC''')
+        conditions.append("role_id=?")
+        params.append(role_id)
+    if module_type:
+        conditions.append("module_type=?")
+        params.append(module_type)
+
+    where_clause = (" WHERE " + " AND ".join(conditions)) if conditions else ""
+    c.execute(f'''SELECT id, case_number, original_filename, role_id, template_id,
+        create_time, source_type, module_type
+        FROM medical_records{where_clause} ORDER BY create_time DESC''', params)
     rows = c.fetchall()
     conn.close()
 
@@ -1346,7 +1959,8 @@ def get_records():
             "role_id": row['role_id'] or 'researcher',
             "template_id": row['template_id'] or '',
             "create_time": row['create_time'],
-            "source_type": row['source_type'] or 'image'
+            "source_type": row['source_type'] or 'image',
+            "module_type": row['module_type'] or 'image_ocr'
         })
     return jsonify({"status": "success", "records": records})
 
@@ -1403,8 +2017,11 @@ def get_record_detail(record_id):
             "confidence": confidence_data,
             "create_time": row['create_time'],
             "source_type": row['source_type'] or 'image',
+            "module_type": row['module_type'] or 'image_ocr',
             "audio_transcript": row['audio_transcript'] if (row['source_type'] == 'audio') else None,
-            "qualitative_data": json.loads(row['qualitative_data']) if row['qualitative_data'] else None
+            "qualitative_data": json.loads(row['qualitative_data']) if row['qualitative_data'] else None,
+            "text_source": row['text_source'] if (row['source_type'] == 'text') else None,
+            "analysis_type": row['analysis_type'] if row['module_type'] == 'qualitative' else None
         }
     })
 
@@ -1557,6 +2174,74 @@ def get_stats():
         by_role[row['role_id'] or 'researcher'] = row['cnt']
     conn.close()
     return jsonify({"status": "success", "total_records": total, "by_role": by_role})
+
+
+@app.route('/data_analysis/fields', methods=['GET'])
+def data_analysis_fields():
+    """获取选中记录的所有可用数值字段"""
+    record_ids = request.args.getlist('ids')
+    if not record_ids:
+        return jsonify({"status": "error", "msg": "请选择记录"})
+
+    conn = get_db()
+    c = conn.cursor()
+    placeholders = ','.join(['?'] * len(record_ids))
+    c.execute(f'SELECT extracted_data FROM medical_records WHERE id IN ({placeholders})', record_ids)
+    rows = c.fetchall()
+    conn.close()
+
+    all_paths = set()
+    for row in rows:
+        if row['extracted_data']:
+            data = json.loads(row['extracted_data'])
+            paths = _collect_field_paths(data)
+            all_paths.update(paths)
+
+    # 过滤出含数值的字段
+    numeric_fields = []
+    text_fields = []
+    for path in sorted(all_paths):
+        has_numeric = False
+        for row in rows:
+            if row['extracted_data']:
+                data = json.loads(row['extracted_data'])
+                val = _extract_nested_field(data, path)
+                if _is_numeric(val):
+                    has_numeric = True
+                    break
+        if has_numeric:
+            numeric_fields.append(path)
+        else:
+            text_fields.append(path)
+
+    return jsonify({
+        "status": "success",
+        "numeric_fields": numeric_fields,
+        "text_fields": text_fields
+    })
+
+
+@app.route('/data_analysis/analyze', methods=['POST'])
+def data_analysis_analyze():
+    """数据分析模块：对选中记录进行统计分析"""
+    req_data = request.get_json()
+    if not req_data:
+        return jsonify({"status": "error", "msg": "无请求数据"})
+
+    record_ids = req_data.get('record_ids', [])
+    fields = req_data.get('fields', [])
+    analysis_type = req_data.get('analysis_type', 'descriptive')
+
+    if not record_ids:
+        return jsonify({"status": "error", "msg": "请选择至少1条记录"})
+    if not fields:
+        return jsonify({"status": "error", "msg": "请选择至少1个分析字段"})
+
+    try:
+        result = analyze_structured_data(record_ids, fields, analysis_type)
+        return jsonify({"status": "success", **result})
+    except Exception as e:
+        return jsonify({"status": "error", "msg": f"分析失败: {str(e)}"})
 
 
 # ========== 启动入口 ==========
