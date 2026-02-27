@@ -27,6 +27,21 @@ try:
 except ImportError:
     pass
 
+HAS_DASHSCOPE = False
+try:
+    import dashscope
+    from dashscope.audio.asr import Recognition
+    HAS_DASHSCOPE = True
+except ImportError:
+    pass
+
+HAS_PYDUB = False
+try:
+    from pydub import AudioSegment
+    HAS_PYDUB = True
+except ImportError:
+    pass
+
 # ========== Flask 应用初始化 ==========
 app = Flask(__name__)
 app.secret_key = uuid.uuid4().hex
@@ -48,10 +63,21 @@ client = OpenAI(
 )
 MODEL_NAME = "Qwen/Qwen3-VL-235B-A22B-Instruct"
 
+# ========== 语音识别配置 ==========
+DASHSCOPE_API_KEY = os.environ.get("DASHSCOPE_API_KEY", "")
+if not DASHSCOPE_API_KEY:
+    print("[WARN] 环境变量 DASHSCOPE_API_KEY 未设置，语音识别功能将不可用")
+if HAS_DASHSCOPE and DASHSCOPE_API_KEY:
+    dashscope.api_key = DASHSCOPE_API_KEY
+
 ALLOWED_EXTENSIONS = {'jpg', 'jpeg', 'png', 'bmp', 'tiff', 'pdf'}
+ALLOWED_AUDIO_EXTENSIONS = {'wav', 'mp3', 'aac', 'amr', 'opus', 'm4a', 'flac'}
 
 def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
+
+def is_audio_file(filename):
+    return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_AUDIO_EXTENSIONS
 
 
 # ========== 角色与模板配置 ==========
@@ -445,6 +471,83 @@ RESEARCHER_CUSTOM_PROMPT_TEMPLATE = """你是临床科研数据提取专家。�
 只输出JSON，不要输出任何其他内容。"""
 
 
+# ========== 音频专用Prompt模板 ==========
+
+PROMPT_AUDIO_DOCTOR = """你是临床医生数据提取专家。以下是医患对话的语音转录文本，请从中提取结构化病历信息。
+
+## 输出格式(JSON):
+{
+  "patient_info": {"姓名": "", "性别": "", "年龄": null},
+  "chief_complaint": "",
+  "present_illness": "",
+  "past_history": "",
+  "physical_exam": {},
+  "diagnosis": [{"诊断名称": "", "ICD10编码": ""}],
+  "treatment_plan": {"药物治疗": "", "医嘱": "", "其他": ""},
+  "conversation_notes": "",
+  "confidence": {}
+}
+
+## 提取规则:
+1. 从对话中识别患者自述的症状和病史
+2. 提取医生口述的诊断和治疗建议
+3. 主诉通常是患者开场描述的主要不适
+4. 注意区分医生询问和患者回答
+5. 如信息不完整或无法识别，对应字段留空字符串
+6. confidence字段：对每个已提取字段给出0-1之间的置信度
+
+只输出JSON，不要输出任何其他内容。"""
+
+PROMPT_AUDIO_NURSE = """你是护理评估专家。以下是护理交班或患者访谈的语音转录文本，请提取护理相关信息。
+
+## 输出格式(JSON):
+{
+  "patient_info": {"姓名": "", "床号": "", "科室": ""},
+  "vital_signs_verbal": {},
+  "nursing_observations": "",
+  "patient_complaints": "",
+  "nursing_actions": "",
+  "handover_notes": "",
+  "risk_alerts": "",
+  "confidence": {}
+}
+
+## 提取规则:
+1. 识别口述的生命体征数值（体温、血压、脉搏、呼吸、血氧等）
+2. 提取护理观察内容（皮肤、伤口、活动能力、意识状态）
+3. 记录患者主观感受和主诉
+4. 提取交班时的重点提醒事项
+5. 识别提及的护理风险（跌倒、压疮、管路等）
+6. confidence字段：对每个已提取字段给出0-1之间的置信度
+
+只输出JSON，不要输出任何其他内容。"""
+
+PROMPT_AUDIO_RESEARCHER = """你是临床科研数据提取专家。以下是研究访谈或病历口述的语音转录文本，请提取科研相关数据。
+
+## 输出格式(JSON):
+{
+  "demographics": {"姓名": "", "性别": "", "年龄": null, "职业": "", "教育程度": ""},
+  "medical_history": "",
+  "intervention_details": "",
+  "outcome_measures": "",
+  "patient_experience": "",
+  "adherence_notes": "",
+  "adverse_events": "",
+  "research_notes": "",
+  "confidence": {}
+}
+
+## 提取规则:
+1. 提取人口学特征
+2. 识别干预措施的描述
+3. 提取患者自我报告的结局（症状改善、生活质量变化）
+4. 注意提及的依从性和不良反应
+5. 日期格式统一为YYYY-MM-DD
+6. confidence字段：对每个已提取字段给出0-1之间的置信度
+
+只输出JSON，不要输出任何其他内容。"""
+
+
 # ========== 数据库初始化 ==========
 def get_db():
     conn = sqlite3.connect(DB_PATH)
@@ -488,7 +591,8 @@ def init_db():
 
     # 检查是否需要加新列（兼容旧数据库）
     existing_cols = {row[1] for row in c.execute("PRAGMA table_info(medical_records)").fetchall()}
-    for col in ['role_id', 'template_id', 'extracted_data', 'confidence_data']:
+    for col in ['role_id', 'template_id', 'extracted_data', 'confidence_data',
+                'source_type', 'audio_transcript', 'qualitative_data']:
         if col not in existing_cols:
             c.execute(f"ALTER TABLE medical_records ADD COLUMN {col} TEXT")
 
@@ -500,13 +604,9 @@ def init_db():
 
 
 def _init_builtin_templates():
-    """插入系统内置模板（如果尚未存在）"""
+    """插入系统内置模板（如果尚未存在），使用INSERT OR IGNORE逐条插入"""
     conn = get_db()
     c = conn.cursor()
-    c.execute("SELECT COUNT(*) as cnt FROM extraction_templates WHERE template_type='fixed'")
-    if c.fetchone()['cnt'] > 0:
-        conn.close()
-        return
 
     now = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
     templates = [
@@ -531,6 +631,13 @@ def _init_builtin_templates():
         # 科研模板
         ('tpl_researcher_default', 'researcher', '综合科研数据提取', 'fixed',
          PROMPT_RESEARCHER, 'table', now),
+        # 音频模板
+        ('tpl_audio_doctor', 'doctor', '医患对话录音', 'fixed',
+         PROMPT_AUDIO_DOCTOR, 'table', now),
+        ('tpl_audio_nurse', 'nurse', '护理交班录音', 'fixed',
+         PROMPT_AUDIO_NURSE, 'card', now),
+        ('tpl_audio_researcher', 'researcher', '研究访谈录音', 'fixed',
+         PROMPT_AUDIO_RESEARCHER, 'table', now),
     ]
 
     for t in templates:
@@ -657,6 +764,124 @@ def parse_ai_response(raw_text):
     return {"error": "AI返回结果解析失败，请重试或检查图片质量", "raw_response": raw_text[:500]}
 
 
+# ========== 语音识别与文本分析 ==========
+
+def transcribe_audio(audio_path):
+    """调用DashScope Paraformer识别本地音频文件"""
+    if not HAS_DASHSCOPE:
+        raise Exception("dashscope 库未安装，请运行 pip install dashscope")
+    if not DASHSCOPE_API_KEY:
+        raise Exception("环境变量 DASHSCOPE_API_KEY 未设置，无法使用语音识别")
+
+    ext = os.path.splitext(audio_path)[1].lower()
+    actual_path = audio_path
+    converted = False
+
+    # 不支持的格式转为wav
+    if ext in ('.m4a', '.flac'):
+        if not HAS_PYDUB:
+            raise Exception("pydub 库未安装，无法转换 m4a/flac 格式，请运行 pip install pydub")
+        audio_seg = AudioSegment.from_file(audio_path)
+        actual_path = audio_path + '.wav'
+        audio_seg.export(actual_path, format='wav')
+        converted = True
+
+    fmt_map = {'.wav': 'wav', '.mp3': 'mp3', '.aac': 'aac',
+               '.amr': 'amr', '.opus': 'opus'}
+    fmt = fmt_map.get(os.path.splitext(actual_path)[1].lower(), 'wav')
+
+    try:
+        recognition = Recognition(
+            model='paraformer-realtime-v2',
+            format=fmt,
+            sample_rate=16000,
+            language_hints=['zh', 'en']
+        )
+        result = recognition.call(actual_path)
+
+        # 提取完整文本
+        sentences = []
+        if hasattr(result, 'get_sentence') and callable(result.get_sentence):
+            sentences = result.get_sentence() or []
+        full_text = ''.join([s.get('text', '') for s in sentences]) if sentences else ''
+
+        if not full_text:
+            # 尝试从output中获取
+            if hasattr(result, 'output') and result.output:
+                out = result.output
+                if isinstance(out, dict) and 'text' in out:
+                    full_text = out['text']
+                elif isinstance(out, dict) and 'sentence' in out:
+                    for s in out['sentence']:
+                        full_text += s.get('text', '')
+
+        if not full_text:
+            raise Exception("语音识别未返回有效文本，请检查音频文件质量")
+
+        return {
+            'text': full_text,
+            'sentences': sentences,
+            'language': 'zh'
+        }
+    finally:
+        if converted and os.path.exists(actual_path):
+            try:
+                os.remove(actual_path)
+            except Exception:
+                pass
+
+
+def extract_from_transcript(transcript_text, ai_prompt):
+    """用Qwen模型从转录文本中提取结构化数据（纯文本模式）"""
+    combined_prompt = ai_prompt + "\n\n以下是语音转录文本，请按上述要求提取结构化信息：\n\n" + transcript_text
+    response = client.chat.completions.create(
+        model=MODEL_NAME,
+        messages=[{'role': 'user', 'content': combined_prompt}],
+        temperature=0.1,
+        max_tokens=4096
+    )
+    raw_text = response.choices[0].message.content
+    parsed = parse_ai_response(raw_text)
+    return parsed, raw_text
+
+
+# ========== 质性研究分析（科研角色专用） ==========
+
+PROMPT_QUALITATIVE_ANALYSIS = """你是临床定性研究专家。请对以下医疗访谈转录文本进行定性分析。
+
+输出JSON格式:
+{{
+  "themes": ["主题1", "主题2"],
+  "keywords": ["关键词1", "关键词2"],
+  "codes": [{{"code": "编码类别", "segments": ["相关文本片段1", "片段2"]}}],
+  "sentiment": "积极/中性/消极",
+  "summary": "2-3句话分析总结"
+}}
+
+分析要求:
+1. 主题分析: 识别3-5个核心讨论主题
+2. 关键词提取: 提取10-15个关键医学/情感词汇
+3. 编码分类: 按类别(如症状描述、治疗态度、医患沟通、情感表达、生活影响)编码文本
+4. 情感倾向: 判断整体情感
+
+转录文本:
+{transcript}
+
+只输出JSON，不要输出任何其他内容。"""
+
+
+def qualitative_analysis(transcript_text):
+    """对转录文本进行定性研究分析"""
+    prompt = PROMPT_QUALITATIVE_ANALYSIS.format(transcript=transcript_text)
+    response = client.chat.completions.create(
+        model=MODEL_NAME,
+        messages=[{'role': 'user', 'content': prompt}],
+        temperature=0.3,
+        max_tokens=3000
+    )
+    return parse_ai_response(response.choices[0].message.content)
+
+
 # ========== Excel 导出 ==========
 def generate_excel(data_list):
     """多角色Excel导出，不同角色放不同Sheet"""
@@ -686,12 +911,24 @@ def generate_excel(data_list):
                     '病历编号': item.get('case_number', ''),
                     '模板': item.get('template_name', ''),
                     '录入时间': item.get('create_time', ''),
+                    '数据来源': '录音' if item.get('source_type') == 'audio' else '图片',
                 }
                 data = item.get('extracted_data', {})
                 conf = item.get('confidence_data', {})
 
                 # 递归展平JSON数据为Excel列
                 _flatten_to_row(data, row, '', conf, low_conf_fields)
+
+                # 音频数据额外列
+                if item.get('source_type') == 'audio' and item.get('audio_transcript'):
+                    transcript = item['audio_transcript']
+                    row['转录原文'] = transcript[:500] + ('...' if len(transcript) > 500 else '')
+                qual = item.get('qualitative_data')
+                if qual and isinstance(qual, dict):
+                    row['主题分析'] = ', '.join(qual.get('themes', []))
+                    row['关键词'] = ', '.join(qual.get('keywords', []))
+                    row['情感倾向'] = qual.get('sentiment', '')
+
                 rows.append(row)
 
             if not rows:
@@ -907,7 +1144,7 @@ def index():
 
 @app.route('/upload', methods=['POST'])
 def upload_and_recognize():
-    """上传文件并AI识别（支持角色/模板选择）"""
+    """上传文件并AI识别（支持角色/模板选择，支持图片和音频）"""
     if 'files' not in request.files:
         return jsonify({"status": "error", "msg": "未选择文件"})
 
@@ -937,7 +1174,10 @@ def upload_and_recognize():
     errors = []
 
     for file in files:
-        if not allowed_file(file.filename):
+        is_audio = is_audio_file(file.filename)
+        is_image = allowed_file(file.filename)
+
+        if not is_audio and not is_image:
             errors.append(f"不支持的格式: {file.filename}")
             continue
 
@@ -947,50 +1187,60 @@ def upload_and_recognize():
         file.save(file_path)
 
         try:
-            if file_ext == '.pdf':
-                image_paths = pdf_to_images(file_path)
+            if is_audio:
+                # ========== 音频处理流程 ==========
+                result_data = _process_audio_file(
+                    file_path, file.filename, role_id, template_id,
+                    ai_prompt, template_name, display_layout)
+                if result_data.get('error'):
+                    errors.append(f"{file.filename}: {result_data['error']}")
+                else:
+                    results.append(result_data)
             else:
-                image_paths = [file_path]
+                # ========== 图片/PDF处理流程（原有逻辑） ==========
+                if file_ext == '.pdf':
+                    image_paths = pdf_to_images(file_path)
+                else:
+                    image_paths = [file_path]
 
-            for img_path in image_paths:
-                data, raw_text = extract_medical_data(img_path, ai_prompt)
+                for img_path in image_paths:
+                    data, raw_text = extract_medical_data(img_path, ai_prompt)
 
-                if "error" in data:
-                    errors.append(f"{file.filename}: {data['error']}")
-                    continue
+                    if "error" in data:
+                        errors.append(f"{file.filename}: {data['error']}")
+                        continue
 
-                case_number = f"CASE_{datetime.now().strftime('%Y%m%d')}_{uuid.uuid4().hex[:6].upper()}"
-                record_id = str(uuid.uuid4())
-                create_time = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+                    case_number = f"CASE_{datetime.now().strftime('%Y%m%d')}_{uuid.uuid4().hex[:6].upper()}"
+                    record_id = str(uuid.uuid4())
+                    create_time = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
 
-                # 分离置信度数据
-                confidence_data = data.pop('confidence', {})
+                    confidence_data = data.pop('confidence', {})
 
-                # 存储
-                conn = get_db()
-                c = conn.cursor()
-                c.execute('''INSERT INTO medical_records
-                    (id, case_number, original_filename, role_id, template_id,
-                     extracted_data, confidence_data, raw_text, create_time)
-                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)''',
-                    (record_id, case_number, file.filename, role_id, template_id,
-                     json.dumps(data, ensure_ascii=False),
-                     json.dumps(confidence_data, ensure_ascii=False),
-                     raw_text, create_time))
-                conn.commit()
-                conn.close()
+                    conn = get_db()
+                    c = conn.cursor()
+                    c.execute('''INSERT INTO medical_records
+                        (id, case_number, original_filename, role_id, template_id,
+                         extracted_data, confidence_data, raw_text, create_time, source_type)
+                        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'image')''',
+                        (record_id, case_number, file.filename, role_id, template_id,
+                         json.dumps(data, ensure_ascii=False),
+                         json.dumps(confidence_data, ensure_ascii=False),
+                         raw_text, create_time))
+                    conn.commit()
+                    conn.close()
 
-                results.append({
-                    "id": record_id,
-                    "case_number": case_number,
-                    "filename": file.filename,
-                    "role_id": role_id,
-                    "template_name": template_name,
-                    "display_layout": display_layout,
-                    "data": data,
-                    "confidence": confidence_data,
-                    "create_time": create_time
-                })
+                    results.append({
+                        "id": record_id,
+                        "case_number": case_number,
+                        "filename": file.filename,
+                        "role_id": role_id,
+                        "template_name": template_name,
+                        "display_layout": display_layout,
+                        "source_type": "image",
+                        "data": data,
+                        "confidence": confidence_data,
+                        "create_time": create_time
+                    })
 
         except Exception as e:
             errors.append(f"{file.filename}: 识别失败 - {str(e)}")
@@ -1009,16 +1259,80 @@ def upload_and_recognize():
     })
 
 
+def _process_audio_file(audio_path, filename, role_id, template_id,
+                        ai_prompt, template_name, display_layout):
+    """处理单个音频文件：语音转写 → 结构化提取 → 可选质性分析"""
+    try:
+        # 1. 语音转文字
+        transcript_result = transcribe_audio(audio_path)
+        transcript_text = transcript_result['text']
+
+        # 2. 用AI从转录文本提取结构化数据
+        data, raw_text = extract_from_transcript(transcript_text, ai_prompt)
+
+        if "error" in data:
+            return {"error": data.get('error', '文本提取失败')}
+
+        # 3. 质性分析（仅科研角色）
+        qual_result = None
+        if role_id == 'researcher':
+            try:
+                qual_result = qualitative_analysis(transcript_text)
+            except Exception as e:
+                print(f"[WARN] 质性分析失败: {e}")
+
+        # 4. 生成记录
+        case_number = f"AUDIO_{datetime.now().strftime('%Y%m%d')}_{uuid.uuid4().hex[:6].upper()}"
+        record_id = str(uuid.uuid4())
+        create_time = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+
+        confidence_data = data.pop('confidence', {})
+
+        # 5. 存储到数据库
+        conn = get_db()
+        c = conn.cursor()
+        c.execute('''INSERT INTO medical_records
+            (id, case_number, original_filename, role_id, template_id,
+             extracted_data, confidence_data, raw_text, create_time,
+             source_type, audio_transcript, qualitative_data)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'audio', ?, ?)''',
+            (record_id, case_number, filename, role_id, template_id,
+             json.dumps(data, ensure_ascii=False),
+             json.dumps(confidence_data, ensure_ascii=False),
+             raw_text, create_time,
+             transcript_text,
+             json.dumps(qual_result, ensure_ascii=False) if qual_result else None))
+        conn.commit()
+        conn.close()
+
+        return {
+            "id": record_id,
+            "case_number": case_number,
+            "filename": filename,
+            "role_id": role_id,
+            "template_name": template_name,
+            "display_layout": display_layout,
+            "source_type": "audio",
+            "transcript": transcript_text,
+            "qualitative_analysis": qual_result,
+            "data": data,
+            "confidence": confidence_data,
+            "create_time": create_time
+        }
+    except Exception as e:
+        return {"error": f"音频处理失败: {str(e)}"}
+
+
 @app.route('/records', methods=['GET'])
 def get_records():
     role_id = request.args.get('role_id', None)
     conn = get_db()
     c = conn.cursor()
     if role_id:
-        c.execute('''SELECT id, case_number, original_filename, role_id, template_id, create_time
+        c.execute('''SELECT id, case_number, original_filename, role_id, template_id, create_time, source_type
             FROM medical_records WHERE role_id=? ORDER BY create_time DESC''', (role_id,))
     else:
-        c.execute('''SELECT id, case_number, original_filename, role_id, template_id, create_time
+        c.execute('''SELECT id, case_number, original_filename, role_id, template_id, create_time, source_type
             FROM medical_records ORDER BY create_time DESC''')
     rows = c.fetchall()
     conn.close()
@@ -1031,7 +1345,8 @@ def get_records():
             "filename": row['original_filename'],
             "role_id": row['role_id'] or 'researcher',
             "template_id": row['template_id'] or '',
-            "create_time": row['create_time']
+            "create_time": row['create_time'],
+            "source_type": row['source_type'] or 'image'
         })
     return jsonify({"status": "success", "records": records})
 
@@ -1086,7 +1401,10 @@ def get_record_detail(record_id):
             "display_layout": display_layout,
             "extracted_data": extracted_data,
             "confidence": confidence_data,
-            "create_time": row['create_time']
+            "create_time": row['create_time'],
+            "source_type": row['source_type'] or 'image',
+            "audio_transcript": row['audio_transcript'] if (row['source_type'] == 'audio') else None,
+            "qualitative_data": json.loads(row['qualitative_data']) if row['qualitative_data'] else None
         }
     })
 
@@ -1203,6 +1521,9 @@ def _rows_to_export_list(rows):
             'template_name': template_name,
             'extracted_data': extracted,
             'confidence_data': conf,
+            'source_type': row['source_type'] or 'image',
+            'audio_transcript': row['audio_transcript'] if row['source_type'] == 'audio' else None,
+            'qualitative_data': json.loads(row['qualitative_data']) if row['qualitative_data'] else None,
         })
     conn.close()
     return data_list

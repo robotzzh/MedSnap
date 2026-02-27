@@ -6,3 +6,6 @@ requests
 numpy
 openpyxl
 python-docx
+PyMuPDF
+dashscope
+pydub

@@ -324,7 +324,7 @@
             <div class="action-card upload" onclick="toggleUploadZone()">
                 <div class="action-icon">&#128196;</div>
                 <h3>上传文件</h3>
-                <p>支持 JPG/PNG/PDF 格式<br>支持批量上传</p>
+                <p>支持 图片/PDF/录音<br>支持批量上传</p>
             </div>
             <div class="action-card recognize disabled" id="recognizeCard" onclick="startRecognize()">
                 <div class="action-icon">&#129302;</div>
@@ -343,11 +343,11 @@
                 <label>识别模板:</label>
                 <select id="templateSelect"></select>
             </div>
-            <input type="file" id="fileInput" class="file-input" multiple accept=".jpg,.jpeg,.png,.bmp,.tiff,.pdf">
+            <input type="file" id="fileInput" class="file-input" multiple accept=".jpg,.jpeg,.png,.bmp,.tiff,.pdf,.wav,.mp3,.m4a,.aac,.flac,.amr,.opus">
             <div class="dropzone" id="dropzone" onclick="document.getElementById('fileInput').click()">
                 <div class="drop-icon">&#128194;</div>
                 <h4>点击选择文件或拖拽至此处</h4>
-                <p>支持 JPG、PNG、BMP、TIFF、PDF 格式</p>
+                <p>支持 图片(JPG/PNG/PDF) 和 录音(MP3/WAV/M4A) 格式</p>
             </div>
             <div class="file-list" id="fileList"></div>
         </div>
@@ -391,7 +391,7 @@
             </div>
             <div class="modal-body">
                 <div class="guide-step"><div class="step-number">1</div><div class="step-content"><h4>选择角色与模板</h4><p>在导航栏选择您的角色（临床医生/护士/科研人员），系统将自动加载对应的识别模板。护士角色还可自定义量表模板。</p></div></div>
-                <div class="guide-step"><div class="step-number">2</div><div class="step-content"><h4>上传并识别</h4><p>选择识别模板后上传病历图片，AI将按模板维度自动提取结构化数据。<span style="color:#dc2626;font-weight:600;">红色标注</span>字段需手动核对。</p></div></div>
+                <div class="guide-step"><div class="step-number">2</div><div class="step-content"><h4>上传并识别</h4><p>选择识别模板后上传病历图片或录音文件，AI将自动提取结构化数据。音频文件会先转录为文字再提取。<span style="color:#dc2626;font-weight:600;">红色标注</span>字段需手动核对。</p></div></div>
                 <div class="guide-step"><div class="step-number">3</div><div class="step-content"><h4>导出Excel</h4><p>校验后点击「导出数据」，不同角色数据将分Sheet导出，可直接导入SPSS/R分析。</p></div></div>
             </div>
             <div class="modal-footer">
@@ -525,8 +525,11 @@
 
     function handleFileSelect(e) { addFiles(Array.from(e.target.files)); e.target.value = ''; }
 
+    var audioExts = ['wav','mp3','m4a','aac','flac','amr','opus'];
+    var imageExts = ['jpg','jpeg','png','bmp','tiff','pdf'];
+
     function addFiles(files) {
-        var allowed = ['jpg','jpeg','png','bmp','tiff','pdf'];
+        var allowed = imageExts.concat(audioExts);
         for (var i = 0; i < files.length; i++) {
             var ext = files[i].name.split('.').pop().toLowerCase();
             if (allowed.indexOf(ext) === -1) { showToast('不支持: ' + files[i].name, 'error'); continue; }
@@ -544,9 +547,11 @@
         var h = '';
         for (var i = 0; i < selectedFiles.length; i++) {
             var f = selectedFiles[i];
+            var ext = f.name.split('.').pop().toLowerCase();
+            var icon = audioExts.indexOf(ext) !== -1 ? '&#127925;' : '&#128196;';
             var sz = (f.size / 1024).toFixed(1);
             sz = sz > 1024 ? (sz / 1024).toFixed(1) + ' MB' : sz + ' KB';
-            h += '<div class="file-item"><div class="file-info"><span>&#128196;</span><span>' + esc(f.name) + '</span><span class="file-size">' + sz + '</span></div><button class="remove-btn" onclick="removeFile(' + i + ')">&#10005;</button></div>';
+            h += '<div class="file-item"><div class="file-info"><span>' + icon + '</span><span>' + esc(f.name) + '</span><span class="file-size">' + sz + '</span></div><button class="remove-btn" onclick="removeFile(' + i + ')">&#10005;</button></div>';
         }
         c.innerHTML = h;
     }
@@ -584,7 +589,10 @@
                 return;
             }
             var file = selectedFiles[idx];
-            updateProgress(Math.round(idx / total * 100), '识别第 ' + (idx + 1) + '/' + total + ' 份: ' + file.name);
+            var fileExt = file.name.split('.').pop().toLowerCase();
+            var isAudio = audioExts.indexOf(fileExt) !== -1;
+            var typeHint = isAudio ? ' (语音转文字中...)' : '';
+            updateProgress(Math.round(idx / total * 100), '识别第 ' + (idx + 1) + '/' + total + ' 份: ' + file.name + typeHint);
 
             var fd = new FormData();
             fd.append('files', file);
@@ -618,7 +626,8 @@
         document.getElementById('resultsTitle').textContent = '识别结果（' + results.length + ' 份）';
         var tabsHtml = '';
         for (var i = 0; i < results.length; i++) {
-            tabsHtml += '<div class="results-tab' + (i === 0 ? ' active' : '') + '" onclick="switchTab(' + i + ')">' + esc(results[i].case_number || ('病历' + (i + 1))) + '</div>';
+            var srcIcon = results[i].source_type === 'audio' ? '&#127925; ' : '';
+            tabsHtml += '<div class="results-tab' + (i === 0 ? ' active' : '') + '" onclick="switchTab(' + i + ')">' + srcIcon + esc(results[i].case_number || ('病历' + (i + 1))) + '</div>';
         }
         document.getElementById('resultsTabs').innerHTML = tabsHtml;
         currentViewIndex = 0;
@@ -639,13 +648,75 @@
         var layout = result.display_layout || 'table';
         var roleId = result.role_id || currentRole;
 
-        if (roleId === 'nurse') {
-            body.innerHTML = renderNurseLayout(data, conf, result.template_name);
-        } else if (roleId === 'doctor') {
-            body.innerHTML = renderDoctorLayout(data, conf);
-        } else {
-            body.innerHTML = renderResearcherLayout(data, conf);
+        var html = '';
+
+        // 音频数据：显示原始转录文本
+        if (result.source_type === 'audio' && result.transcript) {
+            html += '<div style="background:linear-gradient(135deg,#fffbeb,#fef3c7);border:1px solid #fbbf24;border-radius:12px;padding:16px;margin-bottom:16px;">';
+            html += '<h4 style="margin:0 0 10px;color:#92400e;font-size:14px;">&#127908; 原始转录文本</h4>';
+            html += '<div style="max-height:200px;overflow-y:auto;font-size:13px;line-height:1.8;white-space:pre-wrap;color:#78350f;background:rgba(255,255,255,0.5);padding:12px;border-radius:8px;">';
+            html += esc(result.transcript);
+            html += '</div></div>';
         }
+
+        // 质性分析（科研角色音频）
+        if (result.qualitative_analysis) {
+            html += renderQualitativeAnalysis(result.qualitative_analysis);
+        }
+
+        // 原有角色布局
+        if (roleId === 'nurse') {
+            html += renderNurseLayout(data, conf, result.template_name);
+        } else if (roleId === 'doctor') {
+            html += renderDoctorLayout(data, conf);
+        } else {
+            html += renderResearcherLayout(data, conf);
+        }
+
+        body.innerHTML = html;
+    }
+
+    function renderQualitativeAnalysis(qual) {
+        if (!qual) return '';
+        var h = '<div style="background:linear-gradient(135deg,#f5f3ff,#ede9fe);border:1px solid #a78bfa;border-radius:12px;padding:16px;margin-bottom:16px;">';
+        h += '<h4 style="margin:0 0 12px;color:#7c3aed;font-size:14px;">&#128202; 定性研究分析</h4>';
+
+        if (qual.themes && qual.themes.length) {
+            h += '<div style="margin-bottom:10px;"><strong style="color:#6d28d9;font-size:13px;">核心主题：</strong>';
+            for (var i = 0; i < qual.themes.length; i++) {
+                h += '<span style="display:inline-block;background:#ddd6fe;color:#5b21b6;padding:3px 10px;border-radius:10px;margin:3px;font-size:12px;">' + esc(qual.themes[i]) + '</span>';
+            }
+            h += '</div>';
+        }
+
+        if (qual.keywords && qual.keywords.length) {
+            h += '<div style="margin-bottom:10px;"><strong style="color:#6d28d9;font-size:13px;">关键词：</strong>';
+            h += '<span style="font-size:12px;color:#64748b;">' + esc(qual.keywords.join('、')) + '</span></div>';
+        }
+
+        if (qual.codes && qual.codes.length) {
+            h += '<div style="margin-bottom:10px;"><strong style="color:#6d28d9;font-size:13px;">编码分类：</strong>';
+            h += '<table class="data-table" style="margin-top:6px;font-size:12px;"><thead><tr><th>编码</th><th>相关文本</th></tr></thead><tbody>';
+            for (var j = 0; j < qual.codes.length; j++) {
+                var code = qual.codes[j];
+                var segs = code.segments ? code.segments.join('；') : '';
+                h += '<tr><td style="font-weight:600;white-space:nowrap;">' + esc(code.code) + '</td><td style="font-size:12px;color:#475569;">' + esc(segs) + '</td></tr>';
+            }
+            h += '</tbody></table></div>';
+        }
+
+        if (qual.sentiment) {
+            var sentColor = qual.sentiment.indexOf('积极') !== -1 ? '#059669' : (qual.sentiment.indexOf('消极') !== -1 ? '#dc2626' : '#64748b');
+            h += '<div style="margin-bottom:8px;"><strong style="color:#6d28d9;font-size:13px;">情感倾向：</strong>';
+            h += '<span style="color:' + sentColor + ';font-weight:600;">' + esc(qual.sentiment) + '</span></div>';
+        }
+
+        if (qual.summary) {
+            h += '<div style="font-size:13px;color:#475569;line-height:1.6;"><strong style="color:#6d28d9;">分析总结：</strong>' + esc(qual.summary) + '</div>';
+        }
+
+        h += '</div>';
+        return h;
     }
 
     // ===== 医生布局 =====
@@ -929,7 +1000,8 @@
             var r = records[i];
             var rn = roleNames[r.role_id] || r.role_id;
             var rc = roleColors[r.role_id] || '#64748b';
-            h += '<div class="history-item"><div class="info"><span class="case-no">' + esc(r.case_number) + '<span class="role-tag" style="background:' + rc + '20;color:' + rc + ';">' + esc(rn) + '</span></span>';
+            var srcIcon = r.source_type === 'audio' ? '&#127925; ' : '&#128196; ';
+            h += '<div class="history-item"><div class="info"><span class="case-no">' + srcIcon + esc(r.case_number) + '<span class="role-tag" style="background:' + rc + '20;color:' + rc + ';">' + esc(rn) + '</span></span>';
             h += '<span class="meta">' + esc(r.filename) + ' | ' + r.create_time + '</span></div>';
             h += '<div class="actions"><button class="btn-sm" onclick="viewRecord(\'' + r.id + '\')">查看</button>';
             h += '<button class="btn-sm danger" onclick="deleteRecord(\'' + r.id + '\')">删除</button></div></div>';
@@ -947,6 +1019,9 @@
                     case_number: d.case_number, filename: d.filename,
                     role_id: d.role_id, template_name: d.template_name,
                     display_layout: d.display_layout,
+                    source_type: d.source_type || 'image',
+                    transcript: d.audio_transcript,
+                    qualitative_analysis: d.qualitative_data,
                     data: d.extracted_data, confidence: d.confidence, create_time: d.create_time
                 }];
                 showResults(currentResults);
