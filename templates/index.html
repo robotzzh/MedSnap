@@ -26,8 +26,6 @@
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Microsoft YaHei", "PingFang SC", sans-serif;
             background: var(--bg); color: var(--text); min-height: 100vh; line-height: 1.6;
         }
-
-        /* ===== 导航栏 ===== */
         .navbar {
             background: linear-gradient(135deg, #1e40af, var(--role-color));
             color: white; padding: 14px 0;
@@ -36,26 +34,10 @@
             transition: background 0.4s;
         }
         .navbar-inner {
-            max-width: 1100px; margin: 0 auto; padding: 0 24px;
+            max-width: 1200px; margin: 0 auto; padding: 0 24px;
             display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap;
         }
         .navbar h1 { font-size: 18px; font-weight: 700; white-space: nowrap; }
-        .nav-center { display: flex; align-items: center; gap: 10px; }
-        .role-selector {
-            display: flex; align-items: center; gap: 8px;
-            background: rgba(255,255,255,0.15); padding: 6px 12px; border-radius: 8px;
-        }
-        .role-selector label { font-size: 13px; white-space: nowrap; }
-        .role-selector select {
-            background: white; color: var(--text); border: none;
-            padding: 5px 10px; border-radius: 6px; font-size: 13px; cursor: pointer;
-        }
-        #templateManageBtn {
-            display: none; background: rgba(255,255,255,0.2); color: white;
-            border: 1px solid rgba(255,255,255,0.3); padding: 5px 12px;
-            border-radius: 6px; font-size: 12px; cursor: pointer;
-        }
-        #templateManageBtn:hover { background: rgba(255,255,255,0.3); }
         .nav-actions { display: flex; gap: 8px; align-items: center; }
         .record-count { background: rgba(255,255,255,0.2); padding: 4px 12px; border-radius: 20px; font-size: 13px; }
         .nav-btn {
@@ -64,243 +46,26 @@
             border-radius: 8px; cursor: pointer; font-size: 12px; transition: all 0.2s;
         }
         .nav-btn:hover { background: rgba(255,255,255,0.25); }
-
-        /* ===== 主容器 ===== */
-        .container { max-width: 1100px; margin: 0 auto; padding: 24px; }
-
-        /* ===== 隐私提示 ===== */
+        .container { max-width: 1200px; margin: 0 auto; padding: 24px; }
         .privacy-bar {
             background: linear-gradient(135deg, #ecfdf5, #d1fae5);
             border: 1px solid #a7f3d0; border-radius: 10px;
             padding: 10px 20px; margin-bottom: 20px;
             display: flex; align-items: center; gap: 10px; font-size: 13px; color: #065f46;
         }
-
-        /* ===== 操作区 ===== */
-        .action-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-bottom: 20px; }
-        .action-card {
-            background: var(--card); border-radius: 14px; padding: 24px 20px; text-align: center;
-            box-shadow: var(--shadow); cursor: pointer; transition: all 0.25s;
-            border: 2px solid transparent; position: relative;
-        }
-        .action-card:hover { transform: translateY(-3px); box-shadow: 0 8px 32px rgba(0,0,0,0.12); }
-        .action-card.upload { border-color: #bfdbfe; }
-        .action-card.upload:hover { border-color: var(--primary); }
-        .action-card.recognize { border-color: #99f6e4; }
-        .action-card.recognize:hover { border-color: var(--success); }
-        .action-card.export { border-color: #fde68a; }
-        .action-card.export:hover { border-color: var(--warning); }
-        .action-card .action-icon {
-            width: 52px; height: 52px; border-radius: 14px;
-            display: flex; align-items: center; justify-content: center;
-            margin: 0 auto 12px; font-size: 24px;
-        }
-        .action-card.upload .action-icon { background: #dbeafe; }
-        .action-card.recognize .action-icon { background: #ccfbf1; }
-        .action-card.export .action-icon { background: #fef3c7; }
-        .action-card h3 { font-size: 15px; margin-bottom: 4px; }
-        .action-card p { font-size: 12px; color: var(--text-secondary); }
-        .action-card.disabled { opacity: 0.5; cursor: not-allowed; }
-        .action-card.disabled:hover { transform: none; box-shadow: var(--shadow); }
-
-        /* ===== 上传区 ===== */
-        .upload-zone { display: none; background: var(--card); border-radius: 14px; padding: 28px; box-shadow: var(--shadow); margin-bottom: 20px; }
-        .upload-zone.active { display: block; }
-        .template-selector { margin-bottom: 16px; display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
-        .template-selector label { font-weight: 600; font-size: 14px; white-space: nowrap; }
-        .template-selector select { padding: 8px 14px; border: 1px solid var(--border); border-radius: 8px; font-size: 14px; flex: 1; max-width: 400px; }
-        .dropzone {
-            border: 2px dashed #cbd5e1; border-radius: 12px; padding: 40px 24px;
-            text-align: center; transition: all 0.3s; cursor: pointer; background: #f8fafc;
-        }
-        .dropzone:hover, .dropzone.drag-over { border-color: var(--role-color); background: #eff6ff; }
-        .dropzone .drop-icon { font-size: 42px; margin-bottom: 10px; opacity: 0.6; }
-        .dropzone h4 { font-size: 15px; margin-bottom: 6px; }
-        .dropzone p { font-size: 12px; color: var(--text-secondary); }
-        .file-input { display: none; }
-        .file-list { margin-top: 12px; }
-        .file-item {
-            display: flex; align-items: center; justify-content: space-between;
-            padding: 8px 14px; background: #f8fafc; border-radius: 8px; margin-bottom: 6px; font-size: 13px;
-        }
-        .file-item .file-info { display: flex; align-items: center; gap: 6px; }
-        .file-item .file-size { color: var(--text-secondary); font-size: 12px; }
-        .file-item .remove-btn { color: var(--danger); cursor: pointer; border: none; background: none; font-size: 16px; padding: 2px 6px; border-radius: 4px; }
-
-        /* ===== 进度 ===== */
-        .progress-section { display: none; background: var(--card); border-radius: 14px; padding: 20px; box-shadow: var(--shadow); margin-bottom: 20px; }
-        .progress-section.active { display: block; }
-        .progress-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
-        .progress-header h4 { font-size: 14px; display: flex; align-items: center; gap: 8px; }
-        .spinner { width: 18px; height: 18px; border: 3px solid #e2e8f0; border-top-color: var(--role-color); border-radius: 50%; animation: spin 0.8s linear infinite; }
-        @keyframes spin { to { transform: rotate(360deg); } }
-        .progress-bar-track { width: 100%; height: 8px; background: #e2e8f0; border-radius: 4px; overflow: hidden; }
-        .progress-bar-fill { height: 100%; background: linear-gradient(90deg, var(--role-color), var(--primary-light)); border-radius: 4px; transition: width 0.5s; width: 0%; }
-        .progress-text { font-size: 12px; color: var(--text-secondary); margin-top: 6px; }
-
-        /* ===== 结果区 ===== */
-        .results-section { display: none; background: var(--card); border-radius: 14px; box-shadow: var(--shadow); margin-bottom: 20px; overflow: hidden; }
-        .results-section.active { display: block; }
-        .results-header { padding: 16px 24px; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; }
-        .results-header h3 { font-size: 15px; display: flex; align-items: center; gap: 8px; }
-        .results-tabs { display: flex; border-bottom: 1px solid var(--border); background: #f8fafc; overflow-x: auto; }
-        .results-tab { padding: 10px 18px; font-size: 13px; cursor: pointer; border-bottom: 2px solid transparent; color: var(--text-secondary); white-space: nowrap; }
-        .results-tab:hover { color: var(--text); }
-        .results-tab.active { color: var(--role-color); border-bottom-color: var(--role-color); font-weight: 600; }
-        .results-body { padding: 20px 24px; max-height: 700px; overflow-y: auto; }
-
-        /* 数据表格 */
-        .data-table { width: 100%; border-collapse: separate; border-spacing: 0; font-size: 13px; }
-        .data-table th { background: #f1f5f9; padding: 8px 12px; text-align: left; font-weight: 600; font-size: 12px; color: var(--text-secondary); border-bottom: 1px solid var(--border); white-space: nowrap; }
-        .data-table td { padding: 8px 12px; border-bottom: 1px solid #f1f5f9; vertical-align: top; }
-        .data-table tr:hover td { background: #f8fafc; }
-        .data-table td.editable { cursor: text; }
-        .data-table td.editable:hover { background: #eff6ff; }
-        .data-table td.editable:focus { outline: 2px solid var(--role-color); outline-offset: -2px; border-radius: 4px; }
-        .low-confidence { background: #fef2f2 !important; color: var(--danger); font-weight: 600; }
-        .low-confidence::after { content: " \u26a0"; font-size: 11px; }
-        .confidence-badge { display: inline-block; padding: 2px 8px; border-radius: 10px; font-size: 11px; font-weight: 600; }
-        .confidence-high { background: #dcfce7; color: #166534; }
-        .confidence-low { background: #fee2e2; color: #991b1b; }
-
-        /* 护士量表卡片 */
-        .nurse-info-cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; margin-bottom: 18px; }
-        .info-card { background: linear-gradient(135deg, #f0f9ff, #e0f2fe); border-radius: 10px; padding: 16px; }
-        .info-card h4 { font-size: 14px; margin-bottom: 8px; color: var(--primary); }
-        .info-card .info-row { font-size: 13px; padding: 3px 0; display: flex; justify-content: space-between; }
-        .info-card .info-row .label { color: var(--text-secondary); }
-        .info-card .info-row .value { font-weight: 600; }
-
-        .scale-section { background: #fafbfc; border-radius: 10px; padding: 18px; margin-bottom: 16px; border: 1px solid var(--border); }
-        .scale-section h4 { font-size: 14px; margin-bottom: 12px; display: flex; align-items: center; gap: 6px; }
-        .scale-item { padding: 10px 0; border-bottom: 1px solid #f1f5f9; }
-        .scale-item:last-child { border-bottom: none; }
-        .scale-item-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px; }
-        .scale-item-header .item-name { font-size: 13px; font-weight: 500; }
-        .scale-item-header .item-score { font-size: 14px; font-weight: 700; color: var(--role-color); }
-        .scale-item .item-note { font-size: 11px; color: var(--text-secondary); }
-        .scale-progress { height: 6px; background: #e2e8f0; border-radius: 3px; overflow: hidden; margin: 4px 0; }
-        .scale-progress-fill { height: 100%; border-radius: 3px; transition: width 0.5s; }
-
-        .total-score-box {
-            margin-top: 14px; padding: 14px 18px; border-radius: 10px;
-            display: flex; align-items: center; justify-content: space-between;
-            font-size: 16px; font-weight: 700;
-        }
-        .total-score-box.low-risk { background: linear-gradient(135deg, #ecfdf5, #d1fae5); color: #065f46; }
-        .total-score-box.medium-risk { background: linear-gradient(135deg, #fffbeb, #fef3c7); color: #92400e; }
-        .total-score-box.high-risk { background: linear-gradient(135deg, #fef2f2, #fecaca); color: #991b1b; }
-        .risk-badge { padding: 4px 14px; border-radius: 20px; font-size: 13px; font-weight: 600; }
-        .risk-badge.low { background: #dcfce7; color: #166534; }
-        .risk-badge.medium { background: #fef3c7; color: #92400e; }
-        .risk-badge.high { background: #fee2e2; color: #991b1b; }
-
-        /* ===== 历史记录 ===== */
-        .history-section { background: var(--card); border-radius: 14px; box-shadow: var(--shadow); margin-bottom: 20px; overflow: hidden; }
-        .history-header { padding: 16px 24px; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; }
-        .history-header h3 { font-size: 15px; }
-        .history-list { max-height: 280px; overflow-y: auto; }
-        .history-item { display: flex; align-items: center; justify-content: space-between; padding: 10px 24px; border-bottom: 1px solid #f1f5f9; }
-        .history-item:hover { background: #f8fafc; }
-        .history-item .info { display: flex; flex-direction: column; gap: 2px; }
-        .history-item .case-no { font-weight: 600; font-size: 13px; }
-        .history-item .meta { font-size: 11px; color: var(--text-secondary); }
-        .history-item .role-tag { display: inline-block; padding: 1px 8px; border-radius: 10px; font-size: 11px; font-weight: 600; margin-left: 6px; }
-        .history-item .actions { display: flex; gap: 6px; }
-        .btn-sm { padding: 4px 10px; border-radius: 6px; font-size: 11px; cursor: pointer; border: 1px solid var(--border); background: white; color: var(--text); }
-        .btn-sm:hover { background: #f1f5f9; }
-        .btn-sm.danger { color: var(--danger); border-color: #fecaca; }
-        .btn-sm.danger:hover { background: #fef2f2; }
-        .empty-state { padding: 40px 24px; text-align: center; color: var(--text-secondary); }
-        .empty-state .empty-icon { font-size: 42px; margin-bottom: 10px; opacity: 0.4; }
-
-        /* ===== 按钮 ===== */
-        .btn { display: inline-flex; align-items: center; gap: 6px; padding: 8px 18px; border: none; border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer; transition: all 0.2s; }
-        .btn-primary { background: var(--role-color); color: white; }
-        .btn-primary:hover { opacity: 0.9; }
-        .btn-success { background: var(--success); color: white; }
-        .btn:disabled { opacity: 0.5; cursor: not-allowed; }
-
-        /* ===== Toast ===== */
-        .toast-container { position: fixed; top: 70px; right: 24px; z-index: 1000; display: flex; flex-direction: column; gap: 8px; }
-        .toast { padding: 10px 18px; border-radius: 10px; font-size: 13px; box-shadow: 0 4px 20px rgba(0,0,0,0.15); animation: toastIn 0.3s ease; max-width: 340px; }
-        .toast.success { background: #ecfdf5; color: #065f46; border: 1px solid #a7f3d0; }
-        .toast.error { background: #fef2f2; color: #991b1b; border: 1px solid #fecaca; }
-        .toast.info { background: #eff6ff; color: #1e40af; border: 1px solid #bfdbfe; }
-        @keyframes toastIn { from { opacity: 0; transform: translateX(40px); } to { opacity: 1; transform: translateX(0); } }
-
-        /* ===== 弹窗通用 ===== */
-        .modal-overlay {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.5); display: flex; justify-content: center; align-items: center;
-            z-index: 999; opacity: 0; visibility: hidden; transition: all 0.3s;
-        }
-        .modal-overlay.active { opacity: 1; visibility: visible; }
-        .modal {
-            background: white; border-radius: 16px; max-width: 600px; width: 90%;
-            max-height: 85vh; overflow-y: auto; box-shadow: 0 20px 60px rgba(0,0,0,0.2);
-            transform: scale(0.9); transition: transform 0.3s;
-        }
-        .modal-overlay.active .modal { transform: scale(1); }
-        .modal-header { padding: 20px 24px 0; text-align: center; }
-        .modal-header h2 { font-size: 18px; margin-bottom: 4px; }
-        .modal-header p { color: var(--text-secondary); font-size: 13px; }
-        .modal-body { padding: 18px 24px; }
-        .modal-footer { padding: 14px 24px 20px; text-align: center; }
-        .modal-footer .btn { min-width: 140px; justify-content: center; }
-
-        /* 引导弹窗 */
-        .guide-step { display: flex; gap: 14px; padding: 14px 0; border-bottom: 1px solid #f1f5f9; }
-        .guide-step:last-child { border-bottom: none; }
-        .step-number { width: 32px; height: 32px; border-radius: 50%; background: linear-gradient(135deg, #2563eb, #3b82f6); color: white; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 14px; flex-shrink: 0; }
-        .step-content h4 { font-size: 14px; margin-bottom: 3px; }
-        .step-content p { font-size: 12px; color: var(--text-secondary); line-height: 1.6; }
-        .modal-footer .checkbox-row { margin-top: 10px; font-size: 12px; color: var(--text-secondary); display: flex; align-items: center; justify-content: center; gap: 6px; }
-
-        /* 模板管理弹窗 */
-        .template-modal .modal { max-width: 700px; }
-        .template-modal .modal-body { display: flex; gap: 20px; }
-        .template-list-panel { flex: 1; min-width: 0; }
-        .template-list-panel h4 { font-size: 14px; margin-bottom: 10px; }
-        .tpl-item { display: flex; align-items: center; justify-content: space-between; padding: 8px 12px; background: #f8fafc; border-radius: 8px; margin-bottom: 6px; font-size: 13px; }
-        .tpl-item .tpl-type { font-size: 10px; padding: 1px 6px; border-radius: 8px; background: #e2e8f0; color: var(--text-secondary); margin-left: 6px; }
-        .tpl-item .tpl-type.custom { background: #dbeafe; color: #1e40af; }
-        .tpl-item .del-btn { color: var(--danger); cursor: pointer; border: none; background: none; font-size: 14px; }
-        .template-form-panel { flex: 1; min-width: 0; border-left: 1px solid var(--border); padding-left: 20px; }
-        .template-form-panel h4 { font-size: 14px; margin-bottom: 10px; }
-        .template-form-panel label { display: block; font-size: 12px; font-weight: 600; margin: 10px 0 4px; color: var(--text-secondary); }
-        .template-form-panel input[type="text"], .template-form-panel textarea {
-            width: 100%; padding: 8px 12px; border: 1px solid var(--border); border-radius: 8px; font-size: 13px; font-family: inherit;
-        }
-        .template-form-panel textarea { resize: vertical; }
-        .template-form-panel .checkbox-label { display: flex; align-items: center; gap: 6px; font-size: 12px; margin: 8px 0; }
-
-        /* ===== 响应式 ===== */
-        @media (max-width: 768px) {
-            .action-grid { grid-template-columns: 1fr; }
-            .navbar-inner { flex-direction: column; gap: 8px; }
-            .template-modal .modal-body { flex-direction: column; }
-            .template-form-panel { border-left: none; padding-left: 0; border-top: 1px solid var(--border); padding-top: 16px; }
-        }
-
-        .footer { text-align: center; padding: 20px; font-size: 11px; color: var(--text-secondary); }
-        ::-webkit-scrollbar { width: 6px; }
-        ::-webkit-scrollbar-track { background: transparent; }
-        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 3px; }
-
-        /* ===== 模块导航 ===== */
-        .module-nav { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; margin-bottom: 20px; }
+        /* ===== Module Nav ===== */
+        .module-nav { display: grid; grid-template-columns: repeat(5, 1fr); gap: 12px; margin-bottom: 20px; }
         .module-nav-item {
-            background: var(--card); border-radius: 12px; padding: 18px 16px;
+            background: var(--card); border-radius: 12px; padding: 14px 12px;
             cursor: pointer; border: 2px solid var(--border); transition: all 0.3s;
-            display: flex; align-items: center; gap: 12px;
+            display: flex; align-items: center; gap: 10px;
         }
         .module-nav-item:hover { border-color: var(--primary); box-shadow: 0 4px 16px rgba(37,99,235,0.12); transform: translateY(-2px); }
         .module-nav-item.active { border-color: var(--primary); background: linear-gradient(135deg, #eff6ff, #dbeafe); }
-        .module-icon { font-size: 28px; width: 48px; height: 48px; display: flex; align-items: center; justify-content: center; background: #f1f5f9; border-radius: 12px; flex-shrink: 0; }
+        .module-icon { font-size: 24px; width: 42px; height: 42px; display: flex; align-items: center; justify-content: center; background: #f1f5f9; border-radius: 10px; flex-shrink: 0; }
         .module-nav-item.active .module-icon { background: #dbeafe; }
-        .module-info h4 { font-size: 14px; margin-bottom: 2px; font-weight: 700; }
-        .module-info p { font-size: 11px; color: var(--text-secondary); margin: 0; line-height: 1.4; }
+        .module-info h4 { font-size: 13px; margin-bottom: 1px; font-weight: 700; }
+        .module-info p { font-size: 10px; color: var(--text-secondary); margin: 0; line-height: 1.3; }
         .module-content { display: none; background: var(--card); border-radius: 14px; padding: 24px; box-shadow: var(--shadow); margin-bottom: 20px; }
         .module-content.active { display: block; }
         .module-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 18px; flex-wrap: wrap; gap: 10px; }
@@ -340,9 +105,153 @@
         .concept-arrow { color: var(--primary); font-weight: 600; }
         .history-filter { display: flex; align-items: center; gap: 8px; }
         .history-filter select { padding: 4px 8px; border: 1px solid var(--border); border-radius: 6px; font-size: 11px; }
-        @media (max-width: 768px) {
+        /* ===== Upload Zone ===== */
+        .template-selector { margin-bottom: 16px; display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+        .template-selector label { font-weight: 600; font-size: 14px; white-space: nowrap; }
+        .template-selector select { padding: 8px 14px; border: 1px solid var(--border); border-radius: 8px; font-size: 14px; flex: 1; max-width: 400px; }
+        .dropzone {
+            border: 2px dashed #cbd5e1; border-radius: 12px; padding: 40px 24px;
+            text-align: center; transition: all 0.3s; cursor: pointer; background: #f8fafc;
+        }
+        .dropzone:hover, .dropzone.drag-over { border-color: var(--role-color); background: #eff6ff; }
+        .dropzone .drop-icon { font-size: 42px; margin-bottom: 10px; opacity: 0.6; }
+        .dropzone h4 { font-size: 15px; margin-bottom: 6px; }
+        .dropzone p { font-size: 12px; color: var(--text-secondary); }
+        .file-input { display: none; }
+        .file-list { margin-top: 12px; }
+        .file-item {
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 8px 14px; background: #f8fafc; border-radius: 8px; margin-bottom: 6px; font-size: 13px;
+        }
+        .file-item .file-info { display: flex; align-items: center; gap: 6px; }
+        .file-item .file-size { color: var(--text-secondary); font-size: 12px; }
+        .file-item .remove-btn { color: var(--danger); cursor: pointer; border: none; background: none; font-size: 16px; padding: 2px 6px; border-radius: 4px; }
+        /* ===== Progress ===== */
+        .progress-section { display: none; background: var(--card); border-radius: 14px; padding: 20px; box-shadow: var(--shadow); margin-bottom: 20px; }
+        .progress-section.active { display: block; }
+        .progress-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
+        .progress-header h4 { font-size: 14px; display: flex; align-items: center; gap: 8px; }
+        .spinner { width: 18px; height: 18px; border: 3px solid #e2e8f0; border-top-color: var(--role-color); border-radius: 50%; animation: spin 0.8s linear infinite; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        .progress-bar-track { width: 100%; height: 8px; background: #e2e8f0; border-radius: 4px; overflow: hidden; }
+        .progress-bar-fill { height: 100%; background: linear-gradient(90deg, var(--role-color), var(--primary-light)); border-radius: 4px; transition: width 0.5s; width: 0%; }
+        .progress-text { font-size: 12px; color: var(--text-secondary); margin-top: 6px; }
+        /* ===== Results ===== */
+        .results-section { display: none; background: var(--card); border-radius: 14px; box-shadow: var(--shadow); margin-bottom: 20px; overflow: hidden; }
+        .results-section.active { display: block; }
+        .results-header { padding: 16px 24px; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; }
+        .results-header h3 { font-size: 15px; display: flex; align-items: center; gap: 8px; }
+        .results-tabs { display: flex; border-bottom: 1px solid var(--border); background: #f8fafc; overflow-x: auto; }
+        .results-tab { padding: 10px 18px; font-size: 13px; cursor: pointer; border-bottom: 2px solid transparent; color: var(--text-secondary); white-space: nowrap; }
+        .results-tab:hover { color: var(--text); }
+        .results-tab.active { color: var(--role-color); border-bottom-color: var(--role-color); font-weight: 600; }
+        .results-body { padding: 20px 24px; max-height: 700px; overflow-y: auto; }
+        /* Data tables */
+        .data-table { width: 100%; border-collapse: separate; border-spacing: 0; font-size: 13px; }
+        .data-table th { background: #f1f5f9; padding: 8px 12px; text-align: left; font-weight: 600; font-size: 12px; color: var(--text-secondary); border-bottom: 1px solid var(--border); white-space: nowrap; }
+        .data-table td { padding: 8px 12px; border-bottom: 1px solid #f1f5f9; vertical-align: top; }
+        .data-table tr:hover td { background: #f8fafc; }
+        .low-confidence { background: #fef2f2 !important; color: var(--danger); font-weight: 600; }
+        .confidence-badge { display: inline-block; padding: 2px 8px; border-radius: 10px; font-size: 11px; font-weight: 600; }
+        .confidence-high { background: #dcfce7; color: #166534; }
+        .confidence-low { background: #fee2e2; color: #991b1b; }
+        /* Nurse cards */
+        .nurse-info-cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; margin-bottom: 18px; }
+        .info-card { background: linear-gradient(135deg, #f0f9ff, #e0f2fe); border-radius: 10px; padding: 16px; }
+        .info-card h4 { font-size: 14px; margin-bottom: 8px; color: var(--primary); }
+        .info-card .info-row { font-size: 13px; padding: 3px 0; display: flex; justify-content: space-between; }
+        .info-card .info-row .label { color: var(--text-secondary); }
+        .info-card .info-row .value { font-weight: 600; }
+        .scale-section { background: #fafbfc; border-radius: 10px; padding: 18px; margin-bottom: 16px; border: 1px solid var(--border); }
+        .scale-section h4 { font-size: 14px; margin-bottom: 12px; display: flex; align-items: center; gap: 6px; }
+        .scale-item { padding: 10px 0; border-bottom: 1px solid #f1f5f9; }
+        .scale-item:last-child { border-bottom: none; }
+        .scale-item-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px; }
+        .scale-item-header .item-name { font-size: 13px; font-weight: 500; }
+        .scale-item-header .item-score { font-size: 14px; font-weight: 700; color: var(--role-color); }
+        .scale-item .item-note { font-size: 11px; color: var(--text-secondary); }
+        .scale-progress { height: 6px; background: #e2e8f0; border-radius: 3px; overflow: hidden; margin: 4px 0; }
+        .scale-progress-fill { height: 100%; border-radius: 3px; transition: width 0.5s; }
+        .total-score-box { margin-top: 14px; padding: 14px 18px; border-radius: 10px; display: flex; align-items: center; justify-content: space-between; font-size: 16px; font-weight: 700; }
+        .total-score-box.low-risk { background: linear-gradient(135deg, #ecfdf5, #d1fae5); color: #065f46; }
+        .total-score-box.medium-risk { background: linear-gradient(135deg, #fffbeb, #fef3c7); color: #92400e; }
+        .total-score-box.high-risk { background: linear-gradient(135deg, #fef2f2, #fecaca); color: #991b1b; }
+        .risk-badge { padding: 4px 14px; border-radius: 20px; font-size: 13px; font-weight: 600; }
+        .risk-badge.low { background: #dcfce7; color: #166534; }
+        .risk-badge.medium { background: #fef3c7; color: #92400e; }
+        .risk-badge.high { background: #fee2e2; color: #991b1b; }
+        /* History */
+        .history-section { background: var(--card); border-radius: 14px; box-shadow: var(--shadow); margin-bottom: 20px; overflow: hidden; }
+        .history-header { padding: 16px 24px; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; }
+        .history-header h3 { font-size: 15px; }
+        .history-list { max-height: 280px; overflow-y: auto; }
+        .history-item { display: flex; align-items: center; justify-content: space-between; padding: 10px 24px; border-bottom: 1px solid #f1f5f9; }
+        .history-item:hover { background: #f8fafc; }
+        .history-item .info { display: flex; flex-direction: column; gap: 2px; }
+        .history-item .case-no { font-weight: 600; font-size: 13px; }
+        .history-item .meta { font-size: 11px; color: var(--text-secondary); }
+        .history-item .role-tag { display: inline-block; padding: 1px 8px; border-radius: 10px; font-size: 11px; font-weight: 600; margin-left: 6px; }
+        .history-item .actions { display: flex; gap: 6px; }
+        .btn-sm { padding: 4px 10px; border-radius: 6px; font-size: 11px; cursor: pointer; border: 1px solid var(--border); background: white; color: var(--text); }
+        .btn-sm:hover { background: #f1f5f9; }
+        .btn-sm.danger { color: var(--danger); border-color: #fecaca; }
+        .btn-sm.danger:hover { background: #fef2f2; }
+        .empty-state { padding: 40px 24px; text-align: center; color: var(--text-secondary); }
+        .empty-state .empty-icon { font-size: 42px; margin-bottom: 10px; opacity: 0.4; }
+        .btn { display: inline-flex; align-items: center; gap: 6px; padding: 8px 18px; border: none; border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer; transition: all 0.2s; }
+        .btn-primary { background: var(--role-color); color: white; }
+        .btn-primary:hover { opacity: 0.9; }
+        .btn-success { background: var(--success); color: white; }
+        .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+        /* Toast */
+        .toast-container { position: fixed; top: 70px; right: 24px; z-index: 1000; display: flex; flex-direction: column; gap: 8px; }
+        .toast { padding: 10px 18px; border-radius: 10px; font-size: 13px; box-shadow: 0 4px 20px rgba(0,0,0,0.15); animation: toastIn 0.3s ease; max-width: 340px; }
+        .toast.success { background: #ecfdf5; color: #065f46; border: 1px solid #a7f3d0; }
+        .toast.error { background: #fef2f2; color: #991b1b; border: 1px solid #fecaca; }
+        .toast.info { background: #eff6ff; color: #1e40af; border: 1px solid #bfdbfe; }
+        @keyframes toastIn { from { opacity: 0; transform: translateX(40px); } to { opacity: 1; transform: translateX(0); } }
+        /* Modals */
+        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); display: flex; justify-content: center; align-items: center; z-index: 999; opacity: 0; visibility: hidden; transition: all 0.3s; }
+        .modal-overlay.active { opacity: 1; visibility: visible; }
+        .modal { background: white; border-radius: 16px; max-width: 600px; width: 90%; max-height: 85vh; overflow-y: auto; box-shadow: 0 20px 60px rgba(0,0,0,0.2); transform: scale(0.9); transition: transform 0.3s; }
+        .modal-overlay.active .modal { transform: scale(1); }
+        .modal-header { padding: 20px 24px 0; text-align: center; }
+        .modal-header h2 { font-size: 18px; margin-bottom: 4px; }
+        .modal-header p { color: var(--text-secondary); font-size: 13px; }
+        .modal-body { padding: 18px 24px; }
+        .modal-footer { padding: 14px 24px 20px; text-align: center; }
+        .modal-footer .btn { min-width: 140px; justify-content: center; }
+        .guide-step { display: flex; gap: 14px; padding: 14px 0; border-bottom: 1px solid #f1f5f9; }
+        .guide-step:last-child { border-bottom: none; }
+        .step-number { width: 32px; height: 32px; border-radius: 50%; background: linear-gradient(135deg, #2563eb, #3b82f6); color: white; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 14px; flex-shrink: 0; }
+        .step-content h4 { font-size: 14px; margin-bottom: 3px; }
+        .step-content p { font-size: 12px; color: var(--text-secondary); line-height: 1.6; }
+        .modal-footer .checkbox-row { margin-top: 10px; font-size: 12px; color: var(--text-secondary); display: flex; align-items: center; justify-content: center; gap: 6px; }
+        .template-modal .modal { max-width: 700px; }
+        .template-modal .modal-body { display: flex; gap: 20px; }
+        .template-list-panel { flex: 1; min-width: 0; }
+        .template-list-panel h4 { font-size: 14px; margin-bottom: 10px; }
+        .tpl-item { display: flex; align-items: center; justify-content: space-between; padding: 8px 12px; background: #f8fafc; border-radius: 8px; margin-bottom: 6px; font-size: 13px; }
+        .tpl-item .tpl-type { font-size: 10px; padding: 1px 6px; border-radius: 8px; background: #e2e8f0; color: var(--text-secondary); margin-left: 6px; }
+        .tpl-item .tpl-type.custom { background: #dbeafe; color: #1e40af; }
+        .tpl-item .del-btn { color: var(--danger); cursor: pointer; border: none; background: none; font-size: 14px; }
+        .template-form-panel { flex: 1; min-width: 0; border-left: 1px solid var(--border); padding-left: 20px; }
+        .template-form-panel h4 { font-size: 14px; margin-bottom: 10px; }
+        .template-form-panel label { display: block; font-size: 12px; font-weight: 600; margin: 10px 0 4px; color: var(--text-secondary); }
+        .template-form-panel input[type="text"], .template-form-panel textarea { width: 100%; padding: 8px 12px; border: 1px solid var(--border); border-radius: 8px; font-size: 13px; font-family: inherit; }
+        .template-form-panel textarea { resize: vertical; }
+        .template-form-panel .checkbox-label { display: flex; align-items: center; gap: 6px; font-size: 12px; margin: 8px 0; }
+        .footer { text-align: center; padding: 20px; font-size: 11px; color: var(--text-secondary); }
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 3px; }
+        @media (max-width: 900px) { .module-nav { grid-template-columns: repeat(3, 1fr); } }
+        @media (max-width: 600px) {
             .module-nav { grid-template-columns: repeat(2, 1fr); }
+            .navbar-inner { flex-direction: column; gap: 8px; }
             .module-header { flex-direction: column; align-items: flex-start; }
+            .template-modal .modal-body { flex-direction: column; }
+            .template-form-panel { border-left: none; padding-left: 0; border-top: 1px solid var(--border); padding-top: 16px; }
         }
     </style>
     <script src="https://cdn.jsdelivr.net/npm/echarts@5.5.1/dist/echarts.min.js"></script>
@@ -359,37 +268,66 @@
             </div>
         </div>
     </nav>
-
     <div class="toast-container" id="toastContainer"></div>
-
     <div class="container">
-        <div class="privacy-bar">
-            <span>&#128737;</span>
-            <span><strong>隐私保障：</strong>所有数据均在本地处理和存储,不会上传至任何公网服务器。</span>
-        </div>
+        <div class="privacy-bar"><span>&#128737;</span><span><strong>隐私保障：</strong>所有数据均在本地处理和存储,不会上传至任何公网服务器。</span></div>
 
-        <!-- 模块导航 -->
+        <!-- Module Nav -->
         <div class="module-nav" id="moduleNav">
-            <div class="module-nav-item active" data-module="voice_input" onclick="switchModule('voice_input')">
+            <div class="module-nav-item active" data-module="image_ocr" onclick="switchModule('image_ocr')">
+                <div class="module-icon">&#128248;</div>
+                <div class="module-info"><h4>图像识别</h4><p>图片/PDF &middot; OCR &middot; 结构化提取</p></div>
+            </div>
+            <div class="module-nav-item" data-module="voice_input" onclick="switchModule('voice_input')">
                 <div class="module-icon">&#127908;</div>
-                <div class="module-info"><h4>语音输入</h4><p>录音上传 &middot; 语音转写 &middot; 结构化提取</p></div>
+                <div class="module-info"><h4>语音输入</h4><p>录音上传 &middot; 语音转写</p></div>
             </div>
             <div class="module-nav-item" data-module="text_input" onclick="switchModule('text_input')">
                 <div class="module-icon">&#128221;</div>
-                <div class="module-info"><h4>文本输入</h4><p>粘贴文本 &middot; TXT/DOCX上传 &middot; 智能提取</p></div>
+                <div class="module-info"><h4>文本输入</h4><p>粘贴文本 &middot; TXT/DOCX</p></div>
             </div>
             <div class="module-nav-item" data-module="qualitative" onclick="switchModule('qualitative')">
                 <div class="module-icon">&#128300;</div>
-                <div class="module-info"><h4>质性研究</h4><p>访谈分析 &middot; 主题编码 &middot; 概念关联</p></div>
+                <div class="module-info"><h4>质性研究</h4><p>访谈分析 &middot; 主题编码</p></div>
             </div>
             <div class="module-nav-item" data-module="data_analysis" onclick="switchModule('data_analysis')">
                 <div class="module-icon">&#128202;</div>
-                <div class="module-info"><h4>数据分析</h4><p>统计分析 &middot; 可视化图表 &middot; 趋势分析</p></div>
+                <div class="module-info"><h4>数据分析</h4><p>统计分析 &middot; 可视化</p></div>
             </div>
         </div>
 
-        <!-- 模块1: 语音输入 -->
-        <div class="module-content active" id="module-voice_input">
+        <!-- Module: Image OCR (PRIMARY) -->
+        <div class="module-content active" id="module-image_ocr">
+            <div class="module-header">
+                <h3>&#128248; 图像识别模块</h3>
+                <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+                    <div class="role-selector-inline">
+                        <label>角色:</label>
+                        <select id="imageRoleSelect" onchange="loadModuleTemplates('image_ocr')">
+                            <option value="doctor">&#128104;&#8205;&#9877;&#65039; 临床医生</option>
+                            <option value="nurse">&#128105;&#8205;&#9877;&#65039; 护士</option>
+                            <option value="researcher" selected>&#128300; 临床科研</option>
+                        </select>
+                    </div>
+                    <div class="role-selector-inline">
+                        <label>模板:</label>
+                        <select id="imageTemplateSelect"></select>
+                    </div>
+                    <button class="nav-btn" style="color:var(--text);border-color:var(--border);" onclick="openTemplateModal()">模板管理</button>
+                </div>
+            </div>
+            <input type="file" id="imageFileInput" class="file-input" multiple accept=".jpg,.jpeg,.png,.bmp,.tiff,.pdf">
+            <div class="dropzone" id="imageDropzone" onclick="document.getElementById('imageFileInput').click()">
+                <div class="drop-icon">&#128247;</div>
+                <h4>点击上传医疗文档图片或拖拽至此</h4>
+                <p>支持 JPG / PNG / BMP / TIFF / PDF 格式，可批量上传</p>
+            </div>
+            <div class="file-list" id="imageFileList"></div>
+            <button class="btn btn-primary btn-block" onclick="processImageInput()" id="imageStartBtn" disabled>开始识别</button>
+        </div>
+
+        <!-- Module: Voice Input -->
+        <div class="module-content" id="module-voice_input">
             <div class="module-header">
                 <h3>&#127908; 语音输入模块</h3>
                 <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
@@ -418,7 +356,7 @@
             <button class="btn btn-primary btn-block" onclick="processVoiceInput()" id="voiceStartBtn" disabled>开始转写并提取</button>
         </div>
 
-        <!-- 模块2: 文本输入 -->
+        <!-- Module: Text Input -->
         <div class="module-content" id="module-text_input">
             <div class="module-header">
                 <h3>&#128221; 文本输入模块</h3>
@@ -460,7 +398,7 @@
             </div>
         </div>
 
-        <!-- 模块3: 质性研究 -->
+        <!-- Module: Qualitative -->
         <div class="module-content" id="module-qualitative">
             <div class="module-header">
                 <h3>&#128300; 质性研究模块</h3>
@@ -490,13 +428,13 @@
             </div>
             <div class="input-panel" id="qualTextPanel">
                 <div class="text-input-area">
-                    <textarea id="qualTextInput" placeholder="粘贴访谈转录文本、焦点小组记录或观察笔记...&#10;&#10;系统将进行主题提取、编码分类和概念关联分析。" rows="10"></textarea>
+                    <textarea id="qualTextInput" placeholder="粘贴访谈转录文本、焦点小组记录或观察笔记..." rows="10"></textarea>
                 </div>
                 <button class="btn btn-success btn-block" onclick="processQualitative('text')">开始质性分析</button>
             </div>
         </div>
 
-        <!-- 模块4: 数据分析 -->
+        <!-- Module: Data Analysis -->
         <div class="module-content" id="module-data_analysis">
             <div class="module-header">
                 <h3>&#128202; 数据分析模块</h3>
@@ -509,9 +447,9 @@
                         <label>来源:</label>
                         <select id="daFilterModule" onchange="loadAnalysisRecords()">
                             <option value="">全部</option>
+                            <option value="image_ocr">图片识别</option>
                             <option value="voice_input">语音输入</option>
                             <option value="text_input">文本输入</option>
-                            <option value="image_ocr">图片识别</option>
                         </select>
                         <label>角色:</label>
                         <select id="daFilterRole" onchange="loadAnalysisRecords()">
@@ -520,7 +458,7 @@
                             <option value="nurse">护士</option>
                             <option value="researcher">科研</option>
                         </select>
-                        <button class="btn-sm" onclick="toggleSelectAll()" id="selectAllBtn">全选</button>
+                        <button class="btn-sm" onclick="toggleSelectAll()">全选</button>
                     </div>
                     <div class="record-checklist" id="daRecordList">
                         <div class="empty-state" style="padding:20px;"><p style="font-size:12px;">加载中...</p></div>
@@ -563,9 +501,7 @@
         </div>
 
         <div class="results-section" id="resultsSection">
-            <div class="results-header">
-                <h3><span>&#9989;</span><span id="resultsTitle">识别结果</span></h3>
-            </div>
+            <div class="results-header"><h3><span>&#9989;</span><span id="resultsTitle">识别结果</span></h3></div>
             <div class="results-tabs" id="resultsTabs"></div>
             <div class="results-body" id="resultsBody"></div>
         </div>
@@ -576,10 +512,10 @@
                 <div class="history-filter">
                     <select id="historyModuleFilter" onchange="refreshHistory()">
                         <option value="">全部模块</option>
+                        <option value="image_ocr">图片识别</option>
                         <option value="voice_input">语音输入</option>
                         <option value="text_input">文本输入</option>
                         <option value="qualitative">质性研究</option>
-                        <option value="image_ocr">图片识别</option>
                     </select>
                     <button class="btn-sm" onclick="refreshHistory()">刷新</button>
                 </div>
@@ -592,18 +528,15 @@
 
     <div class="footer">临床病历AI识别与结构化提取工具 | 数据仅存储于本地 | 请勿用于临床诊断</div>
 
-    <!-- 新手引导 -->
+    <!-- Guide Modal -->
     <div class="modal-overlay" id="guideModal">
         <div class="modal">
-            <div class="modal-header">
-                <h2>&#128075; 欢迎使用 MedSnap</h2>
-                <p>临床数据智能处理平台 &mdash; 4大功能模块</p>
-            </div>
+            <div class="modal-header"><h2>&#128075; 欢迎使用 MedSnap</h2><p>临床数据智能处理平台</p></div>
             <div class="modal-body">
-                <div class="guide-step"><div class="step-number">1</div><div class="step-content"><h4>选择功能模块</h4><p><strong>语音输入</strong> &mdash; 上传医患对话录音，自动转写并提取结构化数据<br><strong>文本输入</strong> &mdash; 粘贴或上传文本文档(TXT/DOCX)，AI智能识别关键信息<br><strong>质性研究</strong> &mdash; 访谈分析、主题编码、概念关联，适用于定性研究<br><strong>数据分析</strong> &mdash; 对已有数据进行统计分析、可视化和趋势分析</p></div></div>
-                <div class="guide-step"><div class="step-number">2</div><div class="step-content"><h4>配置角色与模板</h4><p>语音和文本模块支持选择角色（临床医生/护士/科研），系统加载对应识别模板。质性研究和数据分析模块独立于角色。</p></div></div>
-                <div class="guide-step"><div class="step-number">3</div><div class="step-content"><h4>上传数据并处理</h4><p>上传文件或输入文本后，AI自动处理。<span style="color:#dc2626;font-weight:600;">红色标注</span>字段建议手动核对。所有数据仅存储在本地。</p></div></div>
-                <div class="guide-step"><div class="step-number">4</div><div class="step-content"><h4>查看结果与导出</h4><p>在「处理历史」中查看所有模块的记录。数据分析模块可选择多条记录生成统计图表。点击「导出」生成Excel报告。</p></div></div>
+                <div class="guide-step"><div class="step-number">1</div><div class="step-content"><h4>选择功能模块</h4><p><strong>图像识别</strong> &mdash; 上传病历图片/PDF，AI自动OCR并提取结构化数据（核心功能）<br><strong>语音输入</strong> &mdash; 上传医患对话录音，自动转写并提取<br><strong>文本输入</strong> &mdash; 粘贴或上传文本文档(TXT/DOCX)<br><strong>质性研究</strong> &mdash; 访谈分析、主题编码、概念关联<br><strong>数据分析</strong> &mdash; 统计分析与可视化</p></div></div>
+                <div class="guide-step"><div class="step-number">2</div><div class="step-content"><h4>配置角色与模板</h4><p>图像、语音和文本模块支持选择角色（临床医生/护士/科研），加载对应识别模板。</p></div></div>
+                <div class="guide-step"><div class="step-number">3</div><div class="step-content"><h4>上传数据并处理</h4><p>上传文件后AI自动处理。<span style="color:#dc2626;font-weight:600;">红色标注</span>字段建议手动核对。</p></div></div>
+                <div class="guide-step"><div class="step-number">4</div><div class="step-content"><h4>导出与分析</h4><p>点击「导出」生成Excel报告，适用于SPSS、R等统计软件。数据分析模块可生成可视化图表。</p></div></div>
             </div>
             <div class="modal-footer">
                 <button class="btn btn-primary" onclick="closeGuide()">开始使用</button>
@@ -612,67 +545,60 @@
         </div>
     </div>
 
-    <!-- 模板管理弹窗 -->
+    <!-- Template Modal -->
     <div class="modal-overlay template-modal" id="templateModal">
         <div class="modal">
-            <div class="modal-header">
-                <h2>&#128221; 护理量表模板管理</h2>
-                <p>管理系统内置模板与自定义模板</p>
-            </div>
+            <div class="modal-header"><h2 id="tplModalTitle">&#128221; 模板管理</h2><p>管理系统内置模板与自定义模板</p></div>
             <div class="modal-body">
-                <div class="template-list-panel">
-                    <h4>现有模板</h4>
-                    <div id="templateListInModal"></div>
-                </div>
+                <div class="template-list-panel"><h4>现有模板</h4><div id="templateListInModal"></div></div>
                 <div class="template-form-panel">
                     <h4>创建自定义模板</h4>
                     <label>模板名称</label>
                     <input type="text" id="newTplName" placeholder="如: 跌倒后再评估表">
                     <label>提取字段（每行一个）</label>
                     <textarea id="newTplFields" rows="8" placeholder="患者姓名&#10;评估日期&#10;压疮部位&#10;皮肤状态&#10;Braden评分&#10;护理措施"></textarea>
-                    <label class="checkbox-label"><input type="checkbox" id="newTplScore"> 包含评分字段（自动识别数字评分）</label>
+                    <label class="checkbox-label"><input type="checkbox" id="newTplScore"> 包含评分字段</label>
                     <button class="btn btn-success" onclick="createCustomTemplate()" style="width:100%;justify-content:center;margin-top:10px;">创建模板</button>
                 </div>
             </div>
-            <div class="modal-footer">
-                <button class="btn btn-primary" onclick="closeTemplateModal()">关闭</button>
-            </div>
+            <div class="modal-footer"><button class="btn btn-primary" onclick="closeTemplateModal()">关闭</button></div>
         </div>
     </div>
 
     <script>
-    // ===== 全局状态 =====
-    var currentModule = 'voice_input';
+    /* ===== Global State ===== */
+    var currentModule = 'image_ocr';
     var currentRole = 'researcher';
     var currentResults = [];
     var currentViewIndex = 0;
-    var currentTemplates = [];
-    var moduleFiles = { voice_input: [], text_input: [], qualitative: [] };
+    var moduleFiles = { image_ocr: [], voice_input: [], text_input: [], qualitative: [] };
     var roleColors = { doctor: '#2563eb', nurse: '#059669', researcher: '#d97706' };
     var roleNames = { doctor: '临床医生', nurse: '护士', researcher: '临床科研' };
     var audioExts = ['wav','mp3','m4a','aac','flac','amr','opus'];
     var textExts = ['txt','doc','docx'];
     var imageExts = ['jpg','jpeg','png','bmp','tiff','pdf'];
-    var moduleIcons = { voice_input: '&#127908;', text_input: '&#128221;', qualitative: '&#128300;', data_analysis: '&#128202;', image_ocr: '&#128196;' };
-    var moduleNames = { voice_input: '语音输入', text_input: '文本输入', qualitative: '质性研究', data_analysis: '数据分析', image_ocr: '图片识别' };
+    var moduleIcons = { image_ocr: '&#128248;', voice_input: '&#127908;', text_input: '&#128221;', qualitative: '&#128300;', data_analysis: '&#128202;' };
+    var moduleNames = { image_ocr: '图片识别', voice_input: '语音输入', text_input: '文本输入', qualitative: '质性研究', data_analysis: '数据分析' };
     var echartsInstances = [];
 
-    // ===== 初始化 =====
+    /* ===== Init ===== */
     document.addEventListener('DOMContentLoaded', function() {
-        var savedModule = sessionStorage.getItem('current_module');
-        if (savedModule) { switchModule(savedModule); }
+        var saved = sessionStorage.getItem('current_module');
+        if (saved) switchModule(saved);
+        loadModuleTemplates('image_ocr');
         loadModuleTemplates('voice_input');
         loadModuleTemplates('text_input');
         refreshHistory();
         refreshStats();
         initAllDragDrop();
+        document.getElementById('imageFileInput').addEventListener('change', function(e) { addModuleFiles('image_ocr', Array.from(e.target.files)); e.target.value = ''; });
         document.getElementById('voiceFileInput').addEventListener('change', function(e) { addModuleFiles('voice_input', Array.from(e.target.files)); e.target.value = ''; });
         document.getElementById('textFileInput').addEventListener('change', function(e) { addModuleFiles('text_input', Array.from(e.target.files)); e.target.value = ''; });
         document.getElementById('qualAudioInput').addEventListener('change', function(e) { addModuleFiles('qualitative', Array.from(e.target.files)); e.target.value = ''; });
         if (!localStorage.getItem('guide_dismissed')) showGuide();
     });
 
-    // ===== 模块切换 =====
+    /* ===== Module Switch ===== */
     function switchModule(moduleId) {
         currentModule = moduleId;
         sessionStorage.setItem('current_module', moduleId);
@@ -681,35 +607,37 @@
         var contents = document.querySelectorAll('.module-content');
         for (var j = 0; j < contents.length; j++) contents[j].classList.toggle('active', contents[j].id === 'module-' + moduleId);
         if (moduleId === 'data_analysis') loadAnalysisRecords();
+        // Update currentRole from module's role selector
+        if (moduleId === 'image_ocr') currentRole = document.getElementById('imageRoleSelect').value;
+        else if (moduleId === 'voice_input') currentRole = document.getElementById('voiceRoleSelect').value;
+        else if (moduleId === 'text_input') currentRole = document.getElementById('textRoleSelect').value;
     }
 
-    // ===== 模板加载 =====
+    /* ===== Template Loading ===== */
     function loadModuleTemplates(moduleId) {
-        var roleSelId = moduleId === 'voice_input' ? 'voiceRoleSelect' : 'textRoleSelect';
-        var tplSelId = moduleId === 'voice_input' ? 'voiceTemplateSelect' : 'textTemplateSelect';
+        var roleSelId, tplSelId;
+        if (moduleId === 'image_ocr') { roleSelId = 'imageRoleSelect'; tplSelId = 'imageTemplateSelect'; }
+        else if (moduleId === 'voice_input') { roleSelId = 'voiceRoleSelect'; tplSelId = 'voiceTemplateSelect'; }
+        else { roleSelId = 'textRoleSelect'; tplSelId = 'textTemplateSelect'; }
         var roleId = document.getElementById(roleSelId).value;
-        currentRole = roleId;
+        if (moduleId === currentModule) currentRole = roleId;
         fetch('/api/templates/' + roleId)
         .then(function(r) { return r.json(); })
         .then(function(data) {
-            if (data.status === 'success') {
-                var sel = document.getElementById(tplSelId);
-                sel.innerHTML = '';
-                for (var i = 0; i < data.templates.length; i++) {
-                    var t = data.templates[i];
-                    var opt = document.createElement('option');
-                    opt.value = t.template_id;
-                    opt.textContent = t.template_name + (t.template_type === 'custom' ? ' (自定义)' : '');
-                    sel.appendChild(opt);
-                }
-                if (moduleId === 'voice_input' || moduleId === 'text_input') {
-                    currentTemplates = data.templates;
-                }
+            if (data.status !== 'success') return;
+            var sel = document.getElementById(tplSelId);
+            sel.innerHTML = '';
+            for (var i = 0; i < data.templates.length; i++) {
+                var t = data.templates[i];
+                var opt = document.createElement('option');
+                opt.value = t.template_id;
+                opt.textContent = t.template_name + (t.template_type === 'custom' ? ' (自定义)' : '');
+                sel.appendChild(opt);
             }
         });
     }
 
-    // ===== Toast =====
+    /* ===== Toast ===== */
     function showToast(msg, type) {
         type = type || 'info';
         var c = document.getElementById('toastContainer');
@@ -720,20 +648,20 @@
         setTimeout(function() { t.style.opacity = '0'; t.style.transition = 'opacity 0.3s'; setTimeout(function() { t.remove(); }, 300); }, 3000);
     }
 
-    // ===== 引导 =====
+    /* ===== Guide ===== */
     function showGuide() { document.getElementById('guideModal').classList.add('active'); }
     function closeGuide() {
         document.getElementById('guideModal').classList.remove('active');
         if (document.getElementById('dontShowAgain').checked) localStorage.setItem('guide_dismissed', 'true');
     }
 
-    // ===== 文件上传（模块化） =====
+    /* ===== Drag & Drop ===== */
     function initAllDragDrop() {
+        setupDragDrop('imageDropzone', 'image_ocr');
         setupDragDrop('voiceDropzone', 'voice_input');
         setupDragDrop('textDropzone', 'text_input');
         setupDragDrop('qualDropzone', 'qualitative');
     }
-
     function setupDragDrop(dzId, moduleId) {
         var dz = document.getElementById(dzId);
         if (!dz) return;
@@ -742,9 +670,11 @@
         dz.addEventListener('drop', function(e) { e.preventDefault(); dz.classList.remove('drag-over'); addModuleFiles(moduleId, Array.from(e.dataTransfer.files)); });
     }
 
+    /* ===== File Management ===== */
     function addModuleFiles(moduleId, files) {
         var allowed;
-        if (moduleId === 'voice_input') allowed = audioExts;
+        if (moduleId === 'image_ocr') allowed = imageExts;
+        else if (moduleId === 'voice_input') allowed = audioExts;
         else if (moduleId === 'text_input') allowed = textExts;
         else allowed = audioExts.concat(textExts);
         for (var i = 0; i < files.length; i++) {
@@ -754,40 +684,32 @@
         }
         renderModuleFileList(moduleId);
     }
-
-    function removeModuleFile(moduleId, idx) {
-        moduleFiles[moduleId].splice(idx, 1);
-        renderModuleFileList(moduleId);
-    }
-
+    function removeModuleFile(moduleId, idx) { moduleFiles[moduleId].splice(idx, 1); renderModuleFileList(moduleId); }
     function renderModuleFileList(moduleId) {
-        var listId = moduleId === 'voice_input' ? 'voiceFileList' : (moduleId === 'text_input' ? 'textFileList' : 'qualFileList');
-        var btnId = moduleId === 'voice_input' ? 'voiceStartBtn' : (moduleId === 'text_input' ? 'textUploadBtn' : 'qualFileBtn');
-        var c = document.getElementById(listId);
+        var map = { image_ocr: ['imageFileList','imageStartBtn'], voice_input: ['voiceFileList','voiceStartBtn'], text_input: ['textFileList','textUploadBtn'], qualitative: ['qualFileList','qualFileBtn'] };
+        var ids = map[moduleId]; if (!ids) return;
+        var c = document.getElementById(ids[0]);
         var files = moduleFiles[moduleId];
-        var btn = document.getElementById(btnId);
+        var btn = document.getElementById(ids[1]);
         if (btn) btn.disabled = files.length === 0;
         if (!files.length) { c.innerHTML = ''; return; }
         var h = '';
         for (var i = 0; i < files.length; i++) {
-            var f = files[i];
-            var ext = f.name.split('.').pop().toLowerCase();
-            var icon = audioExts.indexOf(ext) !== -1 ? '&#127925;' : '&#128196;';
-            var sz = (f.size / 1024).toFixed(1);
-            sz = sz > 1024 ? (sz / 1024).toFixed(1) + ' MB' : sz + ' KB';
+            var f = files[i]; var ext = f.name.split('.').pop().toLowerCase();
+            var icon = (moduleId === 'image_ocr') ? (ext === 'pdf' ? '&#128196;' : '&#128248;') : (audioExts.indexOf(ext) !== -1 ? '&#127925;' : '&#128196;');
+            var sz = (f.size / 1024).toFixed(1); sz = sz > 1024 ? (sz / 1024).toFixed(1) + ' MB' : sz + ' KB';
             h += '<div class="file-item"><div class="file-info"><span>' + icon + '</span><span>' + esc(f.name) + '</span><span class="file-size">' + sz + '</span></div><button class="remove-btn" onclick="removeModuleFile(\'' + moduleId + '\',' + i + ')">&#10005;</button></div>';
         }
         c.innerHTML = h;
     }
 
-    // ===== 子标签切换 =====
+    /* ===== Tab Switch ===== */
     function switchInputTab(mode) {
         var tabs = document.querySelectorAll('#module-text_input .input-tab');
         for (var i = 0; i < tabs.length; i++) tabs[i].classList.toggle('active', i === (mode === 'paste' ? 0 : 1));
         document.getElementById('pastePanel').classList.toggle('active', mode === 'paste');
         document.getElementById('uploadPanel').classList.toggle('active', mode === 'upload');
     }
-
     function switchQualTab(mode) {
         var tabs = document.querySelectorAll('#module-qualitative .input-tab');
         for (var i = 0; i < tabs.length; i++) tabs[i].classList.toggle('active', i === (mode === 'audio' ? 0 : 1));
@@ -795,43 +717,34 @@
         document.getElementById('qualTextPanel').classList.toggle('active', mode === 'text');
     }
 
-    // ===== 语音输入处理 =====
-    function processVoiceInput() {
-        var files = moduleFiles.voice_input;
-        if (!files.length) { showToast('请先上传语音文件', 'error'); return; }
-        var roleId = document.getElementById('voiceRoleSelect').value;
-        var templateId = document.getElementById('voiceTemplateSelect').value;
+    /* ===== Image OCR Processing (PRIMARY) ===== */
+    function processImageInput() {
+        var files = moduleFiles.image_ocr;
+        if (!files.length) { showToast('请先上传图片或PDF文件', 'error'); return; }
+        var roleId = document.getElementById('imageRoleSelect').value;
+        var templateId = document.getElementById('imageTemplateSelect').value;
         if (!templateId) { showToast('请选择识别模板', 'error'); return; }
-
         var ps = document.getElementById('progressSection');
         ps.classList.add('active');
         document.getElementById('resultsSection').classList.remove('active');
-        var total = files.length, done = 0;
-        currentResults = [];
+        var total = files.length; currentResults = [];
         updateProgress(0, '准备上传...');
-
         function next(idx) {
             if (idx >= total) {
                 updateProgress(100, '全部完成！');
-                setTimeout(function() {
-                    ps.classList.remove('active');
-                    if (currentResults.length) showResults(currentResults);
-                    moduleFiles.voice_input = []; renderModuleFileList('voice_input');
-                    refreshHistory(); refreshStats();
-                }, 600);
+                setTimeout(function() { ps.classList.remove('active'); if (currentResults.length) showResults(currentResults); moduleFiles.image_ocr = []; renderModuleFileList('image_ocr'); refreshHistory(); refreshStats(); }, 600);
                 return;
             }
-            updateProgress(Math.round(idx / total * 100), '转写第 ' + (idx + 1) + '/' + total + ' 份 (语音转文字中...)');
+            updateProgress(Math.round(idx / total * 100), '识别第 ' + (idx + 1) + '/' + total + ' 份...');
             var fd = new FormData();
             fd.append('files', files[idx]);
             fd.append('role_id', roleId);
             fd.append('template_id', templateId);
-            fd.append('module_type', 'voice_input');
-
+            fd.append('module_type', 'image_ocr');
             fetch('/upload', { method: 'POST', body: fd })
             .then(function(r) { return r.json(); })
             .then(function(data) {
-                if (data.results) { for (var j = 0; j < data.results.length; j++) currentResults.push(data.results[j]); }
+                if (data.results) for (var j = 0; j < data.results.length; j++) currentResults.push(data.results[j]);
                 if (data.results && data.results.length) showToast(files[idx].name + ' 识别成功', 'success');
                 else if (data.errors && data.errors.length) for (var k = 0; k < data.errors.length; k++) showToast(data.errors[k], 'error');
                 next(idx + 1);
@@ -841,21 +754,55 @@
         next(0);
     }
 
-    // ===== 文本输入处理 =====
+    /* ===== Voice Input Processing ===== */
+    function processVoiceInput() {
+        var files = moduleFiles.voice_input;
+        if (!files.length) { showToast('请先上传语音文件', 'error'); return; }
+        var roleId = document.getElementById('voiceRoleSelect').value;
+        var templateId = document.getElementById('voiceTemplateSelect').value;
+        if (!templateId) { showToast('请选择识别模板', 'error'); return; }
+        var ps = document.getElementById('progressSection');
+        ps.classList.add('active');
+        document.getElementById('resultsSection').classList.remove('active');
+        var total = files.length; currentResults = [];
+        updateProgress(0, '准备上传...');
+        function next(idx) {
+            if (idx >= total) {
+                updateProgress(100, '全部完成！');
+                setTimeout(function() { ps.classList.remove('active'); if (currentResults.length) showResults(currentResults); moduleFiles.voice_input = []; renderModuleFileList('voice_input'); refreshHistory(); refreshStats(); }, 600);
+                return;
+            }
+            updateProgress(Math.round(idx / total * 100), '转写第 ' + (idx + 1) + '/' + total + ' 份...');
+            var fd = new FormData();
+            fd.append('files', files[idx]);
+            fd.append('role_id', roleId);
+            fd.append('template_id', templateId);
+            fd.append('module_type', 'voice_input');
+            fetch('/upload', { method: 'POST', body: fd })
+            .then(function(r) { return r.json(); })
+            .then(function(data) {
+                if (data.results) for (var j = 0; j < data.results.length; j++) currentResults.push(data.results[j]);
+                if (data.results && data.results.length) showToast(files[idx].name + ' 识别成功', 'success');
+                else if (data.errors && data.errors.length) for (var k = 0; k < data.errors.length; k++) showToast(data.errors[k], 'error');
+                next(idx + 1);
+            })
+            .catch(function(err) { showToast(files[idx].name + ': ' + err.message, 'error'); next(idx + 1); });
+        }
+        next(0);
+    }
+
+    /* ===== Text Input Processing ===== */
     function processTextInput(mode) {
         var roleId = document.getElementById('textRoleSelect').value;
         var templateId = document.getElementById('textTemplateSelect').value;
         if (!templateId) { showToast('请选择识别模板', 'error'); return; }
-
         var ps = document.getElementById('progressSection');
         ps.classList.add('active');
         document.getElementById('resultsSection').classList.remove('active');
         currentResults = [];
-
         var fd = new FormData();
         fd.append('role_id', roleId);
         fd.append('template_id', templateId);
-
         if (mode === 'paste') {
             var text = document.getElementById('textContentInput').value.trim();
             if (!text) { ps.classList.remove('active'); showToast('请输入文本内容', 'error'); return; }
@@ -867,9 +814,523 @@
             for (var i = 0; i < files.length; i++) fd.append('files', files[i]);
             updateProgress(30, '正在解析文档...');
         }
-
         fetch('/upload_text', { method: 'POST', body: fd })
         .then(function(r) { return r.json(); })
-        .then
+        .then(function(data) {
+            updateProgress(100, '处理完成！');
+            setTimeout(function() {
+                ps.classList.remove('active');
+                if (data.results && data.results.length) { currentResults = data.results; showResults(currentResults); showToast('成功提取 ' + data.results.length + ' 份数据', 'success'); }
+                if (data.errors) for (var i = 0; i < data.errors.length; i++) showToast(data.errors[i], 'error');
+                if (mode === 'paste') document.getElementById('textContentInput').value = '';
+                else { moduleFiles.text_input = []; renderModuleFileList('text_input'); }
+                refreshHistory(); refreshStats();
+            }, 600);
+        })
+        .catch(function(err) { ps.classList.remove('active'); showToast('处理失败: ' + err.message, 'error'); });
+    }
+
+    /* ===== Qualitative Processing ===== */
+    function processQualitative(mode) {
+        var analysisType = document.getElementById('qualAnalysisType').value;
+        var ps = document.getElementById('progressSection');
+        ps.classList.add('active');
+        document.getElementById('resultsSection').classList.remove('active');
+        currentResults = [];
+        var fd = new FormData();
+        fd.append('analysis_type', analysisType);
+        if (mode === 'file') {
+            var files = moduleFiles.qualitative;
+            if (!files.length) { ps.classList.remove('active'); showToast('请先上传文件', 'error'); return; }
+            for (var i = 0; i < files.length; i++) fd.append('files', files[i]);
+            updateProgress(30, '正在分析... (可能需要1-2分钟)');
+        } else {
+            var text = document.getElementById('qualTextInput').value.trim();
+            if (!text) { ps.classList.remove('active'); showToast('请输入文本', 'error'); return; }
+            fd.append('text_content', text);
+            updateProgress(50, '正在进行质性分析...');
+        }
+        fetch('/qualitative_analyze', { method: 'POST', body: fd })
+        .then(function(r) { return r.json(); })
+        .then(function(data) {
+            updateProgress(100, '分析完成！');
+            setTimeout(function() {
+                ps.classList.remove('active');
+                if (data.results && data.results.length) { currentResults = data.results; showResults(currentResults); showToast('质性分析完成', 'success'); }
+                if (data.errors) for (var i = 0; i < data.errors.length; i++) showToast(data.errors[i], 'error');
+                if (mode === 'text') document.getElementById('qualTextInput').value = '';
+                else { moduleFiles.qualitative = []; renderModuleFileList('qualitative'); }
+                refreshHistory(); refreshStats();
+            }, 600);
+        })
+        .catch(function(err) { ps.classList.remove('active'); showToast('分析失败: ' + err.message, 'error'); });
+    }
+
+    /* ===== Data Analysis ===== */
+    function loadAnalysisRecords() {
+        var mf = document.getElementById('daFilterModule').value;
+        var rf = document.getElementById('daFilterRole').value;
+        var url = '/records?';
+        if (mf) url += 'module_type=' + mf + '&';
+        if (rf) url += 'role_id=' + rf;
+        fetch(url).then(function(r) { return r.json(); }).then(function(data) {
+            if (data.status !== 'success') return;
+            var c = document.getElementById('daRecordList');
+            if (!data.records.length) { c.innerHTML = '<div style="padding:20px;text-align:center;color:var(--text-secondary);font-size:12px;">暂无记录</div>'; return; }
+            var h = '';
+            for (var i = 0; i < data.records.length; i++) {
+                var r = data.records[i];
+                var mi = moduleIcons[r.module_type] || '&#128196;';
+                h += '<label class="record-check-item"><input type="checkbox" class="da-record-cb" value="' + r.id + '" onchange="onRecordSelectChange()">' + mi + ' ' + esc(r.case_number) + ' <span style="color:var(--text-secondary);">' + esc(r.filename || '') + '</span></label>';
+            }
+            c.innerHTML = h;
+        });
+    }
+    function toggleSelectAll() {
+        var cbs = document.querySelectorAll('.da-record-cb');
+        var allChecked = true;
+        for (var i = 0; i < cbs.length; i++) { if (!cbs[i].checked) { allChecked = false; break; } }
+        for (var j = 0; j < cbs.length; j++) cbs[j].checked = !allChecked;
+        onRecordSelectChange();
+    }
+    function onRecordSelectChange() {
+        var ids = getSelectedRecordIds();
+        if (!ids.length) { document.getElementById('daFieldSelector').innerHTML = '<span style="font-size:12px;color:var(--text-secondary);">请先选择记录</span>'; return; }
+        fetch('/data_analysis/fields?ids=' + ids.join('&ids='))
+        .then(function(r) { return r.json(); })
+        .then(function(data) {
+            if (data.status !== 'success') return;
+            var c = document.getElementById('daFieldSelector');
+            var fields = data.numeric_fields || [];
+            if (!fields.length) { c.innerHTML = '<span style="font-size:12px;color:var(--text-secondary);">所选记录无数值型字段</span>'; return; }
+            var h = '';
+            for (var i = 0; i < fields.length; i++) h += '<label class="field-check"><input type="checkbox" class="da-field-cb" value="' + esc(fields[i]) + '" checked> ' + esc(fields[i].split('.').pop()) + '</label>';
+            c.innerHTML = h;
+        });
+    }
+    function getSelectedRecordIds() {
+        var cbs = document.querySelectorAll('.da-record-cb:checked'); var ids = [];
+        for (var i = 0; i < cbs.length; i++) ids.push(cbs[i].value); return ids;
+    }
+    function executeAnalysis() {
+        var ids = getSelectedRecordIds();
+        if (!ids.length) { showToast('请选择至少1条记录', 'error'); return; }
+        var fieldCbs = document.querySelectorAll('.da-field-cb:checked'); var fields = [];
+        for (var i = 0; i < fieldCbs.length; i++) fields.push(fieldCbs[i].value);
+        if (!fields.length) { showToast('请选择至少1个分析字段', 'error'); return; }
+        showToast('正在分析...', 'info');
+        fetch('/data_analysis/analyze', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ record_ids: ids, fields: fields, analysis_type: document.getElementById('daMethod').value }) })
+        .then(function(r) { return r.json(); })
+        .then(function(data) {
+            if (data.status !== 'success') { showToast(data.msg || '分析失败', 'error'); return; }
+            document.getElementById('daResults').style.display = 'block';
+            renderStatsSummary(data.statistics);
+            renderAnalysisCharts(data.charts);
+            showToast('分析完成', 'success');
+        })
+        .catch(function(err) { showToast('分析失败: ' + err.message, 'error'); });
+    }
+    function renderStatsSummary(stats) {
+        var c = document.getElementById('daStatsSummary');
+        if (!stats || !Object.keys(stats).length) { c.innerHTML = ''; return; }
+        var h = '<table class="stats-table"><thead><tr><th>字段</th><th>样本</th><th>均值</th><th>中位数</th><th>标准差</th><th>最小</th><th>最大</th><th>Q1</th><th>Q3</th></tr></thead><tbody>';
+        for (var f in stats) {
+            var s = stats[f];
+            if (s.count === 0) { h += '<tr><td>' + esc(f.split('.').pop()) + '</td><td colspan="8" style="color:var(--text-secondary);">无有效数值</td></tr>'; continue; }
+            h += '<tr><td style="font-weight:600;">' + esc(f.split('.').pop()) + '</td><td>' + s.count + '</td><td>' + s.mean + '</td><td>' + s.median + '</td><td>' + s.std + '</td><td>' + s.min + '</td><td>' + s.max + '</td><td>' + s.q1 + '</td><td>' + s.q3 + '</td></tr>';
+        }
+        h += '</tbody></table>';
+        c.innerHTML = h;
+    }
+    function renderAnalysisCharts(chartConfigs) {
+        for (var k = 0; k < echartsInstances.length; k++) { try { echartsInstances[k].dispose(); } catch(e) {} }
+        echartsInstances = [];
+        var c = document.getElementById('daChartsContainer'); c.innerHTML = '';
+        if (!chartConfigs || !chartConfigs.length) return;
+        for (var i = 0; i < chartConfigs.length; i++) {
+            var div = document.createElement('div'); div.className = 'chart-box'; c.appendChild(div);
+            if (typeof echarts !== 'undefined') { var chart = echarts.init(div); chart.setOption(chartConfigs[i]); echartsInstances.push(chart); }
+        }
+    }
+
+    /* ===== Progress ===== */
+    function updateProgress(pct, txt) {
+        document.getElementById('progressBar').style.width = pct + '%';
+        document.getElementById('progressPercent').textContent = pct + '%';
+        document.getElementById('progressText').textContent = txt;
+    }
+
+    /* ===== Results Display ===== */
+    function showResults(results) {
+        var sec = document.getElementById('resultsSection'); sec.classList.add('active');
+        document.getElementById('resultsTitle').textContent = '处理结果（' + results.length + ' 份）';
+        var tabsHtml = '';
+        for (var i = 0; i < results.length; i++) {
+            var mi = moduleIcons[results[i].module_type] || (results[i].source_type === 'audio' ? '&#127908;' : '&#128248;');
+            tabsHtml += '<div class="results-tab' + (i === 0 ? ' active' : '') + '" onclick="switchTab(' + i + ')">' + mi + ' ' + esc(results[i].case_number || ('结果' + (i + 1))) + '</div>';
+        }
+        document.getElementById('resultsTabs').innerHTML = tabsHtml;
+        currentViewIndex = 0;
+        renderResult(results[0]);
+    }
+    function switchTab(idx) {
+        currentViewIndex = idx;
+        var tabs = document.querySelectorAll('.results-tab');
+        for (var i = 0; i < tabs.length; i++) tabs[i].classList.toggle('active', i === idx);
+        renderResult(currentResults[idx]);
+    }
+    function renderResult(result) {
+        var body = document.getElementById('resultsBody');
+        var data = result.data || {};
+        var conf = result.confidence || {};
+        var roleId = result.role_id || currentRole;
+        var html = '';
+        if (result.source_type === 'text' && result.text_source) {
+            html += '<div style="background:linear-gradient(135deg,#f0fdf4,#dcfce7);border:1px solid #86efac;border-radius:12px;padding:16px;margin-bottom:16px;">';
+            html += '<h4 style="margin:0 0 10px;color:#166534;font-size:14px;">&#128196; 原始文本</h4>';
+            html += '<div style="max-height:200px;overflow-y:auto;font-size:13px;line-height:1.8;white-space:pre-wrap;color:#14532d;background:rgba(255,255,255,0.6);padding:12px;border-radius:8px;">' + esc(result.text_source) + '</div></div>';
+        }
+        if (result.source_type === 'audio' && result.transcript) {
+            html += '<div style="background:linear-gradient(135deg,#fffbeb,#fef3c7);border:1px solid #fbbf24;border-radius:12px;padding:16px;margin-bottom:16px;">';
+            html += '<h4 style="margin:0 0 10px;color:#92400e;font-size:14px;">&#127908; 原始转录文本</h4>';
+            html += '<div style="max-height:200px;overflow-y:auto;font-size:13px;line-height:1.8;white-space:pre-wrap;color:#78350f;background:rgba(255,255,255,0.5);padding:12px;border-radius:8px;">' + esc(result.transcript) + '</div></div>';
+        }
+        if (result.qualitative_analysis) html += renderQualitativeAnalysis(result.qualitative_analysis);
+        if (data && Object.keys(data).length) {
+            if (roleId === 'nurse') html += renderNurseLayout(data, conf, result.template_name);
+            else if (roleId === 'doctor') html += renderDoctorLayout(data, conf);
+            else html += renderResearcherLayout(data, conf);
+        }
+        body.innerHTML = html || '<div class="empty-state"><p>无数据</p></div>';
+    }
+
+    /* ===== Qualitative Analysis Render ===== */
+    function renderQualitativeAnalysis(qual) {
+        if (!qual) return '';
+        var h = '<div style="background:linear-gradient(135deg,#f5f3ff,#ede9fe);border:1px solid #a78bfa;border-radius:12px;padding:16px;margin-bottom:16px;">';
+        h += '<h4 style="margin:0 0 12px;color:#7c3aed;font-size:14px;">&#128300; 质性研究分析</h4>';
+        if (qual.themes && qual.themes.length) {
+            h += '<div style="margin-bottom:10px;"><strong style="color:#6d28d9;font-size:13px;">核心主题：</strong>';
+            for (var i = 0; i < qual.themes.length; i++) h += '<span style="display:inline-block;background:#ddd6fe;color:#5b21b6;padding:3px 10px;border-radius:10px;margin:3px;font-size:12px;">' + esc(qual.themes[i]) + '</span>';
+            h += '</div>';
+        }
+        if (qual.keywords && qual.keywords.length) h += '<div style="margin-bottom:10px;"><strong style="color:#6d28d9;font-size:13px;">关键词：</strong><span style="font-size:12px;color:#64748b;">' + esc(qual.keywords.join('、')) + '</span></div>';
+        if (qual.codes && qual.codes.length) {
+            h += '<div style="margin-bottom:10px;"><strong style="color:#6d28d9;font-size:13px;">编码分类：</strong><table class="data-table" style="margin-top:6px;font-size:12px;"><thead><tr><th>编码</th><th>相关文本</th></tr></thead><tbody>';
+            for (var j = 0; j < qual.codes.length; j++) { var code = qual.codes[j]; h += '<tr><td style="font-weight:600;white-space:nowrap;">' + esc(code.code) + '</td><td style="font-size:12px;color:#475569;">' + esc((code.segments || []).join('；')) + '</td></tr>'; }
+            h += '</tbody></table></div>';
+        }
+        if (qual.concept_network && qual.concept_network.length) {
+            h += '<div style="margin-bottom:10px;"><strong style="color:#6d28d9;font-size:13px;">概念关联：</strong>';
+            for (var cn = 0; cn < qual.concept_network.length; cn++) { var link = qual.concept_network[cn]; h += '<div class="concept-network-item"><span style="font-weight:600;">' + esc(link.source || '') + '</span><span class="concept-arrow">&mdash;[' + esc(link.relation || '') + ']&rarr;</span><span style="font-weight:600;">' + esc(link.target || '') + '</span></div>'; }
+            h += '</div>';
+        }
+        if (qual.sentiment) { var sc = qual.sentiment.indexOf('积极') !== -1 ? '#059669' : (qual.sentiment.indexOf('消极') !== -1 ? '#dc2626' : '#64748b'); h += '<div style="margin-bottom:8px;"><strong style="color:#6d28d9;font-size:13px;">情感倾向：</strong><span style="color:' + sc + ';font-weight:600;">' + esc(qual.sentiment) + '</span></div>'; }
+        if (qual.summary) h += '<div style="font-size:13px;color:#475569;line-height:1.6;"><strong style="color:#6d28d9;">分析总结：</strong>' + esc(qual.summary) + '</div>';
+        h += '</div>';
+        return h;
+    }
+
+    /* ===== Doctor Layout ===== */
+    function renderDoctorLayout(data, conf) {
+        var h = '';
+        var pi = data.patient_info || {};
+        if (Object.keys(pi).length) {
+            h += '<div class="nurse-info-cards"><div class="info-card"><h4>&#128100; 患者信息</h4>';
+            for (var k in pi) { if (pi[k]) h += '<div class="info-row"><span class="label">' + esc(k) + '</span><span class="value">' + esc(fv(pi[k])) + '</span></div>'; }
+            h += '</div></div>';
+        }
+        var sections = [
+            { key: 'chief_complaint', title: '&#128203; 主诉', single: true },
+            { key: 'present_illness', title: '&#128203; 现病史', single: true },
+            { key: 'past_history', title: '&#128203; 既往史', single: true },
+            { key: 'physical_exam', title: '&#129657; 体格检查', single: false },
+            { key: 'diagnosis', title: '&#127973; 诊断', list: true },
+            { key: 'treatment_plan', title: '&#128138; 治疗方案', single: false },
+            { key: 'surgery_record', title: '&#129656; 手术记录', single: true },
+            { key: 'discharge_summary', title: '&#128203; 出院小结', single: true }
+        ];
+        for (var i = 0; i < sections.length; i++) {
+            var s = sections[i]; var val = data[s.key];
+            if (!val || (typeof val === 'object' && !Object.keys(val).length) || (Array.isArray(val) && !val.length)) continue;
+            h += '<h4 style="margin:16px 0 8px;color:var(--role-color);">' + s.title + '</h4>';
+            if (s.single) { h += '<div style="padding:10px 14px;background:#f8fafc;border-radius:8px;font-size:13px;">' + esc(fv(val)) + '</div>'; }
+            else if (s.list) {
+                h += '<table class="data-table"><thead><tr><th>诊断名称</th><th>ICD-10编码</th></tr></thead><tbody>';
+                for (var j = 0; j < val.length; j++) h += '<tr><td>' + esc(val[j]['诊断名称'] || '') + '</td><td>' + esc(val[j]['ICD10编码'] || '') + '</td></tr>';
+                h += '</tbody></table>';
+            } else {
+                h += '<table class="data-table"><thead><tr><th>项目</th><th>内容</th></tr></thead><tbody>';
+                for (var k2 in val) h += '<tr><td>' + esc(k2) + '</td><td>' + esc(fv(val[k2])) + '</td></tr>';
+                h += '</tbody></table>';
+            }
+        }
+        var labs = data.lab_tests;
+        if (labs && Array.isArray(labs) && labs.length) { h += '<h4 style="margin:16px 0 8px;color:var(--role-color);">&#129514; 检验结果</h4>'; h += renderLabTable(labs, conf); }
+        var ri = data.report_info;
+        if (ri && typeof ri === 'object' && Object.keys(ri).length) {
+            h += '<h4 style="margin:16px 0 8px;color:var(--role-color);">&#128203; 报告信息</h4><table class="data-table"><thead><tr><th>项目</th><th>内容</th></tr></thead><tbody>';
+            for (var rk in ri) h += '<tr><td>' + esc(rk) + '</td><td>' + esc(fv(ri[rk])) + '</td></tr>';
+            h += '</tbody></table>';
+        }
+        if (!h) h = renderGenericTable(data, conf);
+        return h;
+    }
+    function renderLabTable(labs, conf) {
+        var h = '<table class="data-table"><thead><tr><th>项目</th><th>缩写</th><th>数值</th><th>单位</th><th>参考范围</th><th>异常</th></tr></thead><tbody>';
+        for (var j = 0; j < labs.length; j++) {
+            var lab = labs[j]; var abn = lab['异常标注'] || '';
+            var ac = abn.indexOf('\u2191') !== -1 ? 'color:#dc2626;font-weight:600;' : (abn.indexOf('\u2193') !== -1 ? 'color:#2563eb;font-weight:600;' : '');
+            h += '<tr><td>' + esc(lab['项目名称'] || '') + '</td><td>' + esc(lab['英文缩写'] || '') + '</td><td style="' + ac + '">' + esc(fv(lab['数值'])) + '</td><td>' + esc(lab['单位'] || '') + '</td><td>' + esc(lab['参考范围'] || '') + '</td><td style="' + ac + '">' + esc(abn) + '</td></tr>';
+        }
+        h += '</tbody></table>';
+        return h;
+    }
+
+    /* ===== Nurse Layout ===== */
+    function renderNurseLayout(data, conf, templateName) {
+        var h = '';
+        var pi = data.patient_info || {};
+        if (Object.keys(pi).length) {
+            h += '<div class="nurse-info-cards"><div class="info-card"><h4>&#128100; 患者信息</h4>';
+            for (var k in pi) { if (pi[k]) h += '<div class="info-row"><span class="label">' + esc(k) + '</span><span class="value">' + esc(fv(pi[k])) + '</span></div>'; }
+            h += '</div>';
+            var vs = data.vital_signs;
+            if (vs && typeof vs === 'object' && Object.keys(vs).length) {
+                h += '<div class="info-card" style="background:linear-gradient(135deg,#fef2f2,#fce7f3);"><h4 style="color:#be123c;">&#10084;&#65039; 生命体征</h4>';
+                for (var vk in vs) { if (vs[vk] !== null && vs[vk] !== '') h += '<div class="info-row"><span class="label">' + esc(vk) + '</span><span class="value">' + esc(fv(vs[vk])) + '</span></div>'; }
+                h += '</div>';
+            }
+            h += '</div>';
+        }
+        var scaleKeys = ['barthel_items', 'morse_items', 'braden_items'];
+        var scaleNames = { barthel_items: 'Barthel自理能力', morse_items: 'Morse跌倒风险', braden_items: 'Braden压疮风险' };
+        var scaleMaxes = { barthel_items: 100, morse_items: 125, braden_items: 23 };
+        for (var si = 0; si < scaleKeys.length; si++) {
+            var sk = scaleKeys[si]; var items = data[sk];
+            if (!items || !Array.isArray(items) || !items.length) continue;
+            h += '<div class="scale-section"><h4>&#128202; ' + (scaleNames[sk] || sk) + '</h4>';
+            for (var j = 0; j < items.length; j++) {
+                var it = items[j]; var score = it['评分'] !== null && it['评分'] !== undefined ? it['评分'] : it['score'];
+                var name = it['项目'] || it['item'] || ('项目' + (j + 1));
+                var maxItem = sk === 'barthel_items' ? (name === '床椅转移' || name === '平地行走' ? 15 : 10) : (sk === 'morse_items' ? 30 : 4);
+                var pct = score !== null && score !== undefined ? Math.min(100, Math.round(score / maxItem * 100)) : 0;
+                var barColor = pct > 70 ? '#059669' : (pct > 30 ? '#d97706' : '#dc2626');
+                if (sk === 'braden_items') barColor = pct > 70 ? '#059669' : (pct > 50 ? '#d97706' : '#dc2626');
+                h += '<div class="scale-item"><div class="scale-item-header"><span class="item-name">' + esc(name) + '</span><span class="item-score">' + (score !== null && score !== undefined ? score + '分' : '-') + '</span></div>';
+                h += '<div class="scale-progress"><div class="scale-progress-fill" style="width:' + pct + '%;background:' + barColor + ';"></div></div>';
+                if (it['备注'] || it['选项']) h += '<div class="item-note">' + esc(it['备注'] || it['选项'] || '') + '</div>';
+                h += '</div>';
+            }
+            var total = data.total_score; var level = data.dependency_level || data.risk_level || '';
+            if (total !== null && total !== undefined) {
+                var riskClass = 'low-risk', badgeClass = 'low';
+                if (sk === 'barthel_items') { if (total <= 40) { riskClass = 'high-risk'; badgeClass = 'high'; level = level || '重度依赖'; } else if (total <= 60) { riskClass = 'medium-risk'; badgeClass = 'medium'; level = level || '中度依赖'; } else if (total <= 99) { level = level || '轻度依赖'; } else { level = level || '自理'; } }
+                else if (sk === 'morse_items') { if (total >= 45) { riskClass = 'high-risk'; badgeClass = 'high'; level = level || '高风险'; } else if (total >= 25) { riskClass = 'medium-risk'; badgeClass = 'medium'; level = level || '中风险'; } else { level = level || '低风险'; } }
+                else if (sk === 'braden_items') { if (total <= 12) { riskClass = 'high-risk'; badgeClass = 'high'; level = level || '高风险'; } else if (total <= 14) { riskClass = 'medium-risk'; badgeClass = 'medium'; level = level || '中度风险'; } else { level = level || '低风险'; } }
+                h += '<div class="total-score-box ' + riskClass + '"><span>总分: ' + total + ' 分</span><span class="risk-badge ' + badgeClass + '">' + esc(level) + '</span></div>';
+            }
+            h += '</div>';
+        }
+        var pain = data.pain_assessment;
+        if (pain && typeof pain === 'object' && Object.keys(pain).length) {
+            h += '<div class="scale-section"><h4>&#128293; 疼痛评估</h4><table class="data-table"><tbody>';
+            for (var pk in pain) h += '<tr><td style="width:120px;font-weight:600;">' + esc(pk) + '</td><td>' + esc(fv(pain[pk])) + '</td></tr>';
+            h += '</tbody></table></div>';
+        }
+        var assess = data.assessment;
+        if (assess && typeof assess === 'object' && Object.keys(assess).length) {
+            h += '<div class="scale-section"><h4>&#128203; 护理评估</h4><table class="data-table"><tbody>';
+            for (var ak in assess) { if (assess[ak]) h += '<tr><td style="width:120px;font-weight:600;">' + esc(ak) + '</td><td>' + esc(fv(assess[ak])) + '</td></tr>'; }
+            h += '</tbody></table></div>';
+        }
+        var records = data.vital_signs_records || data.nursing_measures || data.medication_execution;
+        if (records && Array.isArray(records) && records.length) h += renderGenericArrayTable(records, '护理记录');
+        var cf = data.custom_fields;
+        if (cf && typeof cf === 'object') {
+            h += '<div class="scale-section"><h4>&#128203; 提取数据</h4><table class="data-table"><tbody>';
+            for (var ck in cf) h += '<tr><td style="width:140px;font-weight:600;">' + esc(ck) + '</td><td>' + esc(fv(cf[ck])) + '</td></tr>';
+            h += '</tbody></table></div>';
+        }
+        if (!h) h = renderGenericTable(data, conf);
+        return h;
+    }
+
+    /* ===== Researcher Layout ===== */
+    function renderResearcherLayout(data, conf) {
+        var h = '';
+        var demo = data.demographics;
+        if (demo && typeof demo === 'object' && Object.keys(demo).length) {
+            var dc = (conf && conf.demographics) ? conf.demographics : {};
+            h += '<h4 style="margin:0 0 8px;color:var(--warning);">&#128100; 人口学资料</h4>';
+            h += '<table class="data-table"><thead><tr><th>字段</th><th>值</th><th>置信度</th></tr></thead><tbody>';
+            for (var dk in demo) { var dconf = dc[dk]; var isLow = dconf !== undefined && dconf !== null && parseFloat(dconf) < 0.9; h += '<tr><td>' + esc(dk) + '</td><td class="' + (isLow ? 'low-confidence' : '') + '">' + esc(fv(demo[dk])) + '</td><td>' + confBadge(dconf) + '</td></tr>'; }
+            h += '</tbody></table>';
+        }
+        var labs = data.lab_tests;
+        if (labs && Array.isArray(labs) && labs.length) { h += '<h4 style="margin:16px 0 8px;color:var(--success);">&#129514; 实验室检查</h4>'; h += renderLabTable(labs, conf); }
+        var treat = data.treatment;
+        if (treat && typeof treat === 'object' && Object.keys(treat).length) {
+            var tc = (conf && conf.treatment) ? conf.treatment : {};
+            h += '<h4 style="margin:16px 0 8px;color:var(--primary);">&#127973; 诊疗资料</h4>';
+            h += '<table class="data-table"><thead><tr><th>字段</th><th>值</th><th>置信度</th></tr></thead><tbody>';
+            for (var tk in treat) { var tconf = tc[tk]; var isLow2 = tconf !== undefined && tconf !== null && parseFloat(tconf) < 0.9; h += '<tr><td>' + esc(tk) + '</td><td class="' + (isLow2 ? 'low-confidence' : '') + '">' + esc(fv(treat[tk])) + '</td><td>' + confBadge(tconf) + '</td></tr>'; }
+            h += '</tbody></table>';
+        }
+        if (!demo && !labs && !treat) h = renderGenericTable(data, conf);
+        return h;
+    }
+
+    /* ===== Generic Render ===== */
+    function renderGenericTable(data, conf) {
+        var h = '<table class="data-table"><thead><tr><th>字段</th><th>值</th></tr></thead><tbody>';
+        for (var k in data) {
+            if (k === 'confidence' || k === 'patient_info') continue;
+            var v = data[k];
+            if (typeof v === 'object' && v !== null) {
+                if (Array.isArray(v)) {
+                    h += '<tr><td colspan="2" style="font-weight:600;background:#f1f5f9;">' + esc(k) + '</td></tr>';
+                    for (var i = 0; i < v.length; i++) {
+                        if (typeof v[i] === 'object') { for (var sk in v[i]) h += '<tr><td style="padding-left:24px;">' + esc(sk) + '</td><td>' + esc(fv(v[i][sk])) + '</td></tr>'; }
+                        else h += '<tr><td style="padding-left:24px;">' + (i + 1) + '</td><td>' + esc(fv(v[i])) + '</td></tr>';
+                    }
+                } else {
+                    h += '<tr><td colspan="2" style="font-weight:600;background:#f1f5f9;">' + esc(k) + '</td></tr>';
+                    for (var sk2 in v) h += '<tr><td style="padding-left:24px;">' + esc(sk2) + '</td><td>' + esc(fv(v[sk2])) + '</td></tr>';
+                }
+            } else h += '<tr><td>' + esc(k) + '</td><td>' + esc(fv(v)) + '</td></tr>';
+        }
+        h += '</tbody></table>';
+        return h;
+    }
+    function renderGenericArrayTable(arr, title) {
+        if (!arr || !arr.length) return '';
+        var h = '<div class="scale-section"><h4>&#128203; ' + esc(title) + '</h4>';
+        var keys = Object.keys(arr[0]);
+        h += '<table class="data-table"><thead><tr>';
+        for (var i = 0; i < keys.length; i++) h += '<th>' + esc(keys[i]) + '</th>';
+        h += '</tr></thead><tbody>';
+        for (var j = 0; j < arr.length; j++) { h += '<tr>'; for (var kk = 0; kk < keys.length; kk++) h += '<td>' + esc(fv(arr[j][keys[kk]])) + '</td>'; h += '</tr>'; }
+        h += '</tbody></table></div>';
+        return h;
+    }
+
+    /* ===== Export ===== */
+    function exportData() { window.location.href = '/export_all'; }
+
+    /* ===== History ===== */
+    function refreshHistory() {
+        var mf = document.getElementById('historyModuleFilter').value;
+        var url = '/records?';
+        if (mf) url += 'module_type=' + mf;
+        fetch(url).then(function(r) { return r.json(); }).then(function(data) { if (data.status === 'success') renderHistory(data.records); });
+    }
+    function renderHistory(records) {
+        var c = document.getElementById('historyList');
+        if (!records || !records.length) { c.innerHTML = '<div class="empty-state"><div class="empty-icon">&#128196;</div><p>暂无处理记录</p></div>'; return; }
+        var h = '';
+        for (var i = 0; i < records.length; i++) {
+            var r = records[i];
+            var rn = roleNames[r.role_id] || r.role_id || '';
+            var rc = roleColors[r.role_id] || '#64748b';
+            var mi = moduleIcons[r.module_type] || '&#128196;';
+            var mn = moduleNames[r.module_type] || '';
+            h += '<div class="history-item"><div class="info"><span class="case-no">' + mi + ' ' + esc(r.case_number);
+            if (rn) h += '<span class="role-tag" style="background:' + rc + '20;color:' + rc + ';">' + esc(rn) + '</span>';
+            if (mn) h += '<span class="role-tag" style="background:#e2e8f020;color:#64748b;">' + esc(mn) + '</span>';
+            h += '</span><span class="meta">' + esc(r.filename) + ' | ' + r.create_time + '</span></div>';
+            h += '<div class="actions"><button class="btn-sm" onclick="viewRecord(\'' + r.id + '\')">查看</button>';
+            h += '<button class="btn-sm danger" onclick="deleteRecord(\'' + r.id + '\')">删除</button></div></div>';
+        }
+        c.innerHTML = h;
+    }
+    function viewRecord(id) {
+        fetch('/record/' + id).then(function(r) { return r.json(); }).then(function(data) {
+            if (data.status === 'success') {
+                var d = data.data;
+                currentResults = [{ case_number: d.case_number, filename: d.filename, role_id: d.role_id, template_name: d.template_name, display_layout: d.display_layout, source_type: d.source_type || 'image', module_type: d.module_type || 'image_ocr', transcript: d.audio_transcript, text_source: d.text_source, qualitative_analysis: d.qualitative_data, data: d.extracted_data, confidence: d.confidence, create_time: d.create_time }];
+                showResults(currentResults);
+                document.getElementById('resultsSection').scrollIntoView({ behavior: 'smooth' });
+            }
+        });
+    }
+    function deleteRecord(id) {
+        if (!confirm('确定删除？')) return;
+        fetch('/record/' + id, { method: 'DELETE' }).then(function(r) { return r.json(); }).then(function(d) { if (d.status === 'success') { showToast('已删除', 'success'); refreshHistory(); refreshStats(); } });
+    }
+    function refreshStats() {
+        fetch('/stats').then(function(r) { return r.json(); }).then(function(d) { if (d.status === 'success') document.getElementById('recordCount').textContent = '已处理: ' + d.total_records + ' 份'; });
+    }
+    function cleanAll() {
+        if (!confirm('清空所有数据？不可恢复。')) return;
+        fetch('/clean', { method: 'POST' }).then(function(r) { return r.json(); }).then(function(d) { if (d.status === 'success') { showToast('已清空', 'success'); refreshHistory(); refreshStats(); document.getElementById('resultsSection').classList.remove('active'); currentResults = []; } });
+    }
+
+    /* ===== Template Management ===== */
+    function openTemplateModal() {
+        if (currentModule === 'image_ocr') currentRole = document.getElementById('imageRoleSelect').value;
+        else if (currentModule === 'voice_input') currentRole = document.getElementById('voiceRoleSelect').value;
+        else if (currentModule === 'text_input') currentRole = document.getElementById('textRoleSelect').value;
+        var titles = { doctor: '&#128203; 医生病历模板管理', nurse: '&#128221; 护理量表模板管理', researcher: '&#128202; 科研数据模板管理' };
+        document.getElementById('tplModalTitle').innerHTML = titles[currentRole] || titles.researcher;
+        var cfg = { doctor: { ph: '如: 门诊病历模板', fph: '主诉\n现病史\n诊断', score: false }, nurse: { ph: '如: 跌倒后再评估表', fph: '患者姓名\n评估日期\nBraden评分', score: true }, researcher: { ph: '如: 心血管研究数据模板', fph: '入组时间\n血压\n用药情况', score: false } };
+        var c = cfg[currentRole] || cfg.researcher;
+        document.getElementById('newTplName').placeholder = c.ph;
+        document.getElementById('newTplFields').placeholder = c.fph;
+        document.getElementById('newTplScore').parentElement.style.display = c.score ? 'block' : 'none';
+        document.getElementById('templateModal').classList.add('active');
+        loadTemplateList();
+    }
+    function closeTemplateModal() { document.getElementById('templateModal').classList.remove('active'); }
+    function loadTemplateList() {
+        fetch('/api/templates/' + currentRole).then(function(r) { return r.json(); }).then(function(data) {
+            if (data.status !== 'success') return;
+            var c = document.getElementById('templateListInModal'); var h = '';
+            for (var i = 0; i < data.templates.length; i++) {
+                var t = data.templates[i];
+                h += '<div class="tpl-item"><span>' + esc(t.template_name) + '<span class="tpl-type ' + (t.template_type === 'custom' ? 'custom' : '') + '">' + (t.template_type === 'fixed' ? '系统' : '自定义') + '</span></span>';
+                if (t.template_type === 'custom') h += '<button class="del-btn" onclick="deleteTemplate(\'' + t.template_id + '\')">&#128465;</button>';
+                h += '</div>';
+            }
+            c.innerHTML = h || '<p style="color:var(--text-secondary);font-size:13px;">暂无模板</p>';
+        });
+    }
+    function createCustomTemplate() {
+        var name = document.getElementById('newTplName').value.trim();
+        var fieldsText = document.getElementById('newTplFields').value;
+        var includeScore = document.getElementById('newTplScore').checked;
+        if (!name || !fieldsText.trim()) { showToast('请填写名称和字段', 'error'); return; }
+        var fields = fieldsText.split('\n').map(function(f) { return f.trim(); }).filter(function(f) { return f; });
+        fetch('/api/templates', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ role_id: currentRole, template_name: name, fields: fields, include_score: includeScore }) })
+        .then(function(r) { return r.json(); })
+        .then(function(d) {
+            if (d.status === 'success') {
+                showToast('模板创建成功', 'success');
+                document.getElementById('newTplName').value = '';
+                document.getElementById('newTplFields').value = '';
+                loadTemplateList();
+                loadModuleTemplates('image_ocr');
+                loadModuleTemplates('voice_input');
+                loadModuleTemplates('text_input');
+            } else showToast(d.msg, 'error');
+        });
+    }
+    function deleteTemplate(id) {
+        if (!confirm('确定删除此模板？')) return;
+        fetch('/api/templates/' + id, { method: 'DELETE' }).then(function(r) { return r.json(); }).then(function(d) {
+            if (d.status === 'success') { showToast('已删除', 'success'); loadTemplateList(); loadModuleTemplates('image_ocr'); loadModuleTemplates('voice_input'); loadModuleTemplates('text_input'); }
+            else showToast(d.msg, 'error');
+        });
+    }
+
+    /* ===== Utilities ===== */
+    function esc(s) { if (s === null || s === undefined) return ''; var d = document.createElement('div'); d.textContent = String(s); return d.innerHTML; }
+    function fv(v) { if (v === null || v === undefined || v === '') return '-'; if (Array.isArray(v)) return v.join('; '); return String(v); }
+    function confBadge(c) {
+        if (c === undefined || c === null || c === '') return '<span style="color:#94a3b8;">-</span>';
+        var v = parseFloat(c); if (isNaN(v)) return '-';
+        return '<span class="confidence-badge ' + (v >= 0.9 ? 'confidence-high' : 'confidence-low') + '">' + Math.round(v * 100) + '%</span>';
+    }
+    </script>
 </body>
 </html>
