@@ -180,6 +180,96 @@
         }
 
         .footer { text-align: center; padding: 24px; font-size: 12px; color: var(--text-secondary); }
+
+        /* ===== Template Modal ===== */
+        .modal-content { max-width: 800px; width: 94%; background: white; border-radius: 20px; padding: 36px; max-height: 90vh; overflow-y: auto; }
+        .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; }
+        .modal-header h2 { font-size: 20px; }
+        .modal-header-actions { display: flex; gap: 10px; }
+        .template-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 14px; margin-bottom: 20px; }
+        .template-card { border: 2px solid var(--border); padding: 18px; border-radius: 14px; position: relative; transition: all 0.2s; }
+        .template-card:hover { box-shadow: 0 4px 16px rgba(0,0,0,0.08); }
+        .template-card.custom { border-color: #fbbf24; }
+        .template-card .tpl-name { font-size: 15px; font-weight: 600; margin-bottom: 6px; }
+        .template-card .tpl-meta { font-size: 12px; color: var(--text-secondary); margin-bottom: 10px; }
+        .type-badge { display: inline-block; font-size: 11px; padding: 2px 8px; border-radius: 8px; font-weight: 500; }
+        .type-badge.system { background: #dbeafe; color: #1e40af; }
+        .type-badge.custom { background: #fef3c7; color: #92400e; }
+        .tpl-actions { display: flex; gap: 8px; }
+        .tpl-actions button { font-size: 12px; padding: 4px 12px; border-radius: 8px; border: 1px solid var(--border); background: white; cursor: pointer; }
+        .tpl-actions button:hover { background: #f1f5f9; }
+        .tpl-actions button.danger { color: var(--danger); border-color: #fecaca; }
+        .tpl-actions button.danger:hover { background: #fef2f2; }
+
+        .tpl-form { display: none; }
+        .tpl-form.active { display: block; }
+        .tpl-form label { display: block; font-size: 13px; font-weight: 600; color: var(--text-secondary); margin-bottom: 6px; margin-top: 16px; }
+        .tpl-form input[type="text"] { width: 100%; padding: 10px 14px; border: 1px solid var(--border); border-radius: 10px; font-size: 14px; }
+        .field-rows { margin-top: 10px; }
+        .field-row { display: flex; gap: 8px; margin-bottom: 8px; align-items: center; }
+        .field-row input { flex: 1; padding: 8px 12px; border: 1px solid var(--border); border-radius: 8px; font-size: 13px; }
+        .field-row .remove-field-btn { background: none; border: none; color: var(--danger); cursor: pointer; font-size: 18px; padding: 4px 8px; }
+        .add-field-btn { background: #eff6ff; color: var(--primary); border: 1px dashed var(--primary); padding: 8px 16px; border-radius: 8px; cursor: pointer; font-size: 13px; width: 100%; margin-top: 4px; }
+        .add-field-btn:hover { background: #dbeafe; }
+        .preset-btns { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
+        .preset-btn { font-size: 12px; padding: 4px 10px; border-radius: 8px; border: 1px solid var(--border); background: #f8fafc; cursor: pointer; }
+        .preset-btn:hover { background: #eff6ff; border-color: var(--primary); }
+        .form-actions { display: flex; gap: 12px; margin-top: 24px; }
+        .form-actions .btn-save { flex: 1; padding: 12px; font-size: 15px; font-weight: 600; border: none; border-radius: 12px; cursor: pointer; background: linear-gradient(135deg, #2563eb, #3b82f6); color: white; }
+        .form-actions .btn-cancel { padding: 12px 24px; font-size: 14px; border: 1px solid var(--border); border-radius: 12px; cursor: pointer; background: white; }
+        .score-option { display: flex; align-items: center; gap: 8px; margin-top: 12px; font-size: 13px; }
+
+        /* ===== Field Preview ===== */
+        .preview-section { display: none; background: var(--card); border-radius: 16px; padding: 28px; box-shadow: var(--shadow); margin-bottom: 24px; }
+        .preview-section.active { display: block; }
+        .preview-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 12px; }
+        .preview-actions { display: flex; gap: 10px; align-items: center; }
+        .category-group { margin-bottom: 20px; }
+        .category-group h4 { font-size: 15px; margin-bottom: 10px; color: var(--text); border-bottom: 1px solid var(--border); padding-bottom: 8px; }
+        .field-checkboxes { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 10px; }
+        .field-checkbox { display: flex; align-items: center; padding: 10px 14px; background: #f8fafc; border: 2px solid var(--border); border-radius: 10px; cursor: pointer; transition: all 0.2s; }
+        .field-checkbox:hover { border-color: #93c5fd; }
+        .field-checkbox.checked { border-color: var(--primary); background: #eff6ff; }
+        .field-checkbox input[type="checkbox"] { margin-right: 10px; }
+        .field-info { display: flex; flex-direction: column; gap: 2px; flex: 1; }
+        .field-name { font-weight: 600; font-size: 13px; }
+        .field-example { font-size: 11px; color: var(--text-secondary); }
+        .confidence-badge { font-size: 11px; padding: 2px 8px; border-radius: 8px; background: #d1fae5; color: #065f46; }
+        .btn-group { display: flex; gap: 12px; margin-top: 20px; }
+        .btn-outline { background: white; border: 2px solid var(--primary); color: var(--primary); padding: 12px 20px; border-radius: 12px; cursor: pointer; font-size: 14px; font-weight: 600; flex: 1; text-align: center; }
+        .btn-outline:hover { background: #eff6ff; }
+
+        /* ===== Qualitative 4-Step ===== */
+        .qual-steps-container { margin-top: 16px; }
+        .step-panel { background: white; border: 2px solid #e2e8f0; border-radius: 14px; margin-bottom: 14px; overflow: hidden; }
+        .step-panel.expanded { border-color: #7c3aed; }
+        .step-header { background: linear-gradient(135deg, #f5f3ff, #ede9fe); padding: 14px 20px; cursor: pointer; display: flex; justify-content: space-between; align-items: center; user-select: none; }
+        .step-header:hover { background: linear-gradient(135deg, #ede9fe, #ddd6fe); }
+        .step-header h4 { font-size: 15px; color: #5b21b6; margin: 0; }
+        .step-header .count { font-size: 13px; color: #7c3aed; font-weight: normal; }
+        .step-header .toggle-icon { font-size: 14px; color: #7c3aed; }
+        .step-body { padding: 20px; display: none; }
+        .step-panel.expanded .step-body { display: block; }
+        .coding-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+        .coding-table th { background: #f3f4f6; padding: 10px; text-align: left; font-weight: 600; }
+        .coding-table td { padding: 10px; border-bottom: 1px solid #f1f5f9; }
+        .code-id { background: #ddd6fe; color: #5b21b6; padding: 3px 10px; border-radius: 8px; font-family: monospace; font-weight: 600; font-size: 12px; }
+        .quote-text { font-style: italic; color: #475569; }
+        .theme-card { background: linear-gradient(135deg, #fefeff, #f5f3ff); border-left: 4px solid #7c3aed; padding: 16px; margin-bottom: 14px; border-radius: 0 10px 10px 0; }
+        .main-theme { font-size: 16px; color: #5b21b6; margin-bottom: 10px; font-weight: 700; }
+        .sub-theme { padding-left: 18px; margin-bottom: 10px; border-left: 2px solid #ddd6fe; padding: 8px 0 8px 18px; }
+        .sub-theme-name { font-weight: 600; font-size: 14px; color: #6d28d9; margin-bottom: 4px; }
+        .sub-theme-desc { font-size: 12px; color: #64748b; margin-bottom: 4px; }
+        .linked-codes { font-size: 11px; color: #7c3aed; font-family: monospace; }
+        .quote-group { margin-bottom: 18px; }
+        .quote-group h5 { font-size: 14px; color: #5b21b6; margin-bottom: 8px; }
+        .representative-quote { background: #fffbeb; border-left: 4px solid #fbbf24; padding: 10px 16px; margin: 8px 0; font-size: 13px; font-style: italic; color: #78350f; line-height: 1.7; border-radius: 0 8px 8px 0; }
+        .hierarchy-tree { font-size: 13px; line-height: 2; background: #fafbfc; padding: 16px; border-radius: 10px; margin-bottom: 14px; }
+        .h-level-1 { font-weight: 700; color: #5b21b6; font-size: 15px; margin-bottom: 4px; }
+        .h-level-2 { color: #7c3aed; font-weight: 600; padding-left: 24px; }
+        .h-level-3 { color: #6d28d9; padding-left: 48px; }
+        .h-level-4 { color: #64748b; padding-left: 72px; font-style: italic; font-size: 12px; }
+        .methodology-note { background: #eff6ff; border: 1px solid #93c5fd; border-radius: 10px; padding: 12px 16px; margin-bottom: 16px; font-size: 13px; color: #1e40af; }
     </style>
     <script src="https://cdn.jsdelivr.net/npm/echarts@5.5.1/dist/echarts.min.js"></script>
 </head>
@@ -316,7 +406,10 @@
                     <p>支持 JPG / PNG / BMP / TIFF / PDF 格式，可批量上传</p>
                 </div>
                 <div class="file-list" id="quantImageList"></div>
-                <button class="btn btn-primary btn-block" onclick="processQuantitative('image')" id="quantImageBtn" disabled>开始结构化提取</button>
+                <div class="btn-group">
+                    <button class="btn-outline" onclick="previewFields('image')" id="quantImagePreviewBtn" disabled>&#128269; 预览可提取字段</button>
+                    <button class="btn btn-primary" style="flex:1;padding:12px;border-radius:12px;" onclick="processQuantitative('image')" id="quantImageBtn" disabled>开始结构化提取</button>
+                </div>
             </div>
 
             <div class="source-panel" id="quant-voice">
@@ -327,13 +420,33 @@
                     <p>支持 WAV / MP3 / M4A / AAC / FLAC 格式</p>
                 </div>
                 <div class="file-list" id="quantVoiceList"></div>
-                <button class="btn btn-primary btn-block" onclick="processQuantitative('voice')" id="quantVoiceBtn" disabled>开始转写并提取</button>
+                <div class="btn-group">
+                    <button class="btn-outline" onclick="previewFields('voice')" id="quantVoicePreviewBtn" disabled>&#128269; 预览可提取字段</button>
+                    <button class="btn btn-primary" style="flex:1;padding:12px;border-radius:12px;" onclick="processQuantitative('voice')" id="quantVoiceBtn" disabled>开始转写并提取</button>
+                </div>
             </div>
 
             <div class="source-panel" id="quant-text">
                 <textarea class="text-area" id="quantTextInput" placeholder="在此粘贴病历文本、检验报告、护理记录...&#10;&#10;系统将根据所选模板提取结构化数据。"></textarea>
-                <button class="btn btn-primary btn-block" onclick="processQuantitative('text')">提取结构化数据</button>
+                <div class="btn-group">
+                    <button class="btn-outline" onclick="previewFields('text')">&#128269; 预览可提取字段</button>
+                    <button class="btn btn-primary" style="flex:1;padding:12px;border-radius:12px;" onclick="processQuantitative('text')">提取结构化数据</button>
+                </div>
             </div>
+        </div>
+
+        <!-- Field Preview Section -->
+        <div class="preview-section" id="previewSection">
+            <div class="preview-header">
+                <h3>&#128203; 可提取字段预览</h3>
+                <div class="preview-actions">
+                    <button class="nav-btn" style="color:var(--text);border-color:var(--border);" onclick="selectAllFields()">全选</button>
+                    <button class="nav-btn" style="color:var(--text);border-color:var(--border);" onclick="deselectAllFields()">清空</button>
+                    <button class="btn btn-primary" style="padding:8px 20px;border-radius:10px;" onclick="executeSelectedExtraction()">&#128229; 提取选中字段</button>
+                    <button class="nav-btn" style="color:var(--text);border-color:var(--border);" onclick="closePreview()">&#10005;</button>
+                </div>
+            </div>
+            <div id="previewBody"></div>
         </div>
 
         <!-- Progress Section -->
@@ -369,10 +482,41 @@
 
     <!-- Template Modal -->
     <div class="role-overlay" id="templateModal" style="display:none;background:rgba(0,0,0,0.5);">
-        <div class="role-box" style="max-width:600px;padding:32px;">
-            <h2 style="font-size:20px;margin-bottom:20px;">&#128221; 模板管理</h2>
-            <div id="templateList" style="max-height:300px;overflow-y:auto;margin-bottom:20px;"></div>
-            <button class="confirm-btn" onclick="closeTemplateModal()">关闭</button>
+        <div class="modal-content">
+            <!-- List View -->
+            <div id="tplListView">
+                <div class="modal-header">
+                    <h2>&#128221; 模板管理</h2>
+                    <div class="modal-header-actions">
+                        <button class="btn-outline" style="padding:8px 16px;font-size:13px;flex:unset;border-width:1px;" onclick="showCreateForm()">+ 新建模板</button>
+                        <button class="nav-btn" style="color:var(--text);border-color:var(--border);" onclick="closeTemplateModal()">关闭</button>
+                    </div>
+                </div>
+                <div class="template-grid" id="templateGrid"></div>
+            </div>
+            <!-- Form View -->
+            <div id="tplFormView" class="tpl-form">
+                <div class="modal-header">
+                    <h2 id="tplFormTitle">&#10133; 新建模板</h2>
+                    <button class="nav-btn" style="color:var(--text);border-color:var(--border);" onclick="showListView()">&#8592; 返回列表</button>
+                </div>
+                <label>模板名称</label>
+                <input type="text" id="tplNameInput" placeholder="如: 自定义评估模板">
+                <label>提取字段</label>
+                <div class="field-rows" id="tplFieldRows"></div>
+                <button class="add-field-btn" onclick="addFieldRow()">+ 添加字段</button>
+                <label style="margin-top:12px;">常用字段快速添加</label>
+                <div class="preset-btns" id="presetBtns"></div>
+                <div class="score-option">
+                    <input type="checkbox" id="tplScoreCheck">
+                    <span>此模板包含评分项（评分将提取为数字）</span>
+                </div>
+                <input type="hidden" id="tplEditId" value="">
+                <div class="form-actions">
+                    <button class="btn-cancel" onclick="showListView()">取消</button>
+                    <button class="btn-save" onclick="saveTemplate()">保存模板</button>
+                </div>
+            </div>
         </div>
     </div>
 
@@ -382,6 +526,8 @@ var currentRole = 'researcher';
 var currentMethod = 'qualitative';
 var currentResults = [];
 var files = { qualVoice: [], qualImage: [], quantImage: [], quantVoice: [] };
+var previewCache = null;
+var previewSource = '';
 var roleColors = { doctor: '#2563eb', nurse: '#059669', researcher: '#d97706' };
 var roleNames = { doctor: '临床医生', nurse: '护士', researcher: '临床科研' };
 var roleIcons = { doctor: '&#128104;&#8205;&#9877;&#65039;', nurse: '&#128105;&#8205;&#9877;&#65039;', researcher: '&#128300;' };
@@ -473,6 +619,10 @@ function setupFileInput(inputId, listId, btnId, fileKey) {
     input.addEventListener('change', function(e) {
         files[fileKey] = Array.from(e.target.files);
         renderFileList(listId, fileKey, btnId);
+        // Also enable the preview button for quantitative panels
+        var previewBtnId = btnId.replace('Btn', 'PreviewBtn');
+        var previewBtn = document.getElementById(previewBtnId);
+        if (previewBtn) previewBtn.disabled = files[fileKey].length === 0;
         e.target.value = '';
     });
 }
@@ -495,6 +645,130 @@ function renderFileList(listId, fileKey, btnId) {
 function removeFile(fileKey, idx, listId, btnId) {
     files[fileKey].splice(idx, 1);
     renderFileList(listId, fileKey, btnId);
+}
+
+/* ===== Field Preview ===== */
+function previewFields(source) {
+    var fd = new FormData();
+    if (source === 'text') {
+        var text = document.getElementById('quantTextInput').value.trim();
+        if (!text) { showToast('请输入文本内容', 'error'); return; }
+        fd.append('text_content', text);
+    } else if (source === 'voice') {
+        if (!files.quantVoice.length) { showToast('请先上传文件', 'error'); return; }
+        fd.append('files', files.quantVoice[0]);
+    } else {
+        if (!files.quantImage.length) { showToast('请先上传文件', 'error'); return; }
+        fd.append('files', files.quantImage[0]);
+    }
+    previewSource = source;
+    showProgress('正在分析文档字段...');
+    updateProgress(30, '识别中，请稍候...');
+
+    fetch('/api/preview_fields', { method: 'POST', body: fd })
+    .then(function(r) { return r.json(); })
+    .then(function(data) {
+        updateProgress(100, '完成');
+        setTimeout(function() {
+            hideProgress();
+            if (data.status === 'success' && data.fields && data.fields.length) {
+                previewCache = data.raw_data;
+                renderFieldPreview(data.fields);
+            } else {
+                showToast(data.msg || '未识别到可提取字段', 'error');
+            }
+        }, 300);
+    })
+    .catch(function(err) { hideProgress(); showToast('预览失败: ' + err.message, 'error'); });
+}
+
+function renderFieldPreview(fields) {
+    var categories = {};
+    fields.forEach(function(f) {
+        var cat = f.category || '其他';
+        if (!categories[cat]) categories[cat] = [];
+        categories[cat].push(f);
+    });
+    var catIcons = { '基本信息': '&#128100;', '检验结果': '&#129514;', '诊疗记录': '&#128203;', '护理评估': '&#128153;', '其他': '&#128196;' };
+    var html = '';
+    for (var cat in categories) {
+        html += '<div class="category-group"><h4>' + (catIcons[cat] || '') + ' ' + esc(cat) + '</h4><div class="field-checkboxes">';
+        categories[cat].forEach(function(f) {
+            var conf = Math.round((f.confidence || 0) * 100);
+            html += '<label class="field-checkbox checked" onclick="toggleFieldCheck(this)">';
+            html += '<input type="checkbox" checked value="' + esc(f.field_name) + '">';
+            html += '<div class="field-info"><span class="field-name">' + esc(f.field_name) + '</span>';
+            if (f.example_value) html += '<span class="field-example">示例: ' + esc(String(f.example_value)) + '</span>';
+            html += '</div>';
+            if (conf) html += '<span class="confidence-badge">' + conf + '%</span>';
+            html += '</label>';
+        });
+        html += '</div></div>';
+    }
+    document.getElementById('previewBody').innerHTML = html;
+    document.getElementById('previewSection').classList.add('active');
+}
+
+function toggleFieldCheck(el) {
+    var cb = el.querySelector('input[type="checkbox"]');
+    if (cb) {
+        setTimeout(function() { el.classList.toggle('checked', cb.checked); }, 0);
+    }
+}
+
+function selectAllFields() {
+    document.querySelectorAll('#previewBody .field-checkbox input').forEach(function(cb) {
+        cb.checked = true; cb.closest('.field-checkbox').classList.add('checked');
+    });
+}
+
+function deselectAllFields() {
+    document.querySelectorAll('#previewBody .field-checkbox input').forEach(function(cb) {
+        cb.checked = false; cb.closest('.field-checkbox').classList.remove('checked');
+    });
+}
+
+function closePreview() {
+    document.getElementById('previewSection').classList.remove('active');
+    previewCache = null;
+}
+
+function executeSelectedExtraction() {
+    var selected = [];
+    document.querySelectorAll('#previewBody .field-checkbox input:checked').forEach(function(cb) {
+        selected.push(cb.value);
+    });
+    if (!selected.length) { showToast('请至少选择一个字段', 'error'); return; }
+
+    var body = { selected_fields: selected, role_id: currentRole };
+    if (previewCache) body.raw_data = previewCache;
+    if (previewSource === 'text') body.text_content = document.getElementById('quantTextInput').value.trim();
+
+    showProgress('正在提取选中字段...');
+    updateProgress(50, '处理中...');
+
+    fetch('/api/extract_selected', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body)
+    })
+    .then(function(r) { return r.json(); })
+    .then(function(data) {
+        updateProgress(100, '完成');
+        setTimeout(function() {
+            hideProgress();
+            closePreview();
+            if (data.results && data.results.length) {
+                currentResults = data.results;
+                showResults(data.results);
+                showToast('提取完成', 'success');
+            }
+            if (data.errors) data.errors.forEach(function(e) { showToast(e, 'error'); });
+            refreshHistory();
+            refreshStats();
+        }, 300);
+    })
+    .catch(function(err) { hideProgress(); showToast('提取失败: ' + err.message, 'error'); });
 }
 
 /* ===== Toast ===== */
@@ -642,32 +916,13 @@ function renderResult(result) {
     // Qualitative analysis display
     if (result.qualitative_analysis) {
         var q = result.qualitative_analysis;
-        html += '<div class="qual-section">';
-        html += '<h4>&#128300; 质性分析结果</h4>';
-        if (q.themes && q.themes.length) {
-            html += '<div><strong>核心主题:</strong></div><div class="theme-pills">';
-            q.themes.forEach(function(t) { html += '<span class="theme-pill">' + esc(t) + '</span>'; });
-            html += '</div>';
+        // New 4-step format detection
+        if (q.step1_initial_coding || q.step4_hierarchical_output) {
+            html += renderQualitative4Step(q);
+        } else {
+            // Legacy format (themes/codes/sentiment)
+            html += renderQualitativeLegacy(q);
         }
-        if (q.keywords && q.keywords.length) {
-            html += '<div style="margin:12px 0;"><strong>关键词:</strong> ' + esc(q.keywords.join('、')) + '</div>';
-        }
-        if (q.codes && q.codes.length) {
-            html += '<div><strong>编码分类:</strong></div>';
-            html += '<table class="data-table code-table"><thead><tr><th>编码</th><th>相关文本</th></tr></thead><tbody>';
-            q.codes.forEach(function(c) {
-                html += '<tr><td>' + esc(c.code) + '</td><td>' + esc((c.segments || []).join('；')) + '</td></tr>';
-            });
-            html += '</tbody></table>';
-        }
-        if (q.sentiment) {
-            var sc = q.sentiment.indexOf('积极') !== -1 ? '#059669' : (q.sentiment.indexOf('消极') !== -1 ? '#dc2626' : '#64748b');
-            html += '<div style="margin-top:12px;"><strong>情感倾向:</strong> <span style="color:' + sc + ';font-weight:600;">' + esc(q.sentiment) + '</span></div>';
-        }
-        if (q.summary) {
-            html += '<div style="margin-top:12px;"><strong>分析总结:</strong> ' + esc(q.summary) + '</div>';
-        }
-        html += '</div>';
     }
     
     // Transcript display
@@ -709,6 +964,170 @@ function renderDataRows(obj, prefix) {
         }
     }
     return rows;
+}
+
+/* ===== Qualitative 4-Step Rendering ===== */
+function renderQualitative4Step(q) {
+    var html = '';
+    // Methodology note
+    if (q.methodology_note) {
+        html += '<div class="methodology-note">&#128214; <strong>分析方法：</strong>' + esc(q.methodology_note) + '</div>';
+    }
+    html += '<div class="qual-steps-container">';
+    html += renderStep1(q.step1_initial_coding);
+    html += renderStep2(q.step2_theme_clustering);
+    html += renderStep3(q.step3_representative_quotes);
+    html += renderStep4(q.step4_hierarchical_output);
+    html += '</div>';
+    return html;
+}
+
+function renderStep1(codes) {
+    if (!codes || !codes.length) return '';
+    var html = '<div class="step-panel" data-step="1">';
+    html += '<div class="step-header" onclick="toggleStep(1)">';
+    html += '<h4>&#128221; 第一步：初始编码 <span class="count">(' + codes.length + '个编码)</span></h4>';
+    html += '<span class="toggle-icon">&#9660;</span></div>';
+    html += '<div class="step-body">';
+    html += '<table class="coding-table"><thead><tr><th>编码ID</th><th>编码标签</th><th>原文片段</th><th>段落</th></tr></thead><tbody>';
+    codes.forEach(function(c) {
+        html += '<tr>';
+        html += '<td><span class="code-id">' + esc(c.code_id) + '</span></td>';
+        html += '<td>' + esc(c.code_label) + '</td>';
+        html += '<td class="quote-text">"' + esc(c.original_text) + '"</td>';
+        html += '<td>' + esc(c.paragraph_ref) + '</td>';
+        html += '</tr>';
+    });
+    html += '</tbody></table></div></div>';
+    return html;
+}
+
+function renderStep2(themes) {
+    if (!themes || !themes.length) return '';
+    var html = '<div class="step-panel" data-step="2">';
+    html += '<div class="step-header" onclick="toggleStep(2)">';
+    html += '<h4>&#128451; 第二步：主题聚类 <span class="count">(' + themes.length + '个主题)</span></h4>';
+    html += '<span class="toggle-icon">&#9660;</span></div>';
+    html += '<div class="step-body">';
+    themes.forEach(function(theme) {
+        html += '<div class="theme-card">';
+        html += '<div class="main-theme">&#128312; ' + esc(theme.theme) + '</div>';
+        if (theme.sub_themes) {
+            theme.sub_themes.forEach(function(sub) {
+                html += '<div class="sub-theme">';
+                html += '<div class="sub-theme-name">&#8627; ' + esc(sub.sub_theme) + '</div>';
+                if (sub.description) html += '<div class="sub-theme-desc">' + esc(sub.description) + '</div>';
+                if (sub.codes && sub.codes.length) html += '<div class="linked-codes">&#128279; 关联编码: ' + sub.codes.map(esc).join(', ') + '</div>';
+                html += '</div>';
+            });
+        }
+        html += '</div>';
+    });
+    html += '</div></div>';
+    return html;
+}
+
+function renderStep3(quotes) {
+    if (!quotes || !quotes.length) return '';
+    var html = '<div class="step-panel" data-step="3">';
+    html += '<div class="step-header" onclick="toggleStep(3)">';
+    html += '<h4>&#128172; 第三步：代表性引用</h4>';
+    html += '<span class="toggle-icon">&#9660;</span></div>';
+    html += '<div class="step-body">';
+    quotes.forEach(function(q) {
+        html += '<div class="quote-group">';
+        html += '<h5>&#128312; ' + esc(q.theme) + '</h5>';
+        if (q.quotes) {
+            q.quotes.forEach(function(quote) {
+                html += '<blockquote class="representative-quote">"' + esc(quote) + '"</blockquote>';
+            });
+        }
+        html += '</div>';
+    });
+    html += '</div></div>';
+    return html;
+}
+
+function renderStep4(hierarchy) {
+    if (!hierarchy || !hierarchy.length) return '';
+    var html = '<div class="step-panel expanded" data-step="4">';
+    html += '<div class="step-header" onclick="toggleStep(4)">';
+    html += '<h4>&#127795; 第四步：层级化结构（完整分析结果）</h4>';
+    html += '<span class="toggle-icon">&#9650;</span></div>';
+    html += '<div class="step-body" style="display:block;">';
+    hierarchy.forEach(function(theme) {
+        html += '<div class="hierarchy-tree">';
+        html += '<div class="h-level-1">&#128313; ' + esc(theme.theme) + '</div>';
+        if (theme.sub_themes) {
+            theme.sub_themes.forEach(function(sub, si) {
+                var isLast = si === theme.sub_themes.length - 1;
+                html += '<div class="h-level-2">' + (isLast ? '&#9495;&#9473; ' : '&#9507;&#9473; ') + esc(sub.name) + '</div>';
+                if (sub.codes) {
+                    sub.codes.forEach(function(code, ci) {
+                        var isLastCode = ci === sub.codes.length - 1;
+                        var prefix = isLast ? '&nbsp;&nbsp;&nbsp;' : '&#9475;&nbsp;&nbsp;';
+                        html += '<div class="h-level-3">' + prefix + (isLastCode ? '&#9495;&#9473; ' : '&#9507;&#9473; ') + esc(code.label) + '</div>';
+                        if (code.quotes) {
+                            code.quotes.forEach(function(quote) {
+                                var qPrefix = isLast ? '&nbsp;&nbsp;&nbsp;' : '&#9475;&nbsp;&nbsp;';
+                                qPrefix += isLastCode ? '&nbsp;&nbsp;&nbsp;' : '&#9475;&nbsp;&nbsp;';
+                                html += '<div class="h-level-4">' + qPrefix + '&#128172; "' + esc(quote) + '"</div>';
+                            });
+                        }
+                    });
+                }
+            });
+        }
+        html += '</div>';
+    });
+    html += '</div></div>';
+    return html;
+}
+
+function toggleStep(stepNum) {
+    var panel = document.querySelector('.step-panel[data-step="' + stepNum + '"]');
+    if (!panel) return;
+    var body = panel.querySelector('.step-body');
+    var icon = panel.querySelector('.toggle-icon');
+    if (body.style.display === 'none' || (!body.style.display && !panel.classList.contains('expanded'))) {
+        body.style.display = 'block';
+        icon.innerHTML = '&#9650;';
+        panel.classList.add('expanded');
+    } else {
+        body.style.display = 'none';
+        icon.innerHTML = '&#9660;';
+        panel.classList.remove('expanded');
+    }
+}
+
+function renderQualitativeLegacy(q) {
+    var html = '<div class="qual-section">';
+    html += '<h4>&#128300; 质性分析结果（历史版本）</h4>';
+    if (q.themes && q.themes.length) {
+        html += '<div><strong>核心主题:</strong></div><div class="theme-pills">';
+        q.themes.forEach(function(t) { html += '<span class="theme-pill">' + esc(t) + '</span>'; });
+        html += '</div>';
+    }
+    if (q.keywords && q.keywords.length) {
+        html += '<div style="margin:12px 0;"><strong>关键词:</strong> ' + esc(q.keywords.join('、')) + '</div>';
+    }
+    if (q.codes && q.codes.length) {
+        html += '<div><strong>编码分类:</strong></div>';
+        html += '<table class="data-table code-table"><thead><tr><th>编码</th><th>相关文本</th></tr></thead><tbody>';
+        q.codes.forEach(function(c) {
+            html += '<tr><td>' + esc(c.code) + '</td><td>' + esc((c.segments || []).join('；')) + '</td></tr>';
+        });
+        html += '</tbody></table>';
+    }
+    if (q.sentiment) {
+        var sc = q.sentiment.indexOf('积极') !== -1 ? '#059669' : (q.sentiment.indexOf('消极') !== -1 ? '#dc2626' : '#64748b');
+        html += '<div style="margin-top:12px;"><strong>情感倾向:</strong> <span style="color:' + sc + ';font-weight:600;">' + esc(q.sentiment) + '</span></div>';
+    }
+    if (q.summary) {
+        html += '<div style="margin-top:12px;"><strong>分析总结:</strong> ' + esc(q.summary) + '</div>';
+    }
+    html += '</div>';
+    return html;
 }
 
 /* ===== History ===== */
@@ -775,24 +1194,158 @@ function cleanAll() {
 }
 
 /* ===== Template Modal ===== */
+var rolePresetFields = {
+    doctor: ['主诉','现病史','既往史','体格检查','诊断','治疗方案','手术记录','检验结果'],
+    nurse: ['生命体征','意识状态','皮肤完整性','跌倒风险','压疮风险','护理措施','患者反应','疼痛评分'],
+    researcher: ['人口学特征','实验室检查','主要终点事件','随访日期','血压','血脂','用药情况','治疗结局']
+};
+
 function openTemplateModal() {
+    showListView();
+    loadTemplateGrid();
+    document.getElementById('templateModal').style.display = 'flex';
+}
+
+function closeTemplateModal() {
+    document.getElementById('templateModal').style.display = 'none';
+}
+
+function showListView() {
+    document.getElementById('tplListView').style.display = 'block';
+    document.getElementById('tplFormView').classList.remove('active');
+}
+
+function showCreateForm() {
+    document.getElementById('tplListView').style.display = 'none';
+    document.getElementById('tplFormView').classList.add('active');
+    document.getElementById('tplFormTitle').innerHTML = '&#10133; 新建模板';
+    document.getElementById('tplNameInput').value = '';
+    document.getElementById('tplScoreCheck').checked = false;
+    document.getElementById('tplEditId').value = '';
+    document.getElementById('tplFieldRows').innerHTML = '';
+    addFieldRow('');
+    addFieldRow('');
+    renderPresetBtns();
+}
+
+function showEditForm(templateId) {
+    fetch('/api/templates/' + templateId + '/detail')
+    .then(function(r) { return r.json(); })
+    .then(function(data) {
+        if (data.status !== 'success') { showToast(data.msg || '获取失败', 'error'); return; }
+        var t = data.template;
+        document.getElementById('tplListView').style.display = 'none';
+        document.getElementById('tplFormView').classList.add('active');
+        document.getElementById('tplFormTitle').innerHTML = '&#9998; 编辑模板';
+        document.getElementById('tplNameInput').value = t.template_name;
+        document.getElementById('tplScoreCheck').checked = t.include_score;
+        document.getElementById('tplEditId').value = templateId;
+        document.getElementById('tplFieldRows').innerHTML = '';
+        if (t.fields && t.fields.length) {
+            t.fields.forEach(function(f) { addFieldRow(f); });
+        } else {
+            addFieldRow('');
+        }
+        renderPresetBtns();
+    });
+}
+
+function addFieldRow(name) {
+    var div = document.createElement('div');
+    div.className = 'field-row';
+    div.innerHTML = '<input type="text" value="' + esc(name || '') + '" placeholder="字段名称，如：血压、诊断...">' +
+        '<button class="remove-field-btn" onclick="this.parentElement.remove()" title="删除">&#10005;</button>';
+    document.getElementById('tplFieldRows').appendChild(div);
+}
+
+function renderPresetBtns() {
+    var presets = rolePresetFields[currentRole] || rolePresetFields.researcher;
+    var html = '';
+    presets.forEach(function(p) {
+        html += '<button class="preset-btn" onclick="addPresetField(\'' + p + '\')">' + p + '</button>';
+    });
+    document.getElementById('presetBtns').innerHTML = html;
+}
+
+function addPresetField(name) {
+    var rows = document.querySelectorAll('#tplFieldRows .field-row input');
+    for (var i = 0; i < rows.length; i++) {
+        if (rows[i].value.trim() === name) { showToast('该字段已存在', 'info'); return; }
+    }
+    addFieldRow(name);
+}
+
+function saveTemplate() {
+    var name = document.getElementById('tplNameInput').value.trim();
+    var includeScore = document.getElementById('tplScoreCheck').checked;
+    var editId = document.getElementById('tplEditId').value;
+    var inputs = document.querySelectorAll('#tplFieldRows .field-row input');
+    var fields = [];
+    inputs.forEach(function(inp) { var v = inp.value.trim(); if (v) fields.push(v); });
+
+    if (!name) { showToast('请填写模板名称', 'error'); return; }
+    if (!fields.length) { showToast('请至少添加一个字段', 'error'); return; }
+
+    var body = JSON.stringify({ role_id: currentRole, template_name: name, fields: fields, include_score: includeScore });
+    var url = editId ? '/api/templates/' + editId : '/api/templates';
+    var method = editId ? 'PUT' : 'POST';
+
+    fetch(url, { method: method, headers: { 'Content-Type': 'application/json' }, body: body })
+    .then(function(r) { return r.json(); })
+    .then(function(data) {
+        if (data.status === 'success') {
+            showToast(data.msg, 'success');
+            showListView();
+            loadTemplateGrid();
+            loadTemplates();
+        } else {
+            showToast(data.msg || '操作失败', 'error');
+        }
+    });
+}
+
+function deleteTemplate(templateId) {
+    if (!confirm('确定删除此模板？已使用此模板提取的记录不受影响。')) return;
+    fetch('/api/templates/' + templateId, { method: 'DELETE' })
+    .then(function(r) { return r.json(); })
+    .then(function(data) {
+        if (data.status === 'success') {
+            showToast('模板已删除', 'success');
+            loadTemplateGrid();
+            loadTemplates();
+        } else {
+            showToast(data.msg || '删除失败', 'error');
+        }
+    });
+}
+
+function loadTemplateGrid() {
     fetch('/api/templates/' + currentRole)
     .then(function(r) { return r.json(); })
     .then(function(data) {
         if (data.status !== 'success') return;
         var html = '';
-        data.templates.forEach(function(t) {
-            html += '<div style="padding:12px;background:#f8fafc;border-radius:10px;margin-bottom:10px;display:flex;justify-content:space-between;align-items:center;">';
-            html += '<span>' + esc(t.template_name) + ' <small style="color:#64748b;">(' + (t.template_type === 'custom' ? '自定义' : '系统') + ')</small></span>';
-            html += '</div>';
-        });
-        document.getElementById('templateList').innerHTML = html || '<p style="color:#64748b;">暂无模板</p>';
-        document.getElementById('templateModal').style.display = 'flex';
+        if (!data.templates.length) {
+            html = '<p style="color:var(--text-secondary);text-align:center;padding:40px;">暂无模板，点击"新建模板"创建</p>';
+        } else {
+            data.templates.forEach(function(t) {
+                var isCustom = t.template_type === 'custom';
+                html += '<div class="template-card' + (isCustom ? ' custom' : '') + '">';
+                html += '<div class="tpl-name">' + esc(t.template_name) + '</div>';
+                html += '<div class="tpl-meta"><span class="type-badge ' + (isCustom ? 'custom' : 'system') + '">' + (isCustom ? '自定义' : '系统') + '</span>';
+                if (t.field_count) html += ' &middot; ' + t.field_count + '个字段';
+                html += '</div>';
+                if (isCustom) {
+                    html += '<div class="tpl-actions">';
+                    html += '<button onclick="showEditForm(\'' + t.template_id + '\')">编辑</button>';
+                    html += '<button class="danger" onclick="deleteTemplate(\'' + t.template_id + '\')">删除</button>';
+                    html += '</div>';
+                }
+                html += '</div>';
+            });
+        }
+        document.getElementById('templateGrid').innerHTML = html;
     });
-}
-
-function closeTemplateModal() {
-    document.getElementById('templateModal').style.display = 'none';
 }
 
 /* ===== Utility ===== */

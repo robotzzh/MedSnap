@@ -475,6 +475,61 @@ RESEARCHER_CUSTOM_PROMPT_TEMPLATE = """你是临床科研数据提取专家。�
 只输出JSON，不要输出任何其他内容。"""
 
 
+# ========== 字段预览Prompt ==========
+
+PROMPT_FIELD_PREVIEW = """你是医疗数据分析专家。请仔细分析以下医疗文档，识别所有可以提取的数据字段。
+
+输出JSON格式:
+{{
+  "available_fields": [
+    {{
+      "field_name": "字段名称",
+      "field_type": "text或number或date",
+      "example_value": "从文档中提取的示例值",
+      "confidence": 0.95,
+      "category": "类别"
+    }}
+  ]
+}}
+
+要求:
+1. 字段名称使用中文，简洁明确
+2. 尽可能识别所有有意义的数据项（患者信息、检验指标、诊断、治疗、评估等）
+3. category取值范围：基本信息、检验结果、诊疗记录、护理评估、其他
+4. example_value必须是从文档中实际提取的真实值
+5. confidence表示该字段在文档中的识别置信度(0-1)
+6. 按category分组，同类别字段放在一起
+
+只输出JSON，不要输出任何其他内容。"""
+
+PROMPT_FIELD_PREVIEW_TEXT = """你是医疗数据分析专家。请仔细分析以下医疗文本，识别所有可以提取的数据字段。
+
+输出JSON格式:
+{{
+  "available_fields": [
+    {{
+      "field_name": "字段名称",
+      "field_type": "text或number或date",
+      "example_value": "从文本中提取的示例值",
+      "confidence": 0.95,
+      "category": "类别"
+    }}
+  ]
+}}
+
+要求:
+1. 字段名称使用中文，简洁明确
+2. 尽可能识别所有有意义的数据项
+3. category取值范围：基本信息、检验结果、诊疗记录、护理评估、其他
+4. example_value必须是从文本中实际提取的真实值
+5. confidence表示该字段的识别置信度(0-1)
+
+文本内容:
+{text_content}
+
+只输出JSON，不要输出任何其他内容。"""
+
+
 # ========== 音频专用Prompt模板 ==========
 
 PROMPT_AUDIO_DOCTOR = """你是临床医生数据提取专家。以下是医患对话的语音转录文本，请从中提取结构化病历信息。
@@ -960,42 +1015,100 @@ QUALITATIVE_TYPE_HINTS = {
     }
 }
 
-PROMPT_QUALITATIVE_ENHANCED = """你是临床定性研究专家。请对以下{analysis_type_cn}转录文本进行深度定性分析。
+PROMPT_QUALITATIVE_ENHANCED = """你是质性研究方法论专家。请对以下{analysis_type_cn}材料严格按照四步质性分析法进行系统分析。
 
-输出JSON格式:
+## 分析步骤
+
+### 第一步：初始编码（Open Coding）
+逐句或逐段阅读文本，识别有意义的概念、想法、行为模式，并为每个有意义的片段打上编码标签。
+- 每个编码包含唯一编号(C01, C02...)、编码标签（简短概念名）、对应的原文片段、段落编号(P1, P2...)
+
+### 第二步：主题聚类（Theme Clustering）
+将相似的初始编码进行归纳合并，形成更高层次的上位主题类别。
+- 识别3-5个主主题
+- 每个主主题下有1-4个子主题
+- 每个子主题关联具体的code_id列表
+- 确保主题内部逻辑一致性和主题间差异性
+
+### 第三步：典型原话保留（Representative Quotes）
+为每个最终确定的主题选择2-3条最具代表性的原始引语。
+- 必须是原文直接引用，不做改编
+- 应能充分支撑该主题的核心观点
+
+### 第四步：层级化输出（Hierarchical Structure）
+最终输出严格按照"主题—子主题—编码—原话摘录"的层级结构。
+
+## 输出JSON格式（严格遵守此结构）
 {{
-  "themes": ["主题1", "主题2", "主题3"],
-  "keywords": ["关键词1", "关键词2", "关键词3"],
-  "codes": [
-    {{"code": "编码类别1", "segments": ["相关文本片段1", "片段2"]}},
-    {{"code": "编码类别2", "segments": ["片段3", "片段4"]}}
+  "methodology_note": "本分析采用{analysis_type_cn}质性研究方法，遵循开放性编码→主题聚类→代表性引用→层级输出的四步分析流程",
+  "analysis_type": "{analysis_type}",
+  "step1_initial_coding": [
+    {{
+      "code_id": "C01",
+      "code_label": "编码标签名",
+      "original_text": "原文中的具体片段",
+      "paragraph_ref": "P1"
+    }}
   ],
-  "sentiment": "积极/中性/消极",
-  "summary": "2-3句话分析总结",
-  "concept_network": [
-    {{"source": "概念A", "target": "概念B", "relation": "因果关系"}},
-    {{"source": "概念C", "target": "概念D", "relation": "并列关系"}}
+  "step2_theme_clustering": [
+    {{
+      "theme": "主主题名称",
+      "sub_themes": [
+        {{
+          "sub_theme": "子主题名称",
+          "codes": ["C01", "C03"],
+          "description": "该子主题的简要描述"
+        }}
+      ]
+    }}
+  ],
+  "step3_representative_quotes": [
+    {{
+      "theme": "主主题名称",
+      "quotes": [
+        "原话引用1",
+        "原话引用2"
+      ]
+    }}
+  ],
+  "step4_hierarchical_output": [
+    {{
+      "theme": "主主题名称",
+      "sub_themes": [
+        {{
+          "name": "子主题名称",
+          "codes": [
+            {{
+              "label": "编码标签",
+              "quotes": ["支撑该编码的原话"]
+            }}
+          ]
+        }}
+      ]
+    }}
   ]
 }}
 
-分析要求:
-1. 主题分析: 识别3-5个核心讨论主题（关注: {analysis_hints}）
-2. 关键词提取: 医学/情感/行为关键词10-15个
-3. 编码分类: 按以下类别编码文本: {coding_categories}
-4. 概念关联: 识别概念间的因果/并列/对立关系(3-6组)
-5. 情感判断: 整体情感倾向
+## 分析要点
+- 分析关注点：{analysis_hints}
+- 编码参考类别：{coding_categories}
+- 初始编码数量：8-20个（视文本长度而定）
+- 主主题数量：3-5个
+- 每个主题下的代表性引用：2-3条
+- 所有引用必须来自原文，保持原始措辞
 
-转录文本:
+## 待分析文本：
 {transcript}
 
 只输出JSON，不要输出任何其他内容。"""
 
 
 def qualitative_analysis_enhanced(transcript_text, analysis_type='interview'):
-    """增强版质性分析：支持多种分析类型，含概念网络"""
+    """四步法质性分析：初始编码→主题聚类→代表性引用→层级输出"""
     type_info = QUALITATIVE_TYPE_HINTS.get(analysis_type, QUALITATIVE_TYPE_HINTS['interview'])
     prompt = PROMPT_QUALITATIVE_ENHANCED.format(
         analysis_type_cn=type_info['cn'],
+        analysis_type=analysis_type,
         analysis_hints=type_info['hints'],
         coding_categories=type_info['coding'],
         transcript=transcript_text
@@ -1004,9 +1117,15 @@ def qualitative_analysis_enhanced(transcript_text, analysis_type='interview'):
         model=MODEL_NAME,
         messages=[{'role': 'user', 'content': prompt}],
         temperature=0.3,
-        max_tokens=3000
+        max_tokens=4000
     )
-    return parse_ai_response(response.choices[0].message.content)
+    result = parse_ai_response(response.choices[0].message.content)
+    # 基本校验：确保返回4步结构
+    if 'error' not in result and 'step1_initial_coding' not in result:
+        # 可能是旧格式返回，尝试包装
+        if 'themes' in result:
+            return result  # 返回旧格式，前端会兼容处理
+    return result
 
 
 # ========== 数据分析模块 ==========
@@ -1353,38 +1472,26 @@ def api_get_templates(role_id):
     """获取某角色下的模板列表"""
     conn = get_db()
     c = conn.cursor()
-    c.execute('''SELECT template_id, template_name, template_type, display_layout, create_time
+    c.execute('''SELECT template_id, template_name, template_type, display_layout, ai_prompt, create_time
         FROM extraction_templates WHERE role_id=? AND is_active=1 ORDER BY template_type, create_time''',
               (role_id,))
     rows = c.fetchall()
     conn.close()
     templates = []
     for row in rows:
+        fields = _extract_fields_from_prompt(row['ai_prompt']) if row['ai_prompt'] else []
         templates.append({
             'template_id': row['template_id'],
             'template_name': row['template_name'],
             'template_type': row['template_type'],
             'display_layout': row['display_layout'],
+            'field_count': len(fields),
         })
     return jsonify({"status": "success", "templates": templates})
 
 
-@app.route('/api/templates', methods=['POST'])
-def api_create_template():
-    """创建自定义模板（护士角色）"""
-    data = request.get_json()
-    if not data:
-        return jsonify({"status": "error", "msg": "无数据"})
-
-    role_id = data.get('role_id', 'nurse')
-    template_name = data.get('template_name', '').strip()
-    fields = data.get('fields', [])
-    include_score = data.get('include_score', False)
-
-    if not template_name or not fields:
-        return jsonify({"status": "error", "msg": "请填写模板名称和提取字段"})
-
-    # 生成输出JSON模板
+def _generate_template_prompt(role_id, fields, include_score=False):
+    """根据角色和字段列表生成AI提取Prompt和display_layout"""
     field_schema_parts = []
     for f in fields:
         f = f.strip()
@@ -1397,26 +1504,79 @@ def api_create_template():
     if include_score:
         score_rule = "3. 如果字段是评分项，提取纯数字评分。如有总分，一并计算。\n"
 
-    # 根据角色选择Prompt模板
     if role_id == 'doctor':
         ai_prompt = DOCTOR_CUSTOM_PROMPT_TEMPLATE.format(
-            field_schema=field_schema,
-            field_names=field_names
-        )
+            field_schema=field_schema, field_names=field_names)
         display_layout = 'table'
     elif role_id == 'researcher':
         ai_prompt = RESEARCHER_CUSTOM_PROMPT_TEMPLATE.format(
-            field_schema=field_schema,
-            field_names=field_names
-        )
+            field_schema=field_schema, field_names=field_names)
         display_layout = 'table'
-    else:  # nurse
+    else:
         ai_prompt = NURSE_CUSTOM_PROMPT_TEMPLATE.format(
-            field_schema=field_schema,
-            field_names=field_names,
-            score_rule=score_rule
-        )
+            field_schema=field_schema, field_names=field_names, score_rule=score_rule)
         display_layout = 'scale' if include_score else 'card'
+
+    return ai_prompt, display_layout
+
+
+def _extract_fields_from_prompt(ai_prompt):
+    """从ai_prompt中反向提取自定义字段列表"""
+    fields = []
+    matches = re.findall(r'"custom_fields"\s*:\s*\{([^}]+)\}', ai_prompt, re.DOTALL)
+    if matches:
+        field_matches = re.findall(r'"([^"]+)"\s*:\s*null', matches[0])
+        fields = [f.strip() for f in field_matches if f.strip()]
+    return fields
+
+
+@app.route('/api/templates/<template_id>/detail', methods=['GET'])
+def api_get_template_detail(template_id):
+    """获取模板完整信息用于编辑"""
+    conn = get_db()
+    c = conn.cursor()
+    c.execute('''SELECT template_id, role_id, template_name, template_type,
+        ai_prompt, display_layout, create_time
+        FROM extraction_templates WHERE template_id=?''', (template_id,))
+    row = c.fetchone()
+    conn.close()
+    if not row:
+        return jsonify({"status": "error", "msg": "模板不存在"})
+
+    fields = _extract_fields_from_prompt(row['ai_prompt']) if row['ai_prompt'] else []
+    include_score = row['display_layout'] == 'scale'
+
+    return jsonify({
+        "status": "success",
+        "template": {
+            "template_id": row['template_id'],
+            "role_id": row['role_id'],
+            "template_name": row['template_name'],
+            "template_type": row['template_type'],
+            "display_layout": row['display_layout'],
+            "fields": fields,
+            "include_score": include_score,
+            "create_time": row['create_time']
+        }
+    })
+
+
+@app.route('/api/templates', methods=['POST'])
+def api_create_template():
+    """创建自定义模板"""
+    data = request.get_json()
+    if not data:
+        return jsonify({"status": "error", "msg": "无数据"})
+
+    role_id = data.get('role_id', 'nurse')
+    template_name = data.get('template_name', '').strip()
+    fields = data.get('fields', [])
+    include_score = data.get('include_score', False)
+
+    if not template_name or not fields:
+        return jsonify({"status": "error", "msg": "请填写模板名称和提取字段"})
+
+    ai_prompt, display_layout = _generate_template_prompt(role_id, fields, include_score)
 
     template_id = f"tpl_custom_{uuid.uuid4().hex[:8]}"
     now = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
@@ -1451,6 +1611,216 @@ def api_delete_template(template_id):
     conn.commit()
     conn.close()
     return jsonify({"status": "success", "msg": "模板已删除"})
+
+
+@app.route('/api/templates/<template_id>', methods=['PUT'])
+def api_update_template(template_id):
+    """编辑自定义模板"""
+    data = request.get_json()
+    if not data:
+        return jsonify({"status": "error", "msg": "无数据"})
+
+    conn = get_db()
+    c = conn.cursor()
+    c.execute("SELECT template_type, role_id FROM extraction_templates WHERE template_id=?", (template_id,))
+    row = c.fetchone()
+    if not row:
+        conn.close()
+        return jsonify({"status": "error", "msg": "模板不存在"})
+    if row['template_type'] == 'fixed':
+        conn.close()
+        return jsonify({"status": "error", "msg": "系统内置模板不可编辑"})
+
+    role_id = row['role_id']
+    template_name = data.get('template_name', '').strip()
+    fields = data.get('fields', [])
+    include_score = data.get('include_score', False)
+
+    if not template_name or not fields:
+        conn.close()
+        return jsonify({"status": "error", "msg": "请填写模板名称和提取字段"})
+
+    ai_prompt, display_layout = _generate_template_prompt(role_id, fields, include_score)
+
+    c.execute('''UPDATE extraction_templates
+        SET template_name=?, ai_prompt=?, display_layout=?
+        WHERE template_id=?''',
+              (template_name, ai_prompt, display_layout, template_id))
+    conn.commit()
+    conn.close()
+    return jsonify({"status": "success", "msg": "模板已更新"})
+
+
+# ========== 字段预览与自定义提取 ==========
+
+@app.route('/api/preview_fields', methods=['POST'])
+def api_preview_fields():
+    """文档字段预览 - 分析文档并返回可提取的字段列表"""
+    text_content = request.form.get('text_content', '').strip()
+    uploaded_files = request.files.getlist('files')
+
+    raw_data = None
+    fields = []
+
+    try:
+        if text_content:
+            # 文本模式
+            prompt = PROMPT_FIELD_PREVIEW_TEXT.format(text_content=text_content)
+            response = client.chat.completions.create(
+                model=MODEL_NAME,
+                messages=[{'role': 'user', 'content': prompt}],
+                temperature=0.1,
+                max_tokens=4096
+            )
+            raw_data = parse_ai_response(response.choices[0].message.content)
+
+        elif uploaded_files and uploaded_files[0].filename:
+            file = uploaded_files[0]
+            file_ext = os.path.splitext(file.filename)[1].lower()
+            temp_name = f"{uuid.uuid4().hex}{file_ext}"
+            file_path = os.path.join(app.config['UPLOAD_FOLDER'], temp_name)
+            file.save(file_path)
+
+            try:
+                if is_audio_file(file.filename):
+                    transcript_result = transcribe_audio(file_path)
+                    transcript_text = transcript_result['text']
+                    prompt = PROMPT_FIELD_PREVIEW_TEXT.format(text_content=transcript_text)
+                    response = client.chat.completions.create(
+                        model=MODEL_NAME,
+                        messages=[{'role': 'user', 'content': prompt}],
+                        temperature=0.1,
+                        max_tokens=4096
+                    )
+                    raw_data = parse_ai_response(response.choices[0].message.content)
+                elif is_text_file(file.filename):
+                    raw_file_text = _parse_text_file(file_path)
+                    processed_text = _preprocess_text(raw_file_text)
+                    prompt = PROMPT_FIELD_PREVIEW_TEXT.format(text_content=processed_text)
+                    response = client.chat.completions.create(
+                        model=MODEL_NAME,
+                        messages=[{'role': 'user', 'content': prompt}],
+                        temperature=0.1,
+                        max_tokens=4096
+                    )
+                    raw_data = parse_ai_response(response.choices[0].message.content)
+                else:
+                    # 图片/PDF模式
+                    if file_ext == '.pdf':
+                        image_paths = pdf_to_images(file_path)
+                        if image_paths:
+                            raw_data, _ = extract_medical_data(image_paths[0], PROMPT_FIELD_PREVIEW)
+                            for ip in image_paths:
+                                try:
+                                    os.remove(ip)
+                                except Exception:
+                                    pass
+                    else:
+                        raw_data, _ = extract_medical_data(file_path, PROMPT_FIELD_PREVIEW)
+            finally:
+                try:
+                    if os.path.exists(file_path):
+                        os.remove(file_path)
+                except Exception:
+                    pass
+        else:
+            return jsonify({"status": "error", "msg": "请提供文件或文本内容"})
+
+        if not raw_data or 'error' in raw_data:
+            return jsonify({"status": "error", "msg": raw_data.get('error', '分析失败') if raw_data else '分析失败'})
+
+        fields = raw_data.get('available_fields', [])
+        # 过滤低置信度字段
+        fields = [f for f in fields if f.get('confidence', 0) >= 0.5]
+        # 按category排序
+        category_order = {'基本信息': 0, '检验结果': 1, '诊疗记录': 2, '护理评估': 3, '其他': 4}
+        fields.sort(key=lambda x: category_order.get(x.get('category', '其他'), 4))
+
+        return jsonify({
+            "status": "success",
+            "fields": fields,
+            "raw_data": raw_data
+        })
+    except Exception as e:
+        return jsonify({"status": "error", "msg": f"字段预览失败: {str(e)}"})
+
+
+@app.route('/api/extract_selected', methods=['POST'])
+def api_extract_selected_fields():
+    """根据用户选择的字段执行提取"""
+    data = request.get_json()
+    if not data:
+        return jsonify({"status": "error", "msg": "无数据"})
+
+    selected_fields = data.get('selected_fields', [])
+    role_id = data.get('role_id', 'researcher')
+    cached_raw_data = data.get('raw_data')
+    text_content = data.get('text_content', '').strip()
+
+    if not selected_fields:
+        return jsonify({"status": "error", "msg": "请至少选择一个字段"})
+
+    results = []
+    errors = []
+
+    try:
+        extracted_data = {}
+
+        if cached_raw_data:
+            # 从缓存中筛选字段
+            all_fields = cached_raw_data.get('available_fields', [])
+            for f in all_fields:
+                if f.get('field_name') in selected_fields:
+                    extracted_data[f['field_name']] = f.get('example_value')
+        elif text_content:
+            # 动态生成prompt提取
+            ai_prompt, _ = _generate_template_prompt(role_id, selected_fields)
+            parsed, raw_text = extract_from_transcript(text_content, ai_prompt)
+            if 'error' not in parsed:
+                extracted_data = parsed.get('custom_fields', parsed)
+            else:
+                return jsonify({"status": "error", "msg": parsed.get('error', '提取失败')})
+        else:
+            return jsonify({"status": "error", "msg": "缺少数据来源"})
+
+        # 存储到数据库
+        case_number = f"DYN_{datetime.now().strftime('%Y%m%d')}_{uuid.uuid4().hex[:6].upper()}"
+        record_id = str(uuid.uuid4())
+        create_time = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+
+        conn = get_db()
+        c = conn.cursor()
+        c.execute('''INSERT INTO medical_records
+            (id, case_number, original_filename, role_id, template_id,
+             extracted_data, confidence_data, raw_text, create_time,
+             source_type, module_type)
+            VALUES (?, ?, ?, ?, 'dynamic_extract', ?, NULL, NULL, ?, 'text', 'dynamic_extract')''',
+            (record_id, case_number, '自定义字段提取', role_id,
+             json.dumps(extracted_data, ensure_ascii=False), create_time))
+        conn.commit()
+        conn.close()
+
+        results.append({
+            "id": record_id,
+            "case_number": case_number,
+            "filename": "自定义字段提取",
+            "role_id": role_id,
+            "template_name": "自定义字段",
+            "display_layout": "table",
+            "source_type": "text",
+            "module_type": "dynamic_extract",
+            "data": extracted_data,
+            "create_time": create_time
+        })
+    except Exception as e:
+        errors.append(f"提取失败: {str(e)}")
+
+    return jsonify({
+        "status": "success" if results else "error",
+        "results": results,
+        "errors": errors,
+        "msg": f"成功提取 {len(results)} 份" if results else "提取失败"
+    })
 
 
 # ========== 路由: 核心功能 ==========
