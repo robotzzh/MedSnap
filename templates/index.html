@@ -306,6 +306,39 @@
         .preset-checkbox.checked { border-color: var(--primary); background: #eff6ff; }
         .preset-checkbox input[type="checkbox"] { margin-right: 10px; width: 16px; height: 16px; cursor: pointer; }
         .preset-checkbox .preset-label { font-size: 14px; font-weight: 500; }
+
+        /* ===== User Guide Modal ===== */
+        .guide-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); display: flex; justify-content: center; align-items: center; z-index: 10000; }
+        .guide-overlay.hidden { display: none; }
+        .guide-box { background: white; border-radius: 20px; max-width: 780px; width: 94%; max-height: 88vh; overflow: hidden; display: flex; flex-direction: column; box-shadow: 0 30px 80px rgba(0,0,0,0.3); }
+        .guide-header { padding: 28px 32px 0; display: flex; justify-content: space-between; align-items: flex-start; }
+        .guide-header h2 { font-size: 22px; background: linear-gradient(135deg, #1e40af, #3b82f6); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        .guide-header .guide-close { background: none; border: none; font-size: 22px; cursor: pointer; color: var(--text-secondary); padding: 4px 8px; }
+        .guide-progress { display: flex; gap: 6px; padding: 14px 32px 0; }
+        .guide-dot { width: 10px; height: 10px; border-radius: 50%; background: #e2e8f0; cursor: pointer; transition: all 0.3s; }
+        .guide-dot.active { background: var(--primary); width: 28px; border-radius: 5px; }
+        .guide-body { flex: 1; overflow-y: auto; padding: 20px 32px 28px; }
+        .guide-page { display: none; }
+        .guide-page.active { display: block; }
+        .guide-page h3 { font-size: 18px; margin-bottom: 14px; color: var(--text); }
+        .guide-page h4 { font-size: 15px; margin: 16px 0 8px; color: #475569; }
+        .guide-page p { font-size: 14px; line-height: 1.8; color: #475569; margin-bottom: 10px; }
+        .guide-page ul { padding-left: 20px; margin-bottom: 12px; }
+        .guide-page li { font-size: 14px; line-height: 1.8; color: #475569; margin-bottom: 4px; }
+        .guide-page .tip-box { background: #eff6ff; border: 1px solid #93c5fd; border-radius: 10px; padding: 12px 16px; font-size: 13px; color: #1e40af; margin: 12px 0; }
+        .guide-page .warn-box { background: #fffbeb; border: 1px solid #fbbf24; border-radius: 10px; padding: 12px 16px; font-size: 13px; color: #92400e; margin: 12px 0; }
+        .guide-page .step-num { display: inline-flex; align-items: center; justify-content: center; width: 26px; height: 26px; background: var(--primary); color: white; border-radius: 50%; font-size: 13px; font-weight: 700; margin-right: 8px; }
+        .guide-page .feature-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin: 12px 0; }
+        .guide-page .feature-item { background: #f8fafc; border: 1px solid var(--border); border-radius: 10px; padding: 14px; }
+        .guide-page .feature-item strong { display: block; font-size: 14px; margin-bottom: 4px; }
+        .guide-page .feature-item span { font-size: 12px; color: var(--text-secondary); }
+        .guide-footer { padding: 0 32px 24px; display: flex; justify-content: space-between; align-items: center; }
+        .guide-footer .page-info { font-size: 13px; color: var(--text-secondary); }
+        .guide-footer .guide-btns { display: flex; gap: 10px; }
+        .guide-footer .guide-btn-prev { padding: 10px 20px; border: 1px solid var(--border); border-radius: 10px; background: white; cursor: pointer; font-size: 14px; }
+        .guide-footer .guide-btn-next { padding: 10px 24px; border: none; border-radius: 10px; background: linear-gradient(135deg, #2563eb, #3b82f6); color: white; cursor: pointer; font-size: 14px; font-weight: 600; }
+        .guide-footer .guide-btn-next:hover { background: linear-gradient(135deg, #1d4ed8, #2563eb); }
+        @media (max-width: 768px) { .guide-page .feature-grid { grid-template-columns: 1fr; } }
     </style>
     <script src="https://cdn.jsdelivr.net/npm/echarts@5.5.1/dist/echarts.min.js"></script>
 </head>
@@ -514,7 +547,148 @@
         </div>
     </div>
 
-    <div class="footer">MedSnap 临床数据智能平台 | 数据仅存储于本地 | 请勿用于临床诊断</div>
+    <div class="footer">MedSnap 临床数据智能平台 | 数据仅存储于本地 | 请勿用于临床诊断 | <a href="javascript:void(0)" onclick="showGuide()" style="color:var(--primary);text-decoration:none;">使用指南</a></div>
+
+    <!-- User Guide Modal -->
+    <div class="guide-overlay hidden" id="guideOverlay">
+        <div class="guide-box">
+            <div class="guide-header">
+                <h2>MedSnap 使用指南</h2>
+                <button class="guide-close" onclick="closeGuide()">&#10005;</button>
+            </div>
+            <div class="guide-progress" id="guideDots"></div>
+            <div class="guide-body" id="guideBody">
+
+                <!-- Page 1: Welcome -->
+                <div class="guide-page active" data-page="0">
+                    <h3>欢迎使用 MedSnap 临床数据智能平台</h3>
+                    <p>MedSnap 是一款面向医疗专业人员的 AI 驱动临床数据提取与分析工具，支持从图片、语音、文本等多种来源中自动识别和结构化提取医疗信息。</p>
+                    <div class="feature-grid">
+                        <div class="feature-item"><strong>定量研究</strong><span>结构化数据提取、模板管理、统计分析与可视化</span></div>
+                        <div class="feature-item"><strong>质性分析</strong><span>访谈编码、主题聚类、引用提取、层级化输出</span></div>
+                        <div class="feature-item"><strong>多角色适配</strong><span>临床医生、护士、临床科研人员各有专属模板和字段</span></div>
+                        <div class="feature-item"><strong>多数据源</strong><span>支持图片/PDF、语音录音、文本粘贴三种输入方式</span></div>
+                    </div>
+                    <div class="tip-box">首次使用时，系统会引导您选择角色身份。您的选择将决定可用的模板和预设字段。角色可随时在导航栏切换。</div>
+                </div>
+
+                <!-- Page 2: Role Selection -->
+                <div class="guide-page" data-page="1">
+                    <h3>第一步：选择角色身份</h3>
+                    <p>系统启动时会弹出角色选择界面，提供三种角色：</p>
+                    <h4><span class="step-num">1</span>临床医生</h4>
+                    <p>适用于门诊/住院病历识别、检验报告分析、手术记录提取。系统内置门诊病历模板（12个字段）和检查检验结果模板（8个字段）。</p>
+                    <h4><span class="step-num">2</span>护士</h4>
+                    <p>适用于各类护理评估量表和记录。系统内置 Barthel 自理能力量表、Morse 跌倒风险量表、Braden 压疮风险量表、NRS/VAS 疼痛评估、入院护理评估表、护理记录单共 6 套专业模板。</p>
+                    <h4><span class="step-num">3</span>临床科研</h4>
+                    <p>适用于科研数据提取与分析。内置综合科研数据提取模板，支持人口学特征、实验室检查、终点事件等字段。同时提供质性研究四步分析法。</p>
+                    <div class="tip-box">角色选择后，导航栏右侧会显示当前角色徽章。点击徽章即可随时切换角色，模板列表会自动更新。</div>
+                </div>
+
+                <!-- Page 3: Quantitative -->
+                <div class="guide-page" data-page="2">
+                    <h3>第二步：定量研究模块</h3>
+                    <p>定量研究模块用于从医疗文档中提取结构化数据。</p>
+                    <h4>选择模板</h4>
+                    <p>在模块顶部的下拉菜单中选择识别模板。系统模板针对特定文档类型优化，自定义模板可按需创建。</p>
+                    <h4>上传数据</h4>
+                    <ul>
+                        <li><strong>图片/PDF 上传：</strong>支持 JPG、PNG、BMP、TIFF、PDF 格式，可批量上传多个文件</li>
+                        <li><strong>语音上传：</strong>支持 WAV、MP3、M4A、AAC、FLAC 格式，系统自动转录后提取数据</li>
+                        <li><strong>文本输入：</strong>直接粘贴病历、检验报告等文本内容</li>
+                    </ul>
+                    <h4>字段预览功能</h4>
+                    <p>点击「预览可提取字段」按钮，系统会先分析文档内容，列出所有可识别的字段及其置信度。您可以勾选需要的字段后再执行提取，避免提取不必要的信息。</p>
+                    <div class="tip-box">字段预览会按类别分组显示（基本信息、检验结果、诊疗记录等），每个字段旁标注置信度百分比和示例值，帮助您判断提取质量。</div>
+                </div>
+
+                <!-- Page 4: Qualitative -->
+                <div class="guide-page" data-page="3">
+                    <h3>第三步：质性分析模块</h3>
+                    <p>质性分析模块采用严格的学术四步法，适用于深度访谈、焦点小组和观察记录分析。</p>
+                    <h4>选择分析类型</h4>
+                    <ul>
+                        <li><strong>深度访谈分析：</strong>聚焦患者体验、疾病认知、治疗态度、心理感受</li>
+                        <li><strong>焦点小组分析：</strong>聚焦群体共识、争议点、互动模式、观点演变</li>
+                        <li><strong>观察记录分析：</strong>聚焦行为模式、环境因素、非语言信息、事件序列</li>
+                    </ul>
+                    <h4>四步分析法</h4>
+                    <p><span class="step-num">1</span><strong>初始编码（Open Coding）：</strong>逐句/段识别有意义概念，生成 8-20 个编码，记录编码 ID、标签、原文片段和段落参考。</p>
+                    <p><span class="step-num">2</span><strong>主题聚类（Theme Clustering）：</strong>将编码归纳为 3-5 个主主题，每个主题下设 1-4 个子主题，建立编码与主题的关联关系。</p>
+                    <p><span class="step-num">3</span><strong>代表性引用（Representative Quotes）：</strong>为每个主题选取 2-3 条最具代表性的原文引用，保持原始表述。</p>
+                    <p><span class="step-num">4</span><strong>层级化输出（Hierarchical Output）：</strong>按「主题 - 子主题 - 编码 - 原话摘录」四级结构呈现完整分析结果，以树形图可视化展示。</p>
+                    <div class="tip-box">分析结果以可折叠面板展示，第四步（层级化结构）默认展开。点击每步标题可展开/收起，便于逐步审阅分析过程。</div>
+                </div>
+
+                <!-- Page 5: Template Management -->
+                <div class="guide-page" data-page="4">
+                    <h3>第四步：模板管理</h3>
+                    <p>点击定量研究模块中的「管理模板」按钮打开模板管理界面。</p>
+                    <h4>查看模板详情</h4>
+                    <p>点击任意模板卡片，卡片会高亮选中，下方弹出详情面板，展示该模板包含的所有提取字段。</p>
+                    <h4>创建自定义模板</h4>
+                    <ul>
+                        <li>点击「新建模板」进入表单视图</li>
+                        <li>输入模板名称</li>
+                        <li>系统会根据当前角色自动显示分类的预设字段（默认全选）</li>
+                        <li>取消不需要的预设字段，或在下方添加自定义字段</li>
+                        <li>如模板涉及评分项（如量表），勾选「包含评分项」选项</li>
+                        <li>点击「保存模板」完成创建</li>
+                    </ul>
+                    <h4>编辑和删除</h4>
+                    <p>自定义模板支持编辑和删除操作。在模板卡片上点击「编辑」修改字段，或在详情面板中直接编辑字段名称、增删字段后点击「保存修改」。系统内置模板为只读，不可修改。</p>
+                    <div class="warn-box">删除模板不会影响已使用该模板提取的历史记录。</div>
+                </div>
+
+                <!-- Page 6: Results & History -->
+                <div class="guide-page" data-page="5">
+                    <h3>第五步：查看结果与管理数据</h3>
+                    <h4>查看分析结果</h4>
+                    <p>处理完成后，结果会自动显示在页面中。如果同时处理了多份文档，可通过顶部选项卡切换查看每份结果。</p>
+                    <ul>
+                        <li><strong>定量数据：</strong>以字段-值表格形式展示结构化提取结果</li>
+                        <li><strong>质性分析：</strong>以四步折叠面板展示编码、主题、引用和层级结构</li>
+                        <li><strong>语音数据：</strong>额外显示转录原文，可核对识别准确性</li>
+                    </ul>
+                    <h4>处理历史</h4>
+                    <p>页面底部的「处理历史」区域自动记录所有处理结果。点击「查看」可回看任意历史记录，点击「删除」可移除不需要的记录。</p>
+                    <h4>导出数据</h4>
+                    <p>点击导航栏的「导出数据」按钮，系统会将所有记录导出为 Excel 文件。导出文件按角色分 Sheet 页，低置信度字段会标红提示。</p>
+                    <h4>清空数据</h4>
+                    <p>点击导航栏的「清空」按钮可删除所有数据。此操作不可撤销，请谨慎使用。</p>
+                    <div class="warn-box">所有数据仅存储于服务器本地数据库，不会上传至第三方。本工具仅供辅助分析，请勿直接用于临床诊断。</div>
+                </div>
+
+                <!-- Page 7: FAQ -->
+                <div class="guide-page" data-page="6">
+                    <h3>常见问题与最佳实践</h3>
+                    <h4>常见问题</h4>
+                    <p><strong>Q：支持哪些图片格式？</strong><br>A：JPG、PNG、BMP、TIFF 和 PDF。建议使用清晰、光照均匀的扫描件或照片，分辨率不低于 300dpi。</p>
+                    <p><strong>Q：语音识别支持哪些语言？</strong><br>A：主要支持中文和英文，推荐使用安静环境录音的 WAV 或 MP3 文件。</p>
+                    <p><strong>Q：单次最多上传多大的文件？</strong><br>A：单个文件不超过 100MB，支持批量上传多个文件。</p>
+                    <p><strong>Q：提取结果不准确怎么办？</strong><br>A：可以尝试使用「字段预览」功能先查看识别情况；对于图片，确保文字清晰可见；对于语音，确保录音清晰。</p>
+                    <h4>最佳实践</h4>
+                    <ul>
+                        <li>上传图片前确保文档方向正确、文字清晰、无大面积遮挡</li>
+                        <li>处理量表类文档时，选择对应的量表模板（如 Barthel、Morse）可获得更准确的评分提取</li>
+                        <li>质性分析建议输入不少于 200 字的文本以获得有意义的编码结果</li>
+                        <li>定期导出数据备份，避免数据丢失</li>
+                        <li>利用字段预览功能可在正式提取前评估文档识别质量</li>
+                        <li>创建自定义模板时，字段名称应简洁明确，避免使用缩写</li>
+                    </ul>
+                    <div class="tip-box">您可以随时点击页面底部的「使用指南」链接重新打开本指南。</div>
+                </div>
+
+            </div>
+            <div class="guide-footer">
+                <span class="page-info" id="guidePageInfo">1 / 7</span>
+                <div class="guide-btns">
+                    <button class="guide-btn-prev" id="guidePrevBtn" onclick="guideNav(-1)">上一页</button>
+                    <button class="guide-btn-next" id="guideNextBtn" onclick="guideNav(1)">下一页</button>
+                </div>
+            </div>
+        </div>
+    </div>
 
     <!-- Template Modal -->
     <div class="role-overlay" id="templateModal" style="display:none;background:rgba(0,0,0,0.5);">
@@ -1633,6 +1807,53 @@ function saveDetailFields() {
 /* ===== Utility ===== */
 function esc(s) { if (s == null) return ''; var d = document.createElement('div'); d.textContent = String(s); return d.innerHTML; }
 
+/* ===== User Guide ===== */
+var guideCurrentPage = 0;
+var guideTotalPages = 7;
+
+function showGuide() {
+    guideCurrentPage = 0;
+    renderGuideDots();
+    showGuidePage(0);
+    document.getElementById('guideOverlay').classList.remove('hidden');
+}
+
+function closeGuide() {
+    document.getElementById('guideOverlay').classList.add('hidden');
+    localStorage.setItem('medsnap_guide_seen', '1');
+}
+
+function renderGuideDots() {
+    var html = '';
+    for (var i = 0; i < guideTotalPages; i++) {
+        html += '<span class="guide-dot' + (i === guideCurrentPage ? ' active' : '') + '" onclick="showGuidePage(' + i + ')"></span>';
+    }
+    document.getElementById('guideDots').innerHTML = html;
+}
+
+function showGuidePage(idx) {
+    guideCurrentPage = idx;
+    document.querySelectorAll('.guide-page').forEach(function(p, i) {
+        p.classList.toggle('active', i === idx);
+    });
+    renderGuideDots();
+    document.getElementById('guidePageInfo').textContent = (idx + 1) + ' / ' + guideTotalPages;
+    document.getElementById('guidePrevBtn').style.visibility = idx === 0 ? 'hidden' : 'visible';
+    var nextBtn = document.getElementById('guideNextBtn');
+    if (idx === guideTotalPages - 1) {
+        nextBtn.textContent = '开始使用';
+        nextBtn.onclick = closeGuide;
+    } else {
+        nextBtn.textContent = '下一页';
+        nextBtn.onclick = function() { guideNav(1); };
+    }
+}
+
+function guideNav(dir) {
+    var next = guideCurrentPage + dir;
+    if (next >= 0 && next < guideTotalPages) showGuidePage(next);
+}
+
 /* ===== Init ===== */
 document.addEventListener('DOMContentLoaded', function() {
     // Check saved role
@@ -1653,6 +1874,11 @@ document.addEventListener('DOMContentLoaded', function() {
     loadTemplates();
     refreshHistory();
     refreshStats();
+
+    // Show guide on first visit
+    if (!localStorage.getItem('medsnap_guide_seen')) {
+        setTimeout(function() { showGuide(); }, 800);
+    }
 });
 </script>
 </body>
