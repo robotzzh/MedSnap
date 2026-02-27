@@ -245,23 +245,94 @@
         ::-webkit-scrollbar { width: 6px; }
         ::-webkit-scrollbar-track { background: transparent; }
         ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 3px; }
-        @media (max-width: 900px) { .module-nav { grid-template-columns: repeat(3, 1fr); } }
+        /* Role Selection Startup */
+        .role-startup-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: linear-gradient(135deg, #1e3a8a 0%, #3b82f6 50%, #60a5fa 100%); display: flex; justify-content: center; align-items: center; z-index: 2000; opacity: 1; visibility: visible; transition: all 0.5s ease; }
+        .role-startup-overlay.hidden { opacity: 0; visibility: hidden; }
+        .role-startup-box { background: white; border-radius: 24px; padding: 40px 50px; max-width: 700px; width: 90%; text-align: center; box-shadow: 0 30px 80px rgba(0,0,0,0.3); animation: roleBoxIn 0.6s ease; }
+        @keyframes roleBoxIn { from { opacity: 0; transform: scale(0.85) translateY(30px); } to { opacity: 1; transform: scale(1) translateY(0); } }
+        .role-startup-box h1 { font-size: 28px; margin-bottom: 8px; background: linear-gradient(135deg, #1e40af, #3b82f6); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+        .role-startup-box .subtitle { color: var(--text-secondary); font-size: 14px; margin-bottom: 30px; }
+        .role-cards { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-bottom: 24px; }
+        .role-card { padding: 24px 16px; border: 2px solid var(--border); border-radius: 16px; cursor: pointer; transition: all 0.3s; background: #fafbfc; }
+        .role-card:hover { border-color: var(--primary); transform: translateY(-4px); box-shadow: 0 8px 24px rgba(37,99,235,0.15); }
+        .role-card.selected { border-color: var(--primary); background: linear-gradient(135deg, #eff6ff, #dbeafe); box-shadow: 0 4px 20px rgba(37,99,235,0.2); }
+        .role-card .role-icon { font-size: 48px; margin-bottom: 12px; }
+        .role-card h3 { font-size: 16px; margin-bottom: 4px; color: var(--text); }
+        .role-card p { font-size: 11px; color: var(--text-secondary); line-height: 1.5; }
+        .role-card.doctor { --card-color: #2563eb; }
+        .role-card.nurse { --card-color: #059669; }
+        .role-card.researcher { --card-color: #d97706; }
+        .role-card.selected.doctor { background: linear-gradient(135deg, #eff6ff, #dbeafe); border-color: #2563eb; }
+        .role-card.selected.nurse { background: linear-gradient(135deg, #ecfdf5, #d1fae5); border-color: #059669; }
+        .role-card.selected.researcher { background: linear-gradient(135deg, #fffbeb, #fef3c7); border-color: #d97706; }
+        .role-startup-box .start-btn { width: 100%; padding: 14px; font-size: 16px; font-weight: 600; border: none; border-radius: 12px; cursor: pointer; transition: all 0.3s; background: linear-gradient(135deg, #2563eb, #3b82f6); color: white; }
+        .role-startup-box .start-btn:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(37,99,235,0.35); }
+        .role-startup-box .start-btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+        .role-startup-box .skip-link { display: block; margin-top: 16px; font-size: 12px; color: var(--text-secondary); cursor: pointer; }
+        .role-startup-box .skip-link:hover { color: var(--primary); }
+        /* Navbar role badge */
+        .navbar-role-badge { display: flex; align-items: center; gap: 8px; background: rgba(255,255,255,0.15); padding: 6px 14px; border-radius: 20px; cursor: pointer; transition: all 0.2s; }
+        .navbar-role-badge:hover { background: rgba(255,255,255,0.25); }
+        .navbar-role-badge .role-dot { width: 10px; height: 10px; border-radius: 50%; }
+        .navbar-role-badge .role-name { font-size: 13px; font-weight: 500; }
+        .navbar-role-badge select { background: transparent; border: none; color: white; font-size: 13px; font-weight: 500; cursor: pointer; outline: none; -webkit-appearance: none; appearance: none; padding-right: 16px; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='white' viewBox='0 0 16 16'%3E%3Cpath d='M8 11L3 6h10z'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right center; }
+        .navbar-role-badge select option { color: var(--text); background: white; }
+        @media (max-width: 900px) { .module-nav { grid-template-columns: repeat(3, 1fr); } .role-cards { grid-template-columns: repeat(3, 1fr); } }
         @media (max-width: 600px) {
             .module-nav { grid-template-columns: repeat(2, 1fr); }
             .navbar-inner { flex-direction: column; gap: 8px; }
             .module-header { flex-direction: column; align-items: flex-start; }
             .template-modal .modal-body { flex-direction: column; }
             .template-form-panel { border-left: none; padding-left: 0; border-top: 1px solid var(--border); padding-top: 16px; }
+            .role-cards { grid-template-columns: 1fr; }
+            .role-startup-box { padding: 30px 24px; }
+            .role-startup-box h1 { font-size: 22px; }
         }
     </style>
     <script src="https://cdn.jsdelivr.net/npm/echarts@5.5.1/dist/echarts.min.js"></script>
 </head>
 <body>
+    <!-- Role Selection Startup Screen -->
+    <div class="role-startup-overlay" id="roleStartupOverlay">
+        <div class="role-startup-box">
+            <h1>&#9879; MedSnap 临床数据智能平台</h1>
+            <p class="subtitle">请选择您的角色身份，系统将加载对应的识别模板和数据布局</p>
+            <div class="role-cards">
+                <div class="role-card doctor" onclick="selectStartupRole('doctor')">
+                    <div class="role-icon">&#128104;&#8205;&#9877;&#65039;</div>
+                    <h3>临床医生</h3>
+                    <p>门诊/住院病历<br>检验检查报告<br>手术记录识别</p>
+                </div>
+                <div class="role-card nurse" onclick="selectStartupRole('nurse')">
+                    <div class="role-icon">&#128105;&#8205;&#9877;&#65039;</div>
+                    <h3>护士</h3>
+                    <p>护理量表评估<br>Barthel/Morse/Braden<br>生命体征记录</p>
+                </div>
+                <div class="role-card researcher selected" onclick="selectStartupRole('researcher')">
+                    <div class="role-icon">&#128300;</div>
+                    <h3>临床科研</h3>
+                    <p>科研数据提取<br>质性研究分析<br>统计可视化</p>
+                </div>
+            </div>
+            <button class="start-btn" onclick="confirmStartupRole()">开始使用</button>
+            <span class="skip-link" onclick="skipRoleSelection()">跳过，使用默认设置</span>
+        </div>
+    </div>
+
     <nav class="navbar" id="navbar">
         <div class="navbar-inner">
             <h1 id="appTitle">&#9879; MedSnap 临床数据智能平台</h1>
             <div class="nav-actions">
+                <div class="navbar-role-badge" id="navbarRoleBadge" title="点击切换角色">
+                    <span class="role-dot" id="roleDot" style="background:#d97706;"></span>
+                    <select id="globalRoleSelect" onchange="changeGlobalRole(this.value)">
+                        <option value="doctor">&#128104;&#8205;&#9877; 临床医生</option>
+                        <option value="nurse">&#128105;&#8205;&#9877; 护士</option>
+                        <option value="researcher" selected>&#128300; 临床科研</option>
+                    </select>
+                </div>
                 <span class="record-count" id="recordCount">已处理: 0 份</span>
+                <button class="nav-btn" onclick="showRoleSelection()">切换角色</button>
                 <button class="nav-btn" onclick="showGuide()">引导</button>
                 <button class="nav-btn" onclick="exportData()">导出</button>
                 <button class="nav-btn" onclick="cleanAll()">清空</button>
@@ -303,7 +374,7 @@
                 <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
                     <div class="role-selector-inline">
                         <label>角色:</label>
-                        <select id="imageRoleSelect" onchange="loadModuleTemplates('image_ocr')">
+                        <select id="imageRoleSelect" onchange="changeGlobalRole(this.value)">
                             <option value="doctor">&#128104;&#8205;&#9877;&#65039; 临床医生</option>
                             <option value="nurse">&#128105;&#8205;&#9877;&#65039; 护士</option>
                             <option value="researcher" selected>&#128300; 临床科研</option>
@@ -333,7 +404,7 @@
                 <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
                     <div class="role-selector-inline">
                         <label>角色:</label>
-                        <select id="voiceRoleSelect" onchange="loadModuleTemplates('voice_input')">
+                        <select id="voiceRoleSelect" onchange="changeGlobalRole(this.value)">
                             <option value="doctor">&#128104;&#8205;&#9877;&#65039; 临床医生</option>
                             <option value="nurse">&#128105;&#8205;&#9877;&#65039; 护士</option>
                             <option value="researcher">&#128300; 临床科研</option>
@@ -363,7 +434,7 @@
                 <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
                     <div class="role-selector-inline">
                         <label>角色:</label>
-                        <select id="textRoleSelect" onchange="loadModuleTemplates('text_input')">
+                        <select id="textRoleSelect" onchange="changeGlobalRole(this.value)">
                             <option value="doctor">&#128104;&#8205;&#9877;&#65039; 临床医生</option>
                             <option value="nurse">&#128105;&#8205;&#9877;&#65039; 护士</option>
                             <option value="researcher">&#128300; 临床科研</option>
@@ -580,11 +651,82 @@
     var moduleIcons = { image_ocr: '&#128248;', voice_input: '&#127908;', text_input: '&#128221;', qualitative: '&#128300;', data_analysis: '&#128202;' };
     var moduleNames = { image_ocr: '图片识别', voice_input: '语音输入', text_input: '文本输入', qualitative: '质性研究', data_analysis: '数据分析' };
     var echartsInstances = [];
+    var selectedStartupRole = 'researcher';
+
+    /* ===== Role Selection Startup ===== */
+    function selectStartupRole(roleId) {
+        selectedStartupRole = roleId;
+        var cards = document.querySelectorAll('.role-card');
+        for (var i = 0; i < cards.length; i++) {
+            cards[i].classList.remove('selected');
+            if (cards[i].classList.contains(roleId)) cards[i].classList.add('selected');
+        }
+    }
+    function confirmStartupRole() {
+        currentRole = selectedStartupRole;
+        localStorage.setItem('selected_role', currentRole);
+        hideRoleStartup();
+        applyGlobalRole(currentRole);
+        showToast('已切换至「' + roleNames[currentRole] + '」模式', 'success');
+    }
+    function skipRoleSelection() {
+        localStorage.setItem('role_selection_skipped', 'true');
+        hideRoleStartup();
+    }
+    function hideRoleStartup() {
+        var overlay = document.getElementById('roleStartupOverlay');
+        overlay.classList.add('hidden');
+        setTimeout(function() { overlay.style.display = 'none'; }, 500);
+    }
+    function showRoleSelection() {
+        var overlay = document.getElementById('roleStartupOverlay');
+        overlay.style.display = 'flex';
+        setTimeout(function() { overlay.classList.remove('hidden'); }, 10);
+        selectStartupRole(currentRole);
+    }
+    function changeGlobalRole(roleId) {
+        currentRole = roleId;
+        localStorage.setItem('selected_role', roleId);
+        applyGlobalRole(roleId);
+        showToast('已切换至「' + roleNames[roleId] + '」模式', 'info');
+    }
+    function applyGlobalRole(roleId) {
+        // Update navbar
+        document.getElementById('globalRoleSelect').value = roleId;
+        document.getElementById('roleDot').style.background = roleColors[roleId];
+        // Sync all module role selectors
+        var selectors = ['imageRoleSelect', 'voiceRoleSelect', 'textRoleSelect'];
+        for (var i = 0; i < selectors.length; i++) {
+            var sel = document.getElementById(selectors[i]);
+            if (sel) sel.value = roleId;
+        }
+        // Reload templates for all modules
+        loadModuleTemplates('image_ocr');
+        loadModuleTemplates('voice_input');
+        loadModuleTemplates('text_input');
+        // Update navbar gradient color
+        var navbar = document.getElementById('navbar');
+        navbar.style.background = 'linear-gradient(135deg, #1e40af, ' + roleColors[roleId] + ')';
+    }
 
     /* ===== Init ===== */
     document.addEventListener('DOMContentLoaded', function() {
-        var saved = sessionStorage.getItem('current_module');
-        if (saved) switchModule(saved);
+        // Check for saved role
+        var savedRole = localStorage.getItem('selected_role');
+        var roleSkipped = localStorage.getItem('role_selection_skipped');
+        
+        if (savedRole) {
+            currentRole = savedRole;
+            selectedStartupRole = savedRole;
+            hideRoleStartup();
+            applyGlobalRole(savedRole);
+        } else if (roleSkipped) {
+            hideRoleStartup();
+        }
+        // else: show startup screen (default visible)
+
+        var savedModule = sessionStorage.getItem('current_module');
+        if (savedModule) switchModule(savedModule);
         loadModuleTemplates('image_ocr');
         loadModuleTemplates('voice_input');
         loadModuleTemplates('text_input');
@@ -595,7 +737,11 @@
         document.getElementById('voiceFileInput').addEventListener('change', function(e) { addModuleFiles('voice_input', Array.from(e.target.files)); e.target.value = ''; });
         document.getElementById('textFileInput').addEventListener('change', function(e) { addModuleFiles('text_input', Array.from(e.target.files)); e.target.value = ''; });
         document.getElementById('qualAudioInput').addEventListener('change', function(e) { addModuleFiles('qualitative', Array.from(e.target.files)); e.target.value = ''; });
-        if (!localStorage.getItem('guide_dismissed')) showGuide();
+        
+        // Show guide only after role selection is done and guide not dismissed
+        if ((savedRole || roleSkipped) && !localStorage.getItem('guide_dismissed')) {
+            showGuide();
+        }
     });
 
     /* ===== Module Switch ===== */
@@ -607,10 +753,6 @@
         var contents = document.querySelectorAll('.module-content');
         for (var j = 0; j < contents.length; j++) contents[j].classList.toggle('active', contents[j].id === 'module-' + moduleId);
         if (moduleId === 'data_analysis') loadAnalysisRecords();
-        // Update currentRole from module's role selector
-        if (moduleId === 'image_ocr') currentRole = document.getElementById('imageRoleSelect').value;
-        else if (moduleId === 'voice_input') currentRole = document.getElementById('voiceRoleSelect').value;
-        else if (moduleId === 'text_input') currentRole = document.getElementById('textRoleSelect').value;
     }
 
     /* ===== Template Loading ===== */
