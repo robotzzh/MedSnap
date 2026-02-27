@@ -1530,6 +1530,23 @@ def _extract_fields_from_prompt(ai_prompt):
     return fields
 
 
+# 系统模板的中文字段名映射
+TEMPLATE_FIELDS = {
+    'tpl_doctor_medical': ['主诉', '现病史', '既往史', '个人史', '家族史', '过敏史', '体格检查', '专科检查', '辅助检查', '诊断', '诊疗计划', '处理意见'],
+    'tpl_doctor_lab': ['项目名称', '结果', '参考值', '单位', '异常提示', '标本类型', '采集时间', '报告时间'],
+    'tpl_nurse_admission': ['一般资料', '过敏史', '既往史', '用药史', '生命体征', '意识状态', '皮肤黏膜', '营养状况', '排泄', '活动能力', '跌倒风险', '压疮风险', '疼痛评分', '吞咽功能', '心理状态', '睡眠', '饮食', '专科情况', '护理问题', '护理措施'],
+    'tpl_nurse_barthel': ['进食', '洗澡', '修饰', '穿衣', '控制大便', '控制小便', '如厕', '床椅转移', '平地行走', '上下楼梯'],
+    'tpl_nurse_morse': ['跌倒史', '继发诊断', '步行辅助', '静脉输液/肝素锁', '步态', '认知状态'],
+    'tpl_nurse_braden': ['感知能力', '潮湿程度', '活动能力', '移动能力', '营养摄取', '摩擦力和剪切力'],
+    'tpl_nurse_pain': ['疼痛部位', '疼痛性质', '疼痛强度', '诱发因素', '缓解因素', '伴随症状', '疼痛持续时间'],
+    'tpl_nurse_record': ['生命体征', '意识状态', '皮肤完整性', '跌倒风险', '压疮风险', '护理措施'],
+    'tpl_researcher_default': ['人口学特征', '实验室检查', '主要终点事件', '随访日期', '血压', '血脂', '用药情况', '治疗结局'],
+    'tpl_audio_doctor': ['主诉', '现病史', '诊断', '治疗方案'],
+    'tpl_audio_nurse': ['生命体征', '护理观察', '风险提醒'],
+    'tpl_audio_researcher': ['人口学特征', '病史', '干预措施', '结局指标'],
+}
+
+
 @app.route('/api/templates/<template_id>/detail', methods=['GET'])
 def api_get_template_detail(template_id):
     """获取模板完整信息用于编辑"""
@@ -1543,7 +1560,9 @@ def api_get_template_detail(template_id):
     if not row:
         return jsonify({"status": "error", "msg": "模板不存在"})
 
-    fields = _extract_fields_from_prompt(row['ai_prompt']) if row['ai_prompt'] else []
+    fields = TEMPLATE_FIELDS.get(row['template_id'], [])
+    if not fields and row['template_type'] == 'custom':
+        fields = _extract_fields_from_prompt(row['ai_prompt']) if row['ai_prompt'] else []
     include_score = row['display_layout'] == 'scale'
 
     return jsonify({

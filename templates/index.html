@@ -1265,9 +1265,21 @@ function cleanAll() {
 
 /* ===== Template Modal ===== */
 var rolePresetFields = {
-    doctor: ['主诉','现病史','既往史','体格检查','诊断','治疗方案','手术记录','检验结果'],
-    nurse: ['生命体征','意识状态','皮肤完整性','跌倒风险','压疮风险','护理措施','患者反应','疼痛评分'],
-    researcher: ['人口学特征','实验室检查','主要终点事件','随访日期','血压','血脂','用药情况','治疗结局']
+    doctor: {
+        '门诊/住院病历': ['主诉','现病史','既往史','个人史','家族史','过敏史','体格检查','专科检查','辅助检查','诊断','诊疗计划','处理意见'],
+        '检查检验结果': ['项目名称','结果','参考值','单位','异常提示','标本类型','采集时间','报告时间']
+    },
+    nurse: {
+        '护理评估表': ['生命体征','意识状态','皮肤完整性','跌倒风险','压疮风险','护理措施'],
+        'Morse跌倒风险': ['跌倒史','继发诊断','步行辅助','静脉输液/肝素锁','步态','认知状态'],
+        'Barthel自理能力': ['进食','洗澡','修饰','穿衣','控制大便','控制小便','如厕','床椅转移','平地行走','上下楼梯'],
+        'Braden压疮风险': ['感知能力','潮湿程度','活动能力','移动能力','营养摄取','摩擦力和剪切力'],
+        'NRS/VAS疼痛评估': ['疼痛部位','疼痛性质','疼痛强度','诱发因素','缓解因素','伴随症状','疼痛持续时间'],
+        '入院护理评估': ['一般资料','过敏史','既往史','用药史','皮肤黏膜','营养状况','排泄','吞咽功能','心理状态','睡眠','饮食','专科情况','护理问题']
+    },
+    researcher: {
+        '综合科研数据': ['人口学特征','实验室检查','主要终点事件','随访日期','血压','血脂','用药情况','治疗结局']
+    }
 };
 
 function openTemplateModal() {
@@ -1335,12 +1347,18 @@ function addFieldRow(name) {
 function renderPresetCheckboxes() {
     var presets = rolePresetFields[currentRole] || rolePresetFields.researcher;
     var html = '';
-    presets.forEach(function(p) {
-        html += '<label class="preset-checkbox checked" onclick="togglePresetCheckbox(this)">';
-        html += '<input type="checkbox" checked value="' + esc(p) + '">';
-        html += '<span class="preset-label">' + esc(p) + '</span>';
-        html += '</label>';
-    });
+    for (var category in presets) {
+        html += '<div style="margin-bottom:14px;">';
+        html += '<div style="font-size:13px;font-weight:600;color:var(--text-secondary);margin-bottom:8px;padding-bottom:6px;border-bottom:1px solid var(--border);">' + esc(category) + '</div>';
+        html += '<div class="preset-checkboxes">';
+        presets[category].forEach(function(p) {
+            html += '<label class="preset-checkbox checked" onclick="togglePresetCheckbox(this)">';
+            html += '<input type="checkbox" checked value="' + esc(p) + '">';
+            html += '<span class="preset-label">' + esc(p) + '</span>';
+            html += '</label>';
+        });
+        html += '</div></div>';
+    }
     document.getElementById('presetCheckboxes').innerHTML = html;
 }
 
