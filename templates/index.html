@@ -298,6 +298,14 @@
         .detail-actions .btn-close-detail:hover { background: #f1f5f9; }
         .field-count-badge { font-size: 12px; background: var(--primary); color: white; padding: 2px 10px; border-radius: 10px; font-weight: 500; }
         .detail-loading { text-align: center; padding: 30px; color: var(--text-secondary); }
+
+        /* ===== Preset Field Checkboxes ===== */
+        .preset-checkboxes { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 8px; margin-top: 10px; }
+        .preset-checkbox { display: flex; align-items: center; padding: 10px 14px; background: #f8fafc; border: 2px solid var(--border); border-radius: 10px; cursor: pointer; transition: all 0.2s; }
+        .preset-checkbox:hover { border-color: #93c5fd; background: #fafbfc; }
+        .preset-checkbox.checked { border-color: var(--primary); background: #eff6ff; }
+        .preset-checkbox input[type="checkbox"] { margin-right: 10px; width: 16px; height: 16px; cursor: pointer; }
+        .preset-checkbox .preset-label { font-size: 14px; font-weight: 500; }
     </style>
     <script src="https://cdn.jsdelivr.net/npm/echarts@5.5.1/dist/echarts.min.js"></script>
 </head>
@@ -547,11 +555,27 @@
                 </div>
                 <label>模板名称</label>
                 <input type="text" id="tplNameInput" placeholder="如: 自定义评估模板">
-                <label>提取字段</label>
+                
+                <!-- Preset Fields Section (for new templates) -->
+                <div id="presetFieldsSection" style="margin-top:16px;">
+                    <label style="display:flex;justify-content:space-between;align-items:center;">
+                        <span>预设字段 <span style="font-weight:400;color:var(--text-secondary);">(根据角色自动推荐)</span></span>
+                        <span style="font-size:12px;">
+                            <a href="javascript:void(0)" onclick="selectAllPresets()" style="color:var(--primary);text-decoration:none;">全选</a>
+                            <span style="color:var(--border);margin:0 6px;">|</span>
+                            <a href="javascript:void(0)" onclick="deselectAllPresets()" style="color:var(--text-secondary);text-decoration:none;">清空</a>
+                        </span>
+                    </label>
+                    <div class="preset-checkboxes" id="presetCheckboxes"></div>
+                </div>
+                
+                <!-- Custom Fields Section -->
+                <label style="margin-top:20px;display:flex;justify-content:space-between;align-items:center;">
+                    <span>自定义字段 <span style="font-weight:400;color:var(--text-secondary);">(可选)</span></span>
+                </label>
                 <div class="field-rows" id="tplFieldRows"></div>
-                <button class="add-field-btn" onclick="addFieldRow()">+ 添加字段</button>
-                <label style="margin-top:12px;">常用字段快速添加</label>
-                <div class="preset-btns" id="presetBtns"></div>
+                <button class="add-field-btn" onclick="addFieldRow()">+ 添加自定义字段</button>
+                
                 <div class="score-option">
                     <input type="checkbox" id="tplScoreCheck">
                     <span>此模板包含评分项（评分将提取为数字）</span>
@@ -1272,9 +1296,9 @@ function showCreateForm() {
     document.getElementById('tplScoreCheck').checked = false;
     document.getElementById('tplEditId').value = '';
     document.getElementById('tplFieldRows').innerHTML = '';
-    addFieldRow('');
-    addFieldRow('');
-    renderPresetBtns();
+    // Show preset fields section for new templates
+    document.getElementById('presetFieldsSection').style.display = 'block';
+    renderPresetCheckboxes();
 }
 
 function showEditForm(templateId) {
@@ -1290,12 +1314,13 @@ function showEditForm(templateId) {
         document.getElementById('tplScoreCheck').checked = t.include_score;
         document.getElementById('tplEditId').value = templateId;
         document.getElementById('tplFieldRows').innerHTML = '';
+        // Hide preset section when editing, show fields directly
+        document.getElementById('presetFieldsSection').style.display = 'none';
         if (t.fields && t.fields.length) {
             t.fields.forEach(function(f) { addFieldRow(f); });
         } else {
             addFieldRow('');
         }
-        renderPresetBtns();
     });
 }
 
@@ -1307,33 +1332,61 @@ function addFieldRow(name) {
     document.getElementById('tplFieldRows').appendChild(div);
 }
 
-function renderPresetBtns() {
+function renderPresetCheckboxes() {
     var presets = rolePresetFields[currentRole] || rolePresetFields.researcher;
     var html = '';
     presets.forEach(function(p) {
-        html += '<button class="preset-btn" onclick="addPresetField(\'' + p + '\')">' + p + '</button>';
+        html += '<label class="preset-checkbox checked" onclick="togglePresetCheckbox(this)">';
+        html += '<input type="checkbox" checked value="' + esc(p) + '">';
+        html += '<span class="preset-label">' + esc(p) + '</span>';
+        html += '</label>';
     });
-    document.getElementById('presetBtns').innerHTML = html;
+    document.getElementById('presetCheckboxes').innerHTML = html;
 }
 
-function addPresetField(name) {
-    var rows = document.querySelectorAll('#tplFieldRows .field-row input');
-    for (var i = 0; i < rows.length; i++) {
-        if (rows[i].value.trim() === name) { showToast('该字段已存在', 'info'); return; }
+function togglePresetCheckbox(el) {
+    var cb = el.querySelector('input[type="checkbox"]');
+    if (cb) {
+        setTimeout(function() { el.classList.toggle('checked', cb.checked); }, 0);
     }
-    addFieldRow(name);
+}
+
+function selectAllPresets() {
+    document.querySelectorAll('#presetCheckboxes .preset-checkbox input').forEach(function(cb) {
+        cb.checked = true;
+        cb.closest('.preset-checkbox').classList.add('checked');
+    });
+}
+
+function deselectAllPresets() {
+    document.querySelectorAll('#presetCheckboxes .preset-checkbox input').forEach(function(cb) {
+        cb.checked = false;
+        cb.closest('.preset-checkbox').classList.remove('checked');
+    });
 }
 
 function saveTemplate() {
     var name = document.getElementById('tplNameInput').value.trim();
     var includeScore = document.getElementById('tplScoreCheck').checked;
     var editId = document.getElementById('tplEditId').value;
-    var inputs = document.querySelectorAll('#tplFieldRows .field-row input');
     var fields = [];
-    inputs.forEach(function(inp) { var v = inp.value.trim(); if (v) fields.push(v); });
+    
+    // Collect checked preset fields (only for new templates)
+    if (!editId) {
+        document.querySelectorAll('#presetCheckboxes .preset-checkbox input:checked').forEach(function(cb) {
+            fields.push(cb.value);
+        });
+    }
+    
+    // Collect custom fields
+    var inputs = document.querySelectorAll('#tplFieldRows .field-row input');
+    inputs.forEach(function(inp) {
+        var v = inp.value.trim();
+        if (v && fields.indexOf(v) === -1) fields.push(v);
+    });
 
     if (!name) { showToast('请填写模板名称', 'error'); return; }
-    if (!fields.length) { showToast('请至少添加一个字段', 'error'); return; }
+    if (!fields.length) { showToast('请至少选择或添加一个字段', 'error'); return; }
 
     var body = JSON.stringify({ role_id: currentRole, template_name: name, fields: fields, include_score: includeScore });
     var url = editId ? '/api/templates/' + editId : '/api/templates';
