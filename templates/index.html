@@ -270,6 +270,34 @@
         .h-level-3 { color: #6d28d9; padding-left: 48px; }
         .h-level-4 { color: #64748b; padding-left: 72px; font-style: italic; font-size: 12px; }
         .methodology-note { background: #eff6ff; border: 1px solid #93c5fd; border-radius: 10px; padding: 12px 16px; margin-bottom: 16px; font-size: 13px; color: #1e40af; }
+
+        /* ===== Template Card Selection & Detail ===== */
+        .template-card.selected { border-color: var(--primary); background: linear-gradient(135deg, #eff6ff, #dbeafe); box-shadow: 0 0 0 3px rgba(37,99,235,0.15); }
+        .template-card.custom.selected { border-color: #f59e0b; background: linear-gradient(135deg, #fffbeb, #fef3c7); box-shadow: 0 0 0 3px rgba(245,158,11,0.15); }
+        .template-card { cursor: pointer; }
+        .template-detail-panel { display: none; background: #f8fafc; border: 2px solid var(--primary); border-radius: 14px; padding: 20px; margin-top: 16px; }
+        .template-detail-panel.active { display: block; }
+        .template-detail-panel h4 { font-size: 16px; margin-bottom: 14px; color: var(--text); display: flex; justify-content: space-between; align-items: center; }
+        .field-list { margin-bottom: 16px; }
+        .field-list-item { display: flex; align-items: center; gap: 10px; padding: 10px 14px; background: white; border: 1px solid var(--border); border-radius: 10px; margin-bottom: 8px; transition: all 0.2s; }
+        .field-list-item:hover { border-color: var(--primary); background: #fafbfc; }
+        .field-list-item .field-index { width: 24px; height: 24px; background: var(--primary); color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 600; flex-shrink: 0; }
+        .field-list-item input.field-edit-input { flex: 1; padding: 6px 10px; border: 1px solid transparent; border-radius: 6px; font-size: 14px; background: transparent; }
+        .field-list-item input.field-edit-input:focus { outline: none; border-color: var(--primary); background: white; }
+        .field-list-item .field-delete-btn { background: none; border: none; color: #94a3b8; cursor: pointer; font-size: 16px; padding: 4px 8px; border-radius: 6px; transition: all 0.2s; }
+        .field-list-item .field-delete-btn:hover { color: var(--danger); background: #fef2f2; }
+        .add-new-field-row { display: flex; gap: 10px; margin-top: 10px; }
+        .add-new-field-row input { flex: 1; padding: 10px 14px; border: 2px dashed var(--border); border-radius: 10px; font-size: 14px; }
+        .add-new-field-row input:focus { outline: none; border-color: var(--primary); border-style: solid; }
+        .add-new-field-row button { padding: 10px 20px; background: var(--primary); color: white; border: none; border-radius: 10px; cursor: pointer; font-size: 14px; font-weight: 600; }
+        .add-new-field-row button:hover { background: #1d4ed8; }
+        .detail-actions { display: flex; gap: 10px; margin-top: 16px; padding-top: 16px; border-top: 1px solid var(--border); }
+        .detail-actions .btn-save-fields { flex: 1; padding: 12px; background: linear-gradient(135deg, #059669, #10b981); color: white; border: none; border-radius: 10px; cursor: pointer; font-size: 14px; font-weight: 600; }
+        .detail-actions .btn-save-fields:hover { opacity: 0.9; }
+        .detail-actions .btn-close-detail { padding: 12px 20px; background: white; border: 1px solid var(--border); border-radius: 10px; cursor: pointer; font-size: 14px; }
+        .detail-actions .btn-close-detail:hover { background: #f1f5f9; }
+        .field-count-badge { font-size: 12px; background: var(--primary); color: white; padding: 2px 10px; border-radius: 10px; font-weight: 500; }
+        .detail-loading { text-align: center; padding: 30px; color: var(--text-secondary); }
     </style>
     <script src="https://cdn.jsdelivr.net/npm/echarts@5.5.1/dist/echarts.min.js"></script>
 </head>
@@ -321,68 +349,20 @@
     <div class="container">
         <!-- Research Method Selection -->
         <div class="method-tabs">
-            <div class="method-tab qualitative active" onclick="switchMethod('qualitative')">
-                <div class="tab-icon">&#128300;</div>
-                <h3>质性分析</h3>
-                <p>访谈分析 · 主题编码 · 概念网络 · 情感分析</p>
-            </div>
-            <div class="method-tab quantitative" onclick="switchMethod('quantitative')">
+            <div class="method-tab quantitative active" onclick="switchMethod('quantitative')">
                 <div class="tab-icon">&#128202;</div>
                 <h3>定量研究</h3>
                 <p>结构化提取 · 统计分析 · 数据可视化</p>
             </div>
-        </div>
-
-        <!-- Qualitative Analysis Module -->
-        <div class="module-panel active" id="panel-qualitative">
-            <div class="module-header">
-                <h3>&#128300; 质性分析模块 <span class="role-tag" id="qualRoleTag" style="background:#fef3c7;color:#92400e;">临床科研</span></h3>
-                <div class="config-row">
-                    <label>分析类型:</label>
-                    <select id="qualType">
-                        <option value="interview">深度访谈分析</option>
-                        <option value="focus_group">焦点小组分析</option>
-                        <option value="observation">观察记录分析</option>
-                    </select>
-                </div>
-            </div>
-
-            <div class="source-tabs">
-                <div class="source-tab active" onclick="switchSource('qualitative', 'text')">&#128221; 文本输入</div>
-                <div class="source-tab" onclick="switchSource('qualitative', 'voice')">&#127908; 语音上传</div>
-                <div class="source-tab" onclick="switchSource('qualitative', 'image')">&#128248; 图片上传</div>
-            </div>
-
-            <div class="source-panel active" id="qual-text">
-                <textarea class="text-area" id="qualTextInput" placeholder="在此粘贴访谈转录文本、焦点小组记录、观察笔记...&#10;&#10;系统将自动进行主题编码、关键词提取、情感分析等质性研究分析。"></textarea>
-                <button class="btn btn-success btn-block" onclick="processQualitative('text')">开始质性分析</button>
-            </div>
-
-            <div class="source-panel" id="qual-voice">
-                <input type="file" id="qualVoiceInput" class="file-input" multiple accept=".wav,.mp3,.m4a,.aac,.flac,.amr,.opus">
-                <div class="dropzone" id="qualVoiceZone" onclick="document.getElementById('qualVoiceInput').click()">
-                    <div class="drop-icon">&#127908;</div>
-                    <h4>上传访谈录音文件</h4>
-                    <p>支持 WAV / MP3 / M4A / AAC / FLAC 格式，系统将自动转录并分析</p>
-                </div>
-                <div class="file-list" id="qualVoiceList"></div>
-                <button class="btn btn-success btn-block" onclick="processQualitative('voice')" id="qualVoiceBtn" disabled>开始转录并分析</button>
-            </div>
-
-            <div class="source-panel" id="qual-image">
-                <input type="file" id="qualImageInput" class="file-input" multiple accept=".jpg,.jpeg,.png,.pdf">
-                <div class="dropzone" id="qualImageZone" onclick="document.getElementById('qualImageInput').click()">
-                    <div class="drop-icon">&#128248;</div>
-                    <h4>上传访谈记录图片/PDF</h4>
-                    <p>支持 JPG / PNG / PDF 格式，系统将OCR识别后进行质性分析</p>
-                </div>
-                <div class="file-list" id="qualImageList"></div>
-                <button class="btn btn-success btn-block" onclick="processQualitative('image')" id="qualImageBtn" disabled>开始识别并分析</button>
+            <div class="method-tab qualitative" onclick="switchMethod('qualitative')">
+                <div class="tab-icon">&#128300;</div>
+                <h3>质性分析</h3>
+                <p>访谈分析 · 主题编码 · 概念网络 · 情感分析</p>
             </div>
         </div>
 
         <!-- Quantitative Research Module -->
-        <div class="module-panel" id="panel-quantitative">
+        <div class="module-panel active" id="panel-quantitative">
             <div class="module-header">
                 <h3>&#128202; 定量研究模块 <span class="role-tag" id="quantRoleTag" style="background:#fef3c7;color:#92400e;">临床科研</span></h3>
                 <div class="config-row">
@@ -432,6 +412,54 @@
                     <button class="btn-outline" onclick="previewFields('text')">&#128269; 预览可提取字段</button>
                     <button class="btn btn-primary" style="flex:1;padding:12px;border-radius:12px;" onclick="processQuantitative('text')">提取结构化数据</button>
                 </div>
+            </div>
+        </div>
+
+        <!-- Qualitative Analysis Module -->
+        <div class="module-panel" id="panel-qualitative">
+            <div class="module-header">
+                <h3>&#128300; 质性分析模块 <span class="role-tag" id="qualRoleTag" style="background:#fef3c7;color:#92400e;">临床科研</span></h3>
+                <div class="config-row">
+                    <label>分析类型:</label>
+                    <select id="qualType">
+                        <option value="interview">深度访谈分析</option>
+                        <option value="focus_group">焦点小组分析</option>
+                        <option value="observation">观察记录分析</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="source-tabs">
+                <div class="source-tab active" onclick="switchSource('qualitative', 'text')">&#128221; 文本输入</div>
+                <div class="source-tab" onclick="switchSource('qualitative', 'voice')">&#127908; 语音上传</div>
+                <div class="source-tab" onclick="switchSource('qualitative', 'image')">&#128248; 图片上传</div>
+            </div>
+
+            <div class="source-panel active" id="qual-text">
+                <textarea class="text-area" id="qualTextInput" placeholder="在此粘贴访谈转录文本、焦点小组记录、观察笔记...&#10;&#10;系统将自动进行主题编码、关键词提取、情感分析等质性研究分析。"></textarea>
+                <button class="btn btn-success btn-block" onclick="processQualitative('text')">开始质性分析</button>
+            </div>
+
+            <div class="source-panel" id="qual-voice">
+                <input type="file" id="qualVoiceInput" class="file-input" multiple accept=".wav,.mp3,.m4a,.aac,.flac,.amr,.opus">
+                <div class="dropzone" id="qualVoiceZone" onclick="document.getElementById('qualVoiceInput').click()">
+                    <div class="drop-icon">&#127908;</div>
+                    <h4>上传访谈录音文件</h4>
+                    <p>支持 WAV / MP3 / M4A / AAC / FLAC 格式，系统将自动转录并分析</p>
+                </div>
+                <div class="file-list" id="qualVoiceList"></div>
+                <button class="btn btn-success btn-block" onclick="processQualitative('voice')" id="qualVoiceBtn" disabled>开始转录并分析</button>
+            </div>
+
+            <div class="source-panel" id="qual-image">
+                <input type="file" id="qualImageInput" class="file-input" multiple accept=".jpg,.jpeg,.png,.pdf">
+                <div class="dropzone" id="qualImageZone" onclick="document.getElementById('qualImageInput').click()">
+                    <div class="drop-icon">&#128248;</div>
+                    <h4>上传访谈记录图片/PDF</h4>
+                    <p>支持 JPG / PNG / PDF 格式，系统将OCR识别后进行质性分析</p>
+                </div>
+                <div class="file-list" id="qualImageList"></div>
+                <button class="btn btn-success btn-block" onclick="processQualitative('image')" id="qualImageBtn" disabled>开始识别并分析</button>
             </div>
         </div>
 
@@ -492,7 +520,24 @@
                         <button class="nav-btn" style="color:var(--text);border-color:var(--border);" onclick="closeTemplateModal()">关闭</button>
                     </div>
                 </div>
+                <p style="font-size:13px;color:var(--text-secondary);margin-bottom:16px;">点击模板卡片查看详情和编辑字段</p>
                 <div class="template-grid" id="templateGrid"></div>
+                <!-- Template Detail Panel -->
+                <div class="template-detail-panel" id="templateDetailPanel">
+                    <h4>
+                        <span id="detailTemplateName">模板详情</span>
+                        <span class="field-count-badge" id="detailFieldCount">0 个字段</span>
+                    </h4>
+                    <div class="field-list" id="detailFieldList"></div>
+                    <div class="add-new-field-row">
+                        <input type="text" id="newFieldInput" placeholder="输入新字段名称，如：血压、诊断...">
+                        <button onclick="addFieldToDetail()">添加字段</button>
+                    </div>
+                    <div class="detail-actions">
+                        <button class="btn-close-detail" onclick="closeDetailPanel()">收起详情</button>
+                        <button class="btn-save-fields" onclick="saveDetailFields()">&#10003; 保存修改</button>
+                    </div>
+                </div>
             </div>
             <!-- Form View -->
             <div id="tplFormView" class="tpl-form">
@@ -523,11 +568,12 @@
 <script>
 /* ===== Global State ===== */
 var currentRole = 'researcher';
-var currentMethod = 'qualitative';
+var currentMethod = 'quantitative';
 var currentResults = [];
 var files = { qualVoice: [], qualImage: [], quantImage: [], quantVoice: [] };
 var previewCache = null;
 var previewSource = '';
+var selectedTemplateId = null;
 var roleColors = { doctor: '#2563eb', nurse: '#059669', researcher: '#d97706' };
 var roleNames = { doctor: '临床医生', nurse: '护士', researcher: '临床科研' };
 var roleIcons = { doctor: '&#128104;&#8205;&#9877;&#65039;', nurse: '&#128105;&#8205;&#9877;&#65039;', researcher: '&#128300;' };
@@ -1208,11 +1254,14 @@ function openTemplateModal() {
 
 function closeTemplateModal() {
     document.getElementById('templateModal').style.display = 'none';
+    closeDetailPanel();
 }
 
 function showListView() {
     document.getElementById('tplListView').style.display = 'block';
     document.getElementById('tplFormView').classList.remove('active');
+    closeDetailPanel();
+    loadTemplateGrid();
 }
 
 function showCreateForm() {
@@ -1330,21 +1379,183 @@ function loadTemplateGrid() {
         } else {
             data.templates.forEach(function(t) {
                 var isCustom = t.template_type === 'custom';
-                html += '<div class="template-card' + (isCustom ? ' custom' : '') + '">';
+                var isSelected = selectedTemplateId === t.template_id;
+                html += '<div class="template-card' + (isCustom ? ' custom' : '') + (isSelected ? ' selected' : '') + '" onclick="selectTemplateCard(\'' + t.template_id + '\', event)">';
                 html += '<div class="tpl-name">' + esc(t.template_name) + '</div>';
                 html += '<div class="tpl-meta"><span class="type-badge ' + (isCustom ? 'custom' : 'system') + '">' + (isCustom ? '自定义' : '系统') + '</span>';
                 if (t.field_count) html += ' &middot; ' + t.field_count + '个字段';
                 html += '</div>';
                 if (isCustom) {
                     html += '<div class="tpl-actions">';
-                    html += '<button onclick="showEditForm(\'' + t.template_id + '\')">编辑</button>';
-                    html += '<button class="danger" onclick="deleteTemplate(\'' + t.template_id + '\')">删除</button>';
+                    html += '<button onclick="showEditForm(\'' + t.template_id + '\'); event.stopPropagation();">编辑</button>';
+                    html += '<button class="danger" onclick="deleteTemplate(\'' + t.template_id + '\'); event.stopPropagation();">删除</button>';
                     html += '</div>';
                 }
                 html += '</div>';
             });
         }
         document.getElementById('templateGrid').innerHTML = html;
+    });
+}
+
+function selectTemplateCard(templateId, event) {
+    // Update selection visual
+    document.querySelectorAll('.template-card').forEach(function(card) {
+        card.classList.remove('selected');
+    });
+    event.currentTarget.classList.add('selected');
+    selectedTemplateId = templateId;
+    
+    // Show detail panel
+    showTemplateDetail(templateId);
+}
+
+function showTemplateDetail(templateId) {
+    var panel = document.getElementById('templateDetailPanel');
+    var fieldList = document.getElementById('detailFieldList');
+    fieldList.innerHTML = '<div class="detail-loading">加载中...</div>';
+    panel.classList.add('active');
+    
+    fetch('/api/templates/' + templateId + '/detail')
+    .then(function(r) { return r.json(); })
+    .then(function(data) {
+        if (data.status !== 'success') {
+            showToast(data.msg || '获取失败', 'error');
+            return;
+        }
+        var t = data.template;
+        document.getElementById('detailTemplateName').innerHTML = '&#128203; ' + esc(t.template_name) + (t.template_type === 'system' ? ' <span style="font-size:12px;color:var(--text-secondary);">(系统模板 - 只读)</span>' : '');
+        document.getElementById('detailFieldCount').textContent = (t.fields ? t.fields.length : 0) + ' 个字段';
+        
+        var isReadonly = t.template_type === 'system';
+        var html = '';
+        if (t.fields && t.fields.length) {
+            t.fields.forEach(function(f, idx) {
+                html += '<div class="field-list-item" data-field-index="' + idx + '">';
+                html += '<span class="field-index">' + (idx + 1) + '</span>';
+                html += '<input type="text" class="field-edit-input" value="' + esc(f) + '"' + (isReadonly ? ' readonly' : '') + '>';
+                if (!isReadonly) {
+                    html += '<button class="field-delete-btn" onclick="deleteFieldItem(this)" title="删除">&#128465;</button>';
+                }
+                html += '</div>';
+            });
+        } else {
+            html = '<p style="color:var(--text-secondary);text-align:center;padding:20px;">暂无字段</p>';
+        }
+        fieldList.innerHTML = html;
+        
+        // Hide add field and save for system templates
+        document.querySelector('.add-new-field-row').style.display = isReadonly ? 'none' : 'flex';
+        document.querySelector('.btn-save-fields').style.display = isReadonly ? 'none' : 'block';
+    })
+    .catch(function(err) {
+        fieldList.innerHTML = '<p style="color:var(--danger);text-align:center;padding:20px;">加载失败</p>';
+    });
+}
+
+function closeDetailPanel() {
+    document.getElementById('templateDetailPanel').classList.remove('active');
+    selectedTemplateId = null;
+    document.querySelectorAll('.template-card').forEach(function(card) {
+        card.classList.remove('selected');
+    });
+}
+
+function addFieldToDetail() {
+    var input = document.getElementById('newFieldInput');
+    var name = input.value.trim();
+    if (!name) {
+        showToast('请输入字段名称', 'error');
+        return;
+    }
+    
+    var fieldList = document.getElementById('detailFieldList');
+    var existingFields = fieldList.querySelectorAll('.field-edit-input');
+    var idx = existingFields.length;
+    
+    // Check for duplicate
+    for (var i = 0; i < existingFields.length; i++) {
+        if (existingFields[i].value.trim() === name) {
+            showToast('该字段已存在', 'info');
+            return;
+        }
+    }
+    
+    // If there's a "no fields" message, clear it
+    var noFieldsMsg = fieldList.querySelector('p');
+    if (noFieldsMsg) fieldList.innerHTML = '';
+    
+    var div = document.createElement('div');
+    div.className = 'field-list-item';
+    div.setAttribute('data-field-index', idx);
+    div.innerHTML = '<span class="field-index">' + (idx + 1) + '</span>' +
+        '<input type="text" class="field-edit-input" value="' + esc(name) + '">' +
+        '<button class="field-delete-btn" onclick="deleteFieldItem(this)" title="删除">&#128465;</button>';
+    fieldList.appendChild(div);
+    
+    input.value = '';
+    updateFieldCount();
+    showToast('已添加字段', 'success');
+}
+
+function deleteFieldItem(btn) {
+    var item = btn.closest('.field-list-item');
+    item.remove();
+    reindexFieldItems();
+    updateFieldCount();
+}
+
+function reindexFieldItems() {
+    var items = document.querySelectorAll('#detailFieldList .field-list-item');
+    items.forEach(function(item, idx) {
+        item.setAttribute('data-field-index', idx);
+        item.querySelector('.field-index').textContent = idx + 1;
+    });
+}
+
+function updateFieldCount() {
+    var count = document.querySelectorAll('#detailFieldList .field-edit-input').length;
+    document.getElementById('detailFieldCount').textContent = count + ' 个字段';
+}
+
+function saveDetailFields() {
+    if (!selectedTemplateId) {
+        showToast('请先选择模板', 'error');
+        return;
+    }
+    
+    var inputs = document.querySelectorAll('#detailFieldList .field-edit-input');
+    var fields = [];
+    inputs.forEach(function(inp) {
+        var v = inp.value.trim();
+        if (v) fields.push(v);
+    });
+    
+    if (!fields.length) {
+        showToast('请至少保留一个字段', 'error');
+        return;
+    }
+    
+    // Get template name from detail panel
+    var templateName = document.getElementById('detailTemplateName').textContent.replace(/[📋\s（系统模板.*）]/g, '').trim();
+    
+    fetch('/api/templates/' + selectedTemplateId, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+            role_id: currentRole,
+            fields: fields
+        })
+    })
+    .then(function(r) { return r.json(); })
+    .then(function(data) {
+        if (data.status === 'success') {
+            showToast('字段已保存', 'success');
+            loadTemplateGrid();
+            loadTemplates();
+        } else {
+            showToast(data.msg || '保存失败', 'error');
+        }
     });
 }
 
