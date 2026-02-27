@@ -277,6 +277,11 @@
         .navbar-role-badge .role-name { font-size: 13px; font-weight: 500; }
         .navbar-role-badge select { background: transparent; border: none; color: white; font-size: 13px; font-weight: 500; cursor: pointer; outline: none; -webkit-appearance: none; appearance: none; padding-right: 16px; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='white' viewBox='0 0 16 16'%3E%3Cpath d='M8 11L3 6h10z'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right center; }
         .navbar-role-badge select option { color: var(--text); background: white; }
+        /* Current role badge in modules */
+        .current-role-badge { display: inline-block; padding: 4px 12px; border-radius: 16px; font-size: 12px; font-weight: 500; margin-left: 10px; background: #f1f5f9; color: var(--text-secondary); vertical-align: middle; }
+        .current-role-badge.doctor { background: #dbeafe; color: #1e40af; }
+        .current-role-badge.nurse { background: #d1fae5; color: #065f46; }
+        .current-role-badge.researcher { background: #fef3c7; color: #92400e; }
         @media (max-width: 900px) { .module-nav { grid-template-columns: repeat(3, 1fr); } .role-cards { grid-template-columns: repeat(3, 1fr); } }
         @media (max-width: 600px) {
             .module-nav { grid-template-columns: repeat(2, 1fr); }
@@ -370,16 +375,8 @@
         <!-- Module: Image OCR (PRIMARY) -->
         <div class="module-content active" id="module-image_ocr">
             <div class="module-header">
-                <h3>&#128248; 图像识别模块</h3>
+                <h3>&#128248; 图像识别模块 <span class="current-role-badge" id="imageRoleBadge">&#128300; 临床科研</span></h3>
                 <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
-                    <div class="role-selector-inline">
-                        <label>角色:</label>
-                        <select id="imageRoleSelect" onchange="changeGlobalRole(this.value)">
-                            <option value="doctor">&#128104;&#8205;&#9877;&#65039; 临床医生</option>
-                            <option value="nurse">&#128105;&#8205;&#9877;&#65039; 护士</option>
-                            <option value="researcher" selected>&#128300; 临床科研</option>
-                        </select>
-                    </div>
                     <div class="role-selector-inline">
                         <label>模板:</label>
                         <select id="imageTemplateSelect"></select>
@@ -400,16 +397,8 @@
         <!-- Module: Voice Input -->
         <div class="module-content" id="module-voice_input">
             <div class="module-header">
-                <h3>&#127908; 语音输入模块</h3>
+                <h3>&#127908; 语音输入模块 <span class="current-role-badge" id="voiceRoleBadge">&#128300; 临床科研</span></h3>
                 <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
-                    <div class="role-selector-inline">
-                        <label>角色:</label>
-                        <select id="voiceRoleSelect" onchange="changeGlobalRole(this.value)">
-                            <option value="doctor">&#128104;&#8205;&#9877;&#65039; 临床医生</option>
-                            <option value="nurse">&#128105;&#8205;&#9877;&#65039; 护士</option>
-                            <option value="researcher">&#128300; 临床科研</option>
-                        </select>
-                    </div>
                     <div class="role-selector-inline">
                         <label>模板:</label>
                         <select id="voiceTemplateSelect"></select>
@@ -430,16 +419,8 @@
         <!-- Module: Text Input -->
         <div class="module-content" id="module-text_input">
             <div class="module-header">
-                <h3>&#128221; 文本输入模块</h3>
+                <h3>&#128221; 文本输入模块 <span class="current-role-badge" id="textRoleBadge">&#128300; 临床科研</span></h3>
                 <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
-                    <div class="role-selector-inline">
-                        <label>角色:</label>
-                        <select id="textRoleSelect" onchange="changeGlobalRole(this.value)">
-                            <option value="doctor">&#128104;&#8205;&#9877;&#65039; 临床医生</option>
-                            <option value="nurse">&#128105;&#8205;&#9877;&#65039; 护士</option>
-                            <option value="researcher">&#128300; 临床科研</option>
-                        </select>
-                    </div>
                     <div class="role-selector-inline">
                         <label>模板:</label>
                         <select id="textTemplateSelect"></select>
@@ -694,11 +675,15 @@
         // Update navbar
         document.getElementById('globalRoleSelect').value = roleId;
         document.getElementById('roleDot').style.background = roleColors[roleId];
-        // Sync all module role selectors
-        var selectors = ['imageRoleSelect', 'voiceRoleSelect', 'textRoleSelect'];
-        for (var i = 0; i < selectors.length; i++) {
-            var sel = document.getElementById(selectors[i]);
-            if (sel) sel.value = roleId;
+        // Update role badges in all modules
+        var roleIcons = { doctor: '&#128104;&#8205;&#9877;&#65039;', nurse: '&#128105;&#8205;&#9877;&#65039;', researcher: '&#128300;' };
+        var badges = ['imageRoleBadge', 'voiceRoleBadge', 'textRoleBadge'];
+        for (var i = 0; i < badges.length; i++) {
+            var badge = document.getElementById(badges[i]);
+            if (badge) {
+                badge.innerHTML = roleIcons[roleId] + ' ' + roleNames[roleId];
+                badge.className = 'current-role-badge ' + roleId;
+            }
         }
         // Reload templates for all modules
         loadModuleTemplates('image_ocr');
@@ -757,13 +742,12 @@
 
     /* ===== Template Loading ===== */
     function loadModuleTemplates(moduleId) {
-        var roleSelId, tplSelId;
-        if (moduleId === 'image_ocr') { roleSelId = 'imageRoleSelect'; tplSelId = 'imageTemplateSelect'; }
-        else if (moduleId === 'voice_input') { roleSelId = 'voiceRoleSelect'; tplSelId = 'voiceTemplateSelect'; }
-        else { roleSelId = 'textRoleSelect'; tplSelId = 'textTemplateSelect'; }
-        var roleId = document.getElementById(roleSelId).value;
-        if (moduleId === currentModule) currentRole = roleId;
-        fetch('/api/templates/' + roleId)
+        var tplSelId;
+        if (moduleId === 'image_ocr') tplSelId = 'imageTemplateSelect';
+        else if (moduleId === 'voice_input') tplSelId = 'voiceTemplateSelect';
+        else tplSelId = 'textTemplateSelect';
+        // Use global currentRole directly
+        fetch('/api/templates/' + currentRole)
         .then(function(r) { return r.json(); })
         .then(function(data) {
             if (data.status !== 'success') return;
@@ -863,7 +847,7 @@
     function processImageInput() {
         var files = moduleFiles.image_ocr;
         if (!files.length) { showToast('请先上传图片或PDF文件', 'error'); return; }
-        var roleId = document.getElementById('imageRoleSelect').value;
+        var roleId = currentRole;
         var templateId = document.getElementById('imageTemplateSelect').value;
         if (!templateId) { showToast('请选择识别模板', 'error'); return; }
         var ps = document.getElementById('progressSection');
@@ -900,7 +884,7 @@
     function processVoiceInput() {
         var files = moduleFiles.voice_input;
         if (!files.length) { showToast('请先上传语音文件', 'error'); return; }
-        var roleId = document.getElementById('voiceRoleSelect').value;
+        var roleId = currentRole;
         var templateId = document.getElementById('voiceTemplateSelect').value;
         if (!templateId) { showToast('请选择识别模板', 'error'); return; }
         var ps = document.getElementById('progressSection');
@@ -935,7 +919,7 @@
 
     /* ===== Text Input Processing ===== */
     function processTextInput(mode) {
-        var roleId = document.getElementById('textRoleSelect').value;
+        var roleId = currentRole;
         var templateId = document.getElementById('textTemplateSelect').value;
         if (!templateId) { showToast('请选择识别模板', 'error'); return; }
         var ps = document.getElementById('progressSection');
@@ -1410,9 +1394,7 @@
 
     /* ===== Template Management ===== */
     function openTemplateModal() {
-        if (currentModule === 'image_ocr') currentRole = document.getElementById('imageRoleSelect').value;
-        else if (currentModule === 'voice_input') currentRole = document.getElementById('voiceRoleSelect').value;
-        else if (currentModule === 'text_input') currentRole = document.getElementById('textRoleSelect').value;
+        // currentRole is already set globally, no need to read from module selectors
         var titles = { doctor: '&#128203; 医生病历模板管理', nurse: '&#128221; 护理量表模板管理', researcher: '&#128202; 科研数据模板管理' };
         document.getElementById('tplModalTitle').innerHTML = titles[currentRole] || titles.researcher;
         var cfg = { doctor: { ph: '如: 门诊病历模板', fph: '主诉\n现病史\n诊断', score: false }, nurse: { ph: '如: 跌倒后再评估表', fph: '患者姓名\n评估日期\nBraden评分', score: true }, researcher: { ph: '如: 心血管研究数据模板', fph: '入组时间\n血压\n用药情况', score: false } };
