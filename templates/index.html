@@ -245,6 +245,31 @@
         .field-row .remove-field-btn { background: none; border: none; color: var(--danger); cursor: pointer; font-size: 18px; padding: 4px 8px; }
         .add-field-btn { background: #eff6ff; color: var(--primary); border: 1px dashed var(--primary); padding: 8px 16px; border-radius: 8px; cursor: pointer; font-size: 13px; width: 100%; margin-top: 4px; }
         .add-field-btn:hover { background: #dbeafe; }
+
+        /* AI 智能提取字段区域 */
+        .ai-extract-section { margin-top: 16px; margin-bottom: 8px; }
+        .ai-extract-toggle { width: 100%; padding: 10px 16px; border: 1px dashed #8b5cf6; border-radius: 10px; background: linear-gradient(135deg, #f5f3ff, #ede9fe); color: #7c3aed; font-size: 13px; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 8px; transition: all .2s; }
+        .ai-extract-toggle:hover { background: linear-gradient(135deg, #ede9fe, #ddd6fe); border-color: #7c3aed; }
+        .ai-extract-toggle .arrow { transition: transform .2s; font-size: 11px; margin-left: auto; }
+        .ai-extract-toggle .arrow.open { transform: rotate(90deg); }
+        .ai-extract-body { display: none; margin-top: 12px; padding: 16px; background: #faf5ff; border: 1px solid #e9d5ff; border-radius: 10px; }
+        .ai-extract-body > p { font-size: 12px; color: #6b7280; margin: 0 0 10px 0; }
+        .ai-extract-textarea { width: 100%; padding: 10px 14px; border: 1px solid #d8b4fe; border-radius: 10px; font-size: 13px; resize: vertical; min-height: 80px; font-family: inherit; box-sizing: border-box; }
+        .ai-extract-textarea:focus { outline: none; border-color: #8b5cf6; box-shadow: 0 0 0 3px rgba(139,92,246,0.1); }
+        .ai-extract-actions { display: flex; align-items: center; gap: 12px; margin-top: 10px; }
+        .ai-analyze-btn { padding: 8px 20px; border: none; border-radius: 8px; background: linear-gradient(135deg, #7c3aed, #8b5cf6); color: white; font-size: 13px; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 6px; transition: all .2s; }
+        .ai-analyze-btn:hover { background: linear-gradient(135deg, #6d28d9, #7c3aed); }
+        .ai-analyze-btn:disabled { opacity: 0.6; cursor: not-allowed; }
+        .ai-extract-status { font-size: 12px; color: #6b7280; }
+        .ai-extract-results { margin-top: 14px; padding-top: 14px; border-top: 1px solid #e9d5ff; }
+        .ai-extract-results-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+        .ai-extract-results-header span { font-size: 13px; font-weight: 600; color: #374151; }
+        .ai-extract-results-header a { font-size: 12px; color: #7c3aed; cursor: pointer; text-decoration: none; margin-left: 10px; }
+        .ai-extract-results-header a:hover { text-decoration: underline; }
+        .ai-confidence { font-size: 10px; color: #9ca3af; margin-left: 4px; }
+        .ai-extract-add-btn { width: 100%; margin-top: 12px; padding: 9px 16px; border: none; border-radius: 8px; background: linear-gradient(135deg, #7c3aed, #8b5cf6); color: white; font-size: 13px; font-weight: 600; cursor: pointer; transition: all .2s; }
+        .ai-extract-add-btn:hover { background: linear-gradient(135deg, #6d28d9, #7c3aed); }
+
         .preset-btns { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
         .preset-btn { font-size: 12px; padding: 4px 10px; border-radius: 8px; border: 1px solid var(--border); background: #f8fafc; cursor: pointer; }
         .preset-btn:hover { background: #eff6ff; border-color: var(--primary); }
@@ -787,6 +812,36 @@
                 </label>
                 <div class="field-rows" id="tplFieldRows"></div>
                 <button class="add-field-btn" onclick="addFieldRow()">+ 添加自定义字段</button>
+                
+                <!-- AI 智能提取字段区域 -->
+                <div id="aiExtractSection" class="ai-extract-section">
+                    <button type="button" class="ai-extract-toggle" onclick="toggleAiExtract()">
+                        <span>&#10024; AI 从文本智能提取字段</span>
+                        <span class="arrow" id="aiExtractArrow">&#9654;</span>
+                    </button>
+                    <div id="aiExtractBody" class="ai-extract-body">
+                        <p>粘贴病历描述、评估表内容、研究方案等文本，AI 将自动识别可用作模板字段的关键术语</p>
+                        <textarea id="aiExtractTextarea" class="ai-extract-textarea" maxlength="5000" rows="4"
+                                  placeholder="在此粘贴或输入文本内容，例如：&#10;患者男性，56岁，因反复头痛2周入院。查体：血压150/90mmHg，心率78次/分..."></textarea>
+                        <div class="ai-extract-actions">
+                            <button type="button" id="aiAnalyzeBtn" class="ai-analyze-btn" onclick="analyzeFieldsFromText()">
+                                &#128269; AI 分析字段
+                            </button>
+                            <span id="aiExtractStatus" class="ai-extract-status"></span>
+                        </div>
+                        <div id="aiExtractResults" style="display:none">
+                            <div class="ai-extract-results-header">
+                                <span>识别到以下字段：</span>
+                                <div>
+                                    <a onclick="selectAllAiFields()">全选</a>
+                                    <a onclick="deselectAllAiFields()">清空</a>
+                                </div>
+                            </div>
+                            <div id="aiExtractCheckboxes" class="preset-checkboxes"></div>
+                            <button type="button" class="ai-extract-add-btn" onclick="addAiSelectedFields()">&#10003; 添加选中字段</button>
+                        </div>
+                    </div>
+                </div>
                 
                 <div class="score-option">
                     <input type="checkbox" id="tplScoreCheck">
@@ -1659,6 +1714,9 @@ function showCreateForm() {
     // Show preset fields section for new templates
     document.getElementById('presetFieldsSection').style.display = 'block';
     renderPresetCheckboxes();
+    // 显示并重置 AI 提取区
+    document.getElementById('aiExtractSection').style.display = 'block';
+    resetAiExtract();
 }
 
 function showEditForm(templateId) {
@@ -1676,6 +1734,8 @@ function showEditForm(templateId) {
         document.getElementById('tplFieldRows').innerHTML = '';
         // Hide preset section when editing, show fields directly
         document.getElementById('presetFieldsSection').style.display = 'none';
+        // 编辑模式隐藏 AI 提取区
+        document.getElementById('aiExtractSection').style.display = 'none';
         if (t.fields && t.fields.length) {
             t.fields.forEach(function(f) { addFieldRow(f); });
         } else {
@@ -1691,6 +1751,159 @@ function addFieldRow(name) {
         '<button class="remove-field-btn" onclick="this.parentElement.remove()" title="删除">&#10005;</button>';
     document.getElementById('tplFieldRows').appendChild(div);
 }
+
+// ========== AI 智能提取字段功能 ==========
+
+function toggleAiExtract() {
+    var body = document.getElementById('aiExtractBody');
+    var arrow = document.getElementById('aiExtractArrow');
+    if (body.style.display === 'block') {
+        body.style.display = 'none';
+        arrow.classList.remove('open');
+    } else {
+        body.style.display = 'block';
+        arrow.classList.add('open');
+    }
+}
+
+function analyzeFieldsFromText() {
+    var textarea = document.getElementById('aiExtractTextarea');
+    var text = textarea.value.trim();
+    if (!text || text.length < 5) {
+        showToast('请输入更多文本内容（至少5个字符）', 'error');
+        return;
+    }
+    var btn = document.getElementById('aiAnalyzeBtn');
+    var status = document.getElementById('aiExtractStatus');
+    var results = document.getElementById('aiExtractResults');
+
+    // 设置加载状态
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner" style="width:14px;height:14px;border-width:2px;"></span> 分析中...';
+    status.textContent = '';
+    results.style.display = 'none';
+
+    fetch('/api/extract_fields_from_text', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ text: text, role_id: currentRole })
+    })
+    .then(function(r) { return r.json(); })
+    .then(function(data) {
+        if (data.status === 'success' && data.fields && data.fields.length > 0) {
+            renderAiExtractResults(data.fields);
+            status.textContent = '共识别 ' + data.fields.length + ' 个字段';
+        } else if (data.status === 'success' && (!data.fields || data.fields.length === 0)) {
+            showToast('未从文本中识别到有效字段，请尝试输入更详细的内容', 'info');
+            status.textContent = '未识别到字段';
+        } else {
+            showToast(data.msg || '分析失败', 'error');
+            status.textContent = '分析失败';
+        }
+    })
+    .catch(function(err) {
+        showToast('网络请求失败: ' + err.message, 'error');
+        status.textContent = '请求失败';
+    })
+    .finally(function() {
+        btn.disabled = false;
+        btn.innerHTML = '&#128269; AI 分析字段';
+    });
+}
+
+function renderAiExtractResults(fields) {
+    var results = document.getElementById('aiExtractResults');
+    var container = document.getElementById('aiExtractCheckboxes');
+
+    // 按 category 分组
+    var groups = {};
+    fields.forEach(function(f) {
+        var cat = f.category || '其他';
+        if (!groups[cat]) groups[cat] = [];
+        groups[cat].push(f);
+    });
+
+    var html = '';
+    var categoryOrder = ['基本信息', '检验结果', '诊疗记录', '护理评估', '科研数据', '其他'];
+    categoryOrder.forEach(function(cat) {
+        if (!groups[cat]) return;
+        html += '<div style="margin-bottom:12px;">';
+        html += '<div style="font-size:12px;font-weight:600;color:var(--text-secondary);margin-bottom:6px;padding-bottom:4px;border-bottom:1px solid #e9d5ff;">' + esc(cat) + '</div>';
+        html += '<div class="preset-checkboxes">';
+        groups[cat].forEach(function(f) {
+            var conf = f.confidence ? Math.round(f.confidence * 100) : '';
+            html += '<label class="preset-checkbox checked" onclick="togglePresetCheckbox(this)">';
+            html += '<input type="checkbox" checked value="' + esc(f.name) + '">';
+            html += '<span class="preset-label">' + esc(f.name);
+            if (conf) html += '<span class="ai-confidence">' + conf + '%</span>';
+            html += '</span></label>';
+        });
+        html += '</div></div>';
+    });
+
+    container.innerHTML = html;
+    results.style.display = 'block';
+}
+
+function addAiSelectedFields() {
+    var checkboxes = document.querySelectorAll('#aiExtractCheckboxes .preset-checkbox input:checked');
+    if (!checkboxes.length) {
+        showToast('请先选择要添加的字段', 'info');
+        return;
+    }
+
+    // 获取已有自定义字段用于去重
+    var existing = new Set();
+    document.querySelectorAll('#tplFieldRows .field-row input').forEach(function(inp) {
+        var v = inp.value.trim();
+        if (v) existing.add(v);
+    });
+    // 同时检查预设字段
+    document.querySelectorAll('#presetCheckboxes .preset-checkbox input:checked').forEach(function(cb) {
+        existing.add(cb.value);
+    });
+
+    var added = 0;
+    checkboxes.forEach(function(cb) {
+        var name = cb.value.trim();
+        if (name && !existing.has(name)) {
+            addFieldRow(name);
+            existing.add(name);
+            added++;
+        }
+    });
+
+    if (added > 0) {
+        showToast('已添加 ' + added + ' 个字段', 'success');
+    } else {
+        showToast('所选字段均已存在，无需重复添加', 'info');
+    }
+}
+
+function selectAllAiFields() {
+    document.querySelectorAll('#aiExtractCheckboxes .preset-checkbox').forEach(function(label) {
+        label.classList.add('checked');
+        label.querySelector('input').checked = true;
+    });
+}
+
+function deselectAllAiFields() {
+    document.querySelectorAll('#aiExtractCheckboxes .preset-checkbox').forEach(function(label) {
+        label.classList.remove('checked');
+        label.querySelector('input').checked = false;
+    });
+}
+
+function resetAiExtract() {
+    document.getElementById('aiExtractTextarea').value = '';
+    document.getElementById('aiExtractResults').style.display = 'none';
+    document.getElementById('aiExtractCheckboxes').innerHTML = '';
+    document.getElementById('aiExtractStatus').textContent = '';
+    document.getElementById('aiExtractBody').style.display = 'none';
+    document.getElementById('aiExtractArrow').classList.remove('open');
+}
+
+// ========== END AI 智能提取字段功能 ==========
 
 function renderPresetCheckboxes() {
     var presets = rolePresetFields[currentRole] || rolePresetFields.researcher;
