@@ -1,0 +1,1138 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>临床科研病历AI识别工具</title>
+    <style>
+        :root {
+            --primary: #2563eb;
+            --primary-light: #3b82f6;
+            --success: #059669;
+            --success-light: #10b981;
+            --warning: #d97706;
+            --danger: #dc2626;
+            --danger-light: #fecaca;
+            --bg: #f0f4f8;
+            --card: #ffffff;
+            --text: #1e293b;
+            --text-secondary: #64748b;
+            --border: #e2e8f0;
+            --shadow: 0 4px 24px rgba(0,0,0,0.08);
+            --role-color: #2563eb;
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Microsoft YaHei", "PingFang SC", sans-serif;
+            background: var(--bg); color: var(--text); min-height: 100vh; line-height: 1.6;
+        }
+
+        /* ===== 导航栏 ===== */
+        .navbar {
+            background: linear-gradient(135deg, #1e40af, var(--role-color));
+            color: white; padding: 14px 0;
+            box-shadow: 0 2px 12px rgba(37,99,235,0.3);
+            position: sticky; top: 0; z-index: 100;
+            transition: background 0.4s;
+        }
+        .navbar-inner {
+            max-width: 1100px; margin: 0 auto; padding: 0 24px;
+            display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap;
+        }
+        .navbar h1 { font-size: 18px; font-weight: 700; white-space: nowrap; }
+        .nav-center { display: flex; align-items: center; gap: 10px; }
+        .role-selector {
+            display: flex; align-items: center; gap: 8px;
+            background: rgba(255,255,255,0.15); padding: 6px 12px; border-radius: 8px;
+        }
+        .role-selector label { font-size: 13px; white-space: nowrap; }
+        .role-selector select {
+            background: white; color: var(--text); border: none;
+            padding: 5px 10px; border-radius: 6px; font-size: 13px; cursor: pointer;
+        }
+        #templateManageBtn {
+            display: none; background: rgba(255,255,255,0.2); color: white;
+            border: 1px solid rgba(255,255,255,0.3); padding: 5px 12px;
+            border-radius: 6px; font-size: 12px; cursor: pointer;
+        }
+        #templateManageBtn:hover { background: rgba(255,255,255,0.3); }
+        .nav-actions { display: flex; gap: 8px; align-items: center; }
+        .record-count { background: rgba(255,255,255,0.2); padding: 4px 12px; border-radius: 20px; font-size: 13px; }
+        .nav-btn {
+            background: rgba(255,255,255,0.15); color: white;
+            border: 1px solid rgba(255,255,255,0.25); padding: 6px 14px;
+            border-radius: 8px; cursor: pointer; font-size: 12px; transition: all 0.2s;
+        }
+        .nav-btn:hover { background: rgba(255,255,255,0.25); }
+
+        /* ===== 主容器 ===== */
+        .container { max-width: 1100px; margin: 0 auto; padding: 24px; }
+
+        /* ===== 隐私提示 ===== */
+        .privacy-bar {
+            background: linear-gradient(135deg, #ecfdf5, #d1fae5);
+            border: 1px solid #a7f3d0; border-radius: 10px;
+            padding: 10px 20px; margin-bottom: 20px;
+            display: flex; align-items: center; gap: 10px; font-size: 13px; color: #065f46;
+        }
+
+        /* ===== 操作区 ===== */
+        .action-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-bottom: 20px; }
+        .action-card {
+            background: var(--card); border-radius: 14px; padding: 24px 20px; text-align: center;
+            box-shadow: var(--shadow); cursor: pointer; transition: all 0.25s;
+            border: 2px solid transparent; position: relative;
+        }
+        .action-card:hover { transform: translateY(-3px); box-shadow: 0 8px 32px rgba(0,0,0,0.12); }
+        .action-card.upload { border-color: #bfdbfe; }
+        .action-card.upload:hover { border-color: var(--primary); }
+        .action-card.recognize { border-color: #99f6e4; }
+        .action-card.recognize:hover { border-color: var(--success); }
+        .action-card.export { border-color: #fde68a; }
+        .action-card.export:hover { border-color: var(--warning); }
+        .action-card .action-icon {
+            width: 52px; height: 52px; border-radius: 14px;
+            display: flex; align-items: center; justify-content: center;
+            margin: 0 auto 12px; font-size: 24px;
+        }
+        .action-card.upload .action-icon { background: #dbeafe; }
+        .action-card.recognize .action-icon { background: #ccfbf1; }
+        .action-card.export .action-icon { background: #fef3c7; }
+        .action-card h3 { font-size: 15px; margin-bottom: 4px; }
+        .action-card p { font-size: 12px; color: var(--text-secondary); }
+        .action-card.disabled { opacity: 0.5; cursor: not-allowed; }
+        .action-card.disabled:hover { transform: none; box-shadow: var(--shadow); }
+
+        /* ===== 上传区 ===== */
+        .upload-zone { display: none; background: var(--card); border-radius: 14px; padding: 28px; box-shadow: var(--shadow); margin-bottom: 20px; }
+        .upload-zone.active { display: block; }
+        .template-selector { margin-bottom: 16px; display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+        .template-selector label { font-weight: 600; font-size: 14px; white-space: nowrap; }
+        .template-selector select { padding: 8px 14px; border: 1px solid var(--border); border-radius: 8px; font-size: 14px; flex: 1; max-width: 400px; }
+        .dropzone {
+            border: 2px dashed #cbd5e1; border-radius: 12px; padding: 40px 24px;
+            text-align: center; transition: all 0.3s; cursor: pointer; background: #f8fafc;
+        }
+        .dropzone:hover, .dropzone.drag-over { border-color: var(--role-color); background: #eff6ff; }
+        .dropzone .drop-icon { font-size: 42px; margin-bottom: 10px; opacity: 0.6; }
+        .dropzone h4 { font-size: 15px; margin-bottom: 6px; }
+        .dropzone p { font-size: 12px; color: var(--text-secondary); }
+        .file-input { display: none; }
+        .file-list { margin-top: 12px; }
+        .file-item {
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 8px 14px; background: #f8fafc; border-radius: 8px; margin-bottom: 6px; font-size: 13px;
+        }
+        .file-item .file-info { display: flex; align-items: center; gap: 6px; }
+        .file-item .file-size { color: var(--text-secondary); font-size: 12px; }
+        .file-item .remove-btn { color: var(--danger); cursor: pointer; border: none; background: none; font-size: 16px; padding: 2px 6px; border-radius: 4px; }
+
+        /* ===== 进度 ===== */
+        .progress-section { display: none; background: var(--card); border-radius: 14px; padding: 20px; box-shadow: var(--shadow); margin-bottom: 20px; }
+        .progress-section.active { display: block; }
+        .progress-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
+        .progress-header h4 { font-size: 14px; display: flex; align-items: center; gap: 8px; }
+        .spinner { width: 18px; height: 18px; border: 3px solid #e2e8f0; border-top-color: var(--role-color); border-radius: 50%; animation: spin 0.8s linear infinite; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        .progress-bar-track { width: 100%; height: 8px; background: #e2e8f0; border-radius: 4px; overflow: hidden; }
+        .progress-bar-fill { height: 100%; background: linear-gradient(90deg, var(--role-color), var(--primary-light)); border-radius: 4px; transition: width 0.5s; width: 0%; }
+        .progress-text { font-size: 12px; color: var(--text-secondary); margin-top: 6px; }
+
+        /* ===== 结果区 ===== */
+        .results-section { display: none; background: var(--card); border-radius: 14px; box-shadow: var(--shadow); margin-bottom: 20px; overflow: hidden; }
+        .results-section.active { display: block; }
+        .results-header { padding: 16px 24px; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; }
+        .results-header h3 { font-size: 15px; display: flex; align-items: center; gap: 8px; }
+        .results-tabs { display: flex; border-bottom: 1px solid var(--border); background: #f8fafc; overflow-x: auto; }
+        .results-tab { padding: 10px 18px; font-size: 13px; cursor: pointer; border-bottom: 2px solid transparent; color: var(--text-secondary); white-space: nowrap; }
+        .results-tab:hover { color: var(--text); }
+        .results-tab.active { color: var(--role-color); border-bottom-color: var(--role-color); font-weight: 600; }
+        .results-body { padding: 20px 24px; max-height: 700px; overflow-y: auto; }
+
+        /* 数据表格 */
+        .data-table { width: 100%; border-collapse: separate; border-spacing: 0; font-size: 13px; }
+        .data-table th { background: #f1f5f9; padding: 8px 12px; text-align: left; font-weight: 600; font-size: 12px; color: var(--text-secondary); border-bottom: 1px solid var(--border); white-space: nowrap; }
+        .data-table td { padding: 8px 12px; border-bottom: 1px solid #f1f5f9; vertical-align: top; }
+        .data-table tr:hover td { background: #f8fafc; }
+        .data-table td.editable { cursor: text; }
+        .data-table td.editable:hover { background: #eff6ff; }
+        .data-table td.editable:focus { outline: 2px solid var(--role-color); outline-offset: -2px; border-radius: 4px; }
+        .low-confidence { background: #fef2f2 !important; color: var(--danger); font-weight: 600; }
+        .low-confidence::after { content: " \u26a0"; font-size: 11px; }
+        .confidence-badge { display: inline-block; padding: 2px 8px; border-radius: 10px; font-size: 11px; font-weight: 600; }
+        .confidence-high { background: #dcfce7; color: #166534; }
+        .confidence-low { background: #fee2e2; color: #991b1b; }
+
+        /* 护士量表卡片 */
+        .nurse-info-cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; margin-bottom: 18px; }
+        .info-card { background: linear-gradient(135deg, #f0f9ff, #e0f2fe); border-radius: 10px; padding: 16px; }
+        .info-card h4 { font-size: 14px; margin-bottom: 8px; color: var(--primary); }
+        .info-card .info-row { font-size: 13px; padding: 3px 0; display: flex; justify-content: space-between; }
+        .info-card .info-row .label { color: var(--text-secondary); }
+        .info-card .info-row .value { font-weight: 600; }
+
+        .scale-section { background: #fafbfc; border-radius: 10px; padding: 18px; margin-bottom: 16px; border: 1px solid var(--border); }
+        .scale-section h4 { font-size: 14px; margin-bottom: 12px; display: flex; align-items: center; gap: 6px; }
+        .scale-item { padding: 10px 0; border-bottom: 1px solid #f1f5f9; }
+        .scale-item:last-child { border-bottom: none; }
+        .scale-item-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px; }
+        .scale-item-header .item-name { font-size: 13px; font-weight: 500; }
+        .scale-item-header .item-score { font-size: 14px; font-weight: 700; color: var(--role-color); }
+        .scale-item .item-note { font-size: 11px; color: var(--text-secondary); }
+        .scale-progress { height: 6px; background: #e2e8f0; border-radius: 3px; overflow: hidden; margin: 4px 0; }
+        .scale-progress-fill { height: 100%; border-radius: 3px; transition: width 0.5s; }
+
+        .total-score-box {
+            margin-top: 14px; padding: 14px 18px; border-radius: 10px;
+            display: flex; align-items: center; justify-content: space-between;
+            font-size: 16px; font-weight: 700;
+        }
+        .total-score-box.low-risk { background: linear-gradient(135deg, #ecfdf5, #d1fae5); color: #065f46; }
+        .total-score-box.medium-risk { background: linear-gradient(135deg, #fffbeb, #fef3c7); color: #92400e; }
+        .total-score-box.high-risk { background: linear-gradient(135deg, #fef2f2, #fecaca); color: #991b1b; }
+        .risk-badge { padding: 4px 14px; border-radius: 20px; font-size: 13px; font-weight: 600; }
+        .risk-badge.low { background: #dcfce7; color: #166534; }
+        .risk-badge.medium { background: #fef3c7; color: #92400e; }
+        .risk-badge.high { background: #fee2e2; color: #991b1b; }
+
+        /* ===== 历史记录 ===== */
+        .history-section { background: var(--card); border-radius: 14px; box-shadow: var(--shadow); margin-bottom: 20px; overflow: hidden; }
+        .history-header { padding: 16px 24px; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; }
+        .history-header h3 { font-size: 15px; }
+        .history-list { max-height: 280px; overflow-y: auto; }
+        .history-item { display: flex; align-items: center; justify-content: space-between; padding: 10px 24px; border-bottom: 1px solid #f1f5f9; }
+        .history-item:hover { background: #f8fafc; }
+        .history-item .info { display: flex; flex-direction: column; gap: 2px; }
+        .history-item .case-no { font-weight: 600; font-size: 13px; }
+        .history-item .meta { font-size: 11px; color: var(--text-secondary); }
+        .history-item .role-tag { display: inline-block; padding: 1px 8px; border-radius: 10px; font-size: 11px; font-weight: 600; margin-left: 6px; }
+        .history-item .actions { display: flex; gap: 6px; }
+        .btn-sm { padding: 4px 10px; border-radius: 6px; font-size: 11px; cursor: pointer; border: 1px solid var(--border); background: white; color: var(--text); }
+        .btn-sm:hover { background: #f1f5f9; }
+        .btn-sm.danger { color: var(--danger); border-color: #fecaca; }
+        .btn-sm.danger:hover { background: #fef2f2; }
+        .empty-state { padding: 40px 24px; text-align: center; color: var(--text-secondary); }
+        .empty-state .empty-icon { font-size: 42px; margin-bottom: 10px; opacity: 0.4; }
+
+        /* ===== 按钮 ===== */
+        .btn { display: inline-flex; align-items: center; gap: 6px; padding: 8px 18px; border: none; border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer; transition: all 0.2s; }
+        .btn-primary { background: var(--role-color); color: white; }
+        .btn-primary:hover { opacity: 0.9; }
+        .btn-success { background: var(--success); color: white; }
+        .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+        /* ===== Toast ===== */
+        .toast-container { position: fixed; top: 70px; right: 24px; z-index: 1000; display: flex; flex-direction: column; gap: 8px; }
+        .toast { padding: 10px 18px; border-radius: 10px; font-size: 13px; box-shadow: 0 4px 20px rgba(0,0,0,0.15); animation: toastIn 0.3s ease; max-width: 340px; }
+        .toast.success { background: #ecfdf5; color: #065f46; border: 1px solid #a7f3d0; }
+        .toast.error { background: #fef2f2; color: #991b1b; border: 1px solid #fecaca; }
+        .toast.info { background: #eff6ff; color: #1e40af; border: 1px solid #bfdbfe; }
+        @keyframes toastIn { from { opacity: 0; transform: translateX(40px); } to { opacity: 1; transform: translateX(0); } }
+
+        /* ===== 弹窗通用 ===== */
+        .modal-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.5); display: flex; justify-content: center; align-items: center;
+            z-index: 999; opacity: 0; visibility: hidden; transition: all 0.3s;
+        }
+        .modal-overlay.active { opacity: 1; visibility: visible; }
+        .modal {
+            background: white; border-radius: 16px; max-width: 600px; width: 90%;
+            max-height: 85vh; overflow-y: auto; box-shadow: 0 20px 60px rgba(0,0,0,0.2);
+            transform: scale(0.9); transition: transform 0.3s;
+        }
+        .modal-overlay.active .modal { transform: scale(1); }
+        .modal-header { padding: 20px 24px 0; text-align: center; }
+        .modal-header h2 { font-size: 18px; margin-bottom: 4px; }
+        .modal-header p { color: var(--text-secondary); font-size: 13px; }
+        .modal-body { padding: 18px 24px; }
+        .modal-footer { padding: 14px 24px 20px; text-align: center; }
+        .modal-footer .btn { min-width: 140px; justify-content: center; }
+
+        /* 引导弹窗 */
+        .guide-step { display: flex; gap: 14px; padding: 14px 0; border-bottom: 1px solid #f1f5f9; }
+        .guide-step:last-child { border-bottom: none; }
+        .step-number { width: 32px; height: 32px; border-radius: 50%; background: linear-gradient(135deg, #2563eb, #3b82f6); color: white; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 14px; flex-shrink: 0; }
+        .step-content h4 { font-size: 14px; margin-bottom: 3px; }
+        .step-content p { font-size: 12px; color: var(--text-secondary); line-height: 1.6; }
+        .modal-footer .checkbox-row { margin-top: 10px; font-size: 12px; color: var(--text-secondary); display: flex; align-items: center; justify-content: center; gap: 6px; }
+
+        /* 模板管理弹窗 */
+        .template-modal .modal { max-width: 700px; }
+        .template-modal .modal-body { display: flex; gap: 20px; }
+        .template-list-panel { flex: 1; min-width: 0; }
+        .template-list-panel h4 { font-size: 14px; margin-bottom: 10px; }
+        .tpl-item { display: flex; align-items: center; justify-content: space-between; padding: 8px 12px; background: #f8fafc; border-radius: 8px; margin-bottom: 6px; font-size: 13px; }
+        .tpl-item .tpl-type { font-size: 10px; padding: 1px 6px; border-radius: 8px; background: #e2e8f0; color: var(--text-secondary); margin-left: 6px; }
+        .tpl-item .tpl-type.custom { background: #dbeafe; color: #1e40af; }
+        .tpl-item .del-btn { color: var(--danger); cursor: pointer; border: none; background: none; font-size: 14px; }
+        .template-form-panel { flex: 1; min-width: 0; border-left: 1px solid var(--border); padding-left: 20px; }
+        .template-form-panel h4 { font-size: 14px; margin-bottom: 10px; }
+        .template-form-panel label { display: block; font-size: 12px; font-weight: 600; margin: 10px 0 4px; color: var(--text-secondary); }
+        .template-form-panel input[type="text"], .template-form-panel textarea {
+            width: 100%; padding: 8px 12px; border: 1px solid var(--border); border-radius: 8px; font-size: 13px; font-family: inherit;
+        }
+        .template-form-panel textarea { resize: vertical; }
+        .template-form-panel .checkbox-label { display: flex; align-items: center; gap: 6px; font-size: 12px; margin: 8px 0; }
+
+        /* ===== 响应式 ===== */
+        @media (max-width: 768px) {
+            .action-grid { grid-template-columns: 1fr; }
+            .navbar-inner { flex-direction: column; gap: 8px; }
+            .template-modal .modal-body { flex-direction: column; }
+            .template-form-panel { border-left: none; padding-left: 0; border-top: 1px solid var(--border); padding-top: 16px; }
+        }
+
+        .footer { text-align: center; padding: 20px; font-size: 11px; color: var(--text-secondary); }
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 3px; }
+    </style>
+</head>
+<body>
+    <nav class="navbar" id="navbar">
+        <div class="navbar-inner">
+            <h1 id="appTitle">&#128202; 临床病历AI识别工具</h1>
+            <div class="nav-center">
+                <div class="role-selector">
+                    <label>角色:</label>
+                    <select id="roleSelect" onchange="switchRole(this.value)">
+                        <option value="doctor">&#128104;&#8205;&#9877;&#65039; 临床医生</option>
+                        <option value="nurse">&#128105;&#8205;&#9877;&#65039; 护士</option>
+                        <option value="researcher" selected>&#128300; 临床科研</option>
+                    </select>
+                </div>
+                <button id="templateManageBtn" onclick="openTemplateModal()">模板管理</button>
+            </div>
+            <div class="nav-actions">
+                <span class="record-count" id="recordCount">已识别: 0 份</span>
+                <button class="nav-btn" onclick="showGuide()">引导</button>
+                <button class="nav-btn" onclick="cleanAll()">清空</button>
+            </div>
+        </div>
+    </nav>
+
+    <div class="toast-container" id="toastContainer"></div>
+
+    <div class="container">
+        <div class="privacy-bar">
+            <span>&#128737;</span>
+            <span><strong>隐私保障：</strong>所有数据均在本地处理和存储，敏感信息（身份证号、手机号、姓名、地址等）已进行自动脱敏处理，脱敏后再进行AI分析。</span>
+        </div>
+
+        <div class="action-grid">
+            <div class="action-card upload" onclick="toggleUploadZone()">
+                <div class="action-icon">&#128196;</div>
+                <h3>上传文件</h3>
+                <p>支持 图片/PDF/录音<br>支持批量上传</p>
+            </div>
+            <div class="action-card recognize disabled" id="recognizeCard" onclick="startRecognize()">
+                <div class="action-icon">&#129302;</div>
+                <h3>开始识别</h3>
+                <p>AI智能识别文本<br>自动结构化提取</p>
+            </div>
+            <div class="action-card export" onclick="exportData()">
+                <div class="action-icon">&#128229;</div>
+                <h3>导出数据</h3>
+                <p>一键导出Excel<br>适配SPSS/R分析</p>
+            </div>
+        </div>
+
+        <div class="upload-zone" id="uploadZone">
+            <div class="template-selector">
+                <label>识别模板:</label>
+                <select id="templateSelect"></select>
+            </div>
+            <input type="file" id="fileInput" class="file-input" multiple accept=".jpg,.jpeg,.png,.bmp,.tiff,.pdf,.wav,.mp3,.m4a,.aac,.flac,.amr,.opus">
+            <div class="dropzone" id="dropzone" onclick="document.getElementById('fileInput').click()">
+                <div class="drop-icon">&#128194;</div>
+                <h4>点击选择文件或拖拽至此处</h4>
+                <p>支持 图片(JPG/PNG/PDF) 和 录音(MP3/WAV/M4A) 格式</p>
+            </div>
+            <div class="file-list" id="fileList"></div>
+        </div>
+
+        <div class="progress-section" id="progressSection">
+            <div class="progress-header">
+                <h4><div class="spinner"></div><span id="progressTitle">正在识别...</span></h4>
+                <span id="progressPercent" style="font-size:13px;color:var(--text-secondary);">0%</span>
+            </div>
+            <div class="progress-bar-track"><div class="progress-bar-fill" id="progressBar"></div></div>
+            <div class="progress-text" id="progressText">准备中...</div>
+        </div>
+
+        <div class="results-section" id="resultsSection">
+            <div class="results-header">
+                <h3><span>&#9989;</span><span id="resultsTitle">识别结果</span></h3>
+            </div>
+            <div class="results-tabs" id="resultsTabs"></div>
+            <div class="results-body" id="resultsBody"></div>
+        </div>
+
+        <div class="history-section">
+            <div class="history-header">
+                <h3>&#128203; 识别历史</h3>
+                <button class="btn-sm" onclick="refreshHistory()">刷新</button>
+            </div>
+            <div class="history-list" id="historyList">
+                <div class="empty-state"><div class="empty-icon">&#128196;</div><p>暂无识别记录</p></div>
+            </div>
+        </div>
+    </div>
+
+    <div class="footer">临床病历AI识别与结构化提取工具 | 数据仅存储于本地 | 敏感信息已自动脱敏 | 请勿用于临床诊断</div>
+
+    <!-- 新手引导 -->
+    <div class="modal-overlay" id="guideModal">
+        <div class="modal">
+            <div class="modal-header">
+                <h2>&#128075; 欢迎使用</h2>
+                <p>3步完成病历数据结构化提取</p>
+            </div>
+            <div class="modal-body">
+                <div class="guide-step"><div class="step-number">1</div><div class="step-content"><h4>选择角色与模板</h4><p>在导航栏选择您的角色（临床医生/护士/科研人员），系统将自动加载对应的识别模板。护士角色还可自定义量表模板。</p></div></div>
+                <div class="guide-step"><div class="step-number">2</div><div class="step-content"><h4>上传并识别</h4><p>选择识别模板后上传病历图片或录音文件，AI将自动提取结构化数据。音频文件会先转录为文字再提取。<span style="color:#dc2626;font-weight:600;">红色标注</span>字段需手动核对。</p></div></div>
+                <div class="guide-step"><div class="step-number">3</div><div class="step-content"><h4>导出Excel</h4><p>校验后点击「导出数据」，不同角色数据将分Sheet导出，可直接导入SPSS/R分析。</p></div></div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-primary" onclick="closeGuide()">开始使用</button>
+                <div class="checkbox-row"><input type="checkbox" id="dontShowAgain"><label for="dontShowAgain">下次不再显示</label></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 模板管理弹窗 -->
+    <div class="modal-overlay template-modal" id="templateModal">
+        <div class="modal">
+            <div class="modal-header">
+                <h2>&#128221; 护理量表模板管理</h2>
+                <p>管理系统内置模板与自定义模板</p>
+            </div>
+            <div class="modal-body">
+                <div class="template-list-panel">
+                    <h4>现有模板</h4>
+                    <div id="templateListInModal"></div>
+                </div>
+                <div class="template-form-panel">
+                    <h4>创建自定义模板</h4>
+                    <label>模板名称</label>
+                    <input type="text" id="newTplName" placeholder="如: 跌倒后再评估表">
+                    <label>提取字段（每行一个）</label>
+                    <textarea id="newTplFields" rows="8" placeholder="患者姓名&#10;评估日期&#10;压疮部位&#10;皮肤状态&#10;Braden评分&#10;护理措施"></textarea>
+                    <label class="checkbox-label"><input type="checkbox" id="newTplScore"> 包含评分字段（自动识别数字评分）</label>
+                    <button class="btn btn-success" onclick="createCustomTemplate()" style="width:100%;justify-content:center;margin-top:10px;">创建模板</button>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-primary" onclick="closeTemplateModal()">关闭</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+    // ===== 全局状态 =====
+    var selectedFiles = [];
+    var currentResults = [];
+    var currentViewIndex = 0;
+    var currentRole = 'researcher';
+    var currentTemplates = [];
+    var roleColors = { doctor: '#2563eb', nurse: '#059669', researcher: '#d97706' };
+    var roleNames = { doctor: '临床医生', nurse: '护士', researcher: '临床科研' };
+
+    // ===== 初始化 =====
+    document.addEventListener('DOMContentLoaded', function() {
+        var saved = sessionStorage.getItem('current_role');
+        if (saved && roleColors[saved]) {
+            currentRole = saved;
+            document.getElementById('roleSelect').value = currentRole;
+        }
+        applyRoleTheme();
+        loadTemplates(currentRole);
+        refreshHistory();
+        refreshStats();
+        initDragDrop();
+        document.getElementById('fileInput').addEventListener('change', handleFileSelect);
+        if (!localStorage.getItem('guide_dismissed')) showGuide();
+    });
+
+    // ===== 角色切换 =====
+    function switchRole(roleId) {
+        currentRole = roleId;
+        sessionStorage.setItem('current_role', roleId);
+        applyRoleTheme();
+        loadTemplates(roleId);
+        refreshHistory();
+        showToast('已切换到: ' + roleNames[roleId], 'info');
+    }
+
+    function applyRoleTheme() {
+        var color = roleColors[currentRole] || '#2563eb';
+        document.documentElement.style.setProperty('--role-color', color);
+        var btn = document.getElementById('templateManageBtn');
+        btn.style.display = 'inline-block';  // 所有角色都显示模板管理按钮
+    }
+
+    function loadTemplates(roleId) {
+        fetch('/api/templates/' + roleId)
+        .then(function(r) { return r.json(); })
+        .then(function(data) {
+            if (data.status === 'success') {
+                currentTemplates = data.templates;
+                renderTemplateSelect();
+            }
+        });
+    }
+
+    function renderTemplateSelect() {
+        var sel = document.getElementById('templateSelect');
+        sel.innerHTML = '';
+        for (var i = 0; i < currentTemplates.length; i++) {
+            var t = currentTemplates[i];
+            var opt = document.createElement('option');
+            opt.value = t.template_id;
+            opt.textContent = t.template_name + (t.template_type === 'custom' ? ' (自定义)' : '');
+            sel.appendChild(opt);
+        }
+    }
+
+    // ===== Toast =====
+    function showToast(msg, type) {
+        type = type || 'info';
+        var c = document.getElementById('toastContainer');
+        var t = document.createElement('div');
+        t.className = 'toast ' + type;
+        t.textContent = msg;
+        c.appendChild(t);
+        setTimeout(function() { t.style.opacity = '0'; t.style.transition = 'opacity 0.3s'; setTimeout(function() { t.remove(); }, 300); }, 3000);
+    }
+
+    // ===== 引导 =====
+    function showGuide() { document.getElementById('guideModal').classList.add('active'); }
+    function closeGuide() {
+        document.getElementById('guideModal').classList.remove('active');
+        if (document.getElementById('dontShowAgain').checked) localStorage.setItem('guide_dismissed', 'true');
+    }
+
+    // ===== 文件上传 =====
+    function toggleUploadZone() { document.getElementById('uploadZone').classList.toggle('active'); }
+
+    function initDragDrop() {
+        var dz = document.getElementById('dropzone');
+        dz.addEventListener('dragover', function(e) { e.preventDefault(); dz.classList.add('drag-over'); });
+        dz.addEventListener('dragleave', function() { dz.classList.remove('drag-over'); });
+        dz.addEventListener('drop', function(e) { e.preventDefault(); dz.classList.remove('drag-over'); addFiles(Array.from(e.dataTransfer.files)); });
+    }
+
+    function handleFileSelect(e) { addFiles(Array.from(e.target.files)); e.target.value = ''; }
+
+    var audioExts = ['wav','mp3','m4a','aac','flac','amr','opus'];
+    var imageExts = ['jpg','jpeg','png','bmp','tiff','pdf'];
+
+    function addFiles(files) {
+        var allowed = imageExts.concat(audioExts);
+        for (var i = 0; i < files.length; i++) {
+            var ext = files[i].name.split('.').pop().toLowerCase();
+            if (allowed.indexOf(ext) === -1) { showToast('不支持: ' + files[i].name, 'error'); continue; }
+            selectedFiles.push(files[i]);
+        }
+        renderFileList();
+        updateActionCards();
+    }
+
+    function removeFile(idx) { selectedFiles.splice(idx, 1); renderFileList(); updateActionCards(); }
+
+    function renderFileList() {
+        var c = document.getElementById('fileList');
+        if (!selectedFiles.length) { c.innerHTML = ''; return; }
+        var h = '';
+        for (var i = 0; i < selectedFiles.length; i++) {
+            var f = selectedFiles[i];
+            var ext = f.name.split('.').pop().toLowerCase();
+            var icon = audioExts.indexOf(ext) !== -1 ? '&#127925;' : '&#128196;';
+            var sz = (f.size / 1024).toFixed(1);
+            sz = sz > 1024 ? (sz / 1024).toFixed(1) + ' MB' : sz + ' KB';
+            h += '<div class="file-item"><div class="file-info"><span>' + icon + '</span><span>' + esc(f.name) + '</span><span class="file-size">' + sz + '</span></div><button class="remove-btn" onclick="removeFile(' + i + ')">&#10005;</button></div>';
+        }
+        c.innerHTML = h;
+    }
+
+    function updateActionCards() {
+        var rc = document.getElementById('recognizeCard');
+        rc.classList.toggle('disabled', selectedFiles.length === 0);
+    }
+
+    // ===== AI识别 =====
+    function startRecognize() {
+        if (!selectedFiles.length) { showToast('请先上传文件', 'error'); return; }
+        if (document.getElementById('recognizeCard').classList.contains('disabled')) return;
+
+        var tplSelect = document.getElementById('templateSelect');
+        if (!tplSelect.value) { showToast('请选择识别模板', 'error'); return; }
+
+        var ps = document.getElementById('progressSection');
+        ps.classList.add('active');
+        document.getElementById('resultsSection').classList.remove('active');
+
+        var total = selectedFiles.length, done = 0;
+        currentResults = [];
+        updateProgress(0, '准备上传...');
+
+        function next(idx) {
+            if (idx >= total) {
+                updateProgress(100, '全部完成！');
+                setTimeout(function() {
+                    ps.classList.remove('active');
+                    if (currentResults.length) showResults(currentResults);
+                    selectedFiles = []; renderFileList(); updateActionCards();
+                    refreshHistory(); refreshStats();
+                }, 600);
+                return;
+            }
+            var file = selectedFiles[idx];
+            var fileExt = file.name.split('.').pop().toLowerCase();
+            var isAudio = audioExts.indexOf(fileExt) !== -1;
+            var typeHint = isAudio ? ' (语音转文字中...)' : '';
+            updateProgress(Math.round(idx / total * 100), '识别第 ' + (idx + 1) + '/' + total + ' 份: ' + file.name + typeHint);
+
+            var fd = new FormData();
+            fd.append('files', file);
+            fd.append('role_id', currentRole);
+            fd.append('template_id', tplSelect.value);
+
+            fetch('/upload', { method: 'POST', body: fd })
+            .then(function(r) { return r.json(); })
+            .then(function(data) {
+                if (data.results) { for (var j = 0; j < data.results.length; j++) currentResults.push(data.results[j]); }
+                if (data.results && data.results.length) showToast(file.name + ' 识别成功', 'success');
+                else if (data.errors && data.errors.length) for (var k = 0; k < data.errors.length; k++) showToast(data.errors[k], 'error');
+                else showToast(data.msg || '识别失败', 'error');
+                next(idx + 1);
+            })
+            .catch(function(err) { showToast(file.name + ': ' + err.message, 'error'); next(idx + 1); });
+        }
+        next(0);
+    }
+
+    function updateProgress(pct, txt) {
+        document.getElementById('progressBar').style.width = pct + '%';
+        document.getElementById('progressPercent').textContent = pct + '%';
+        document.getElementById('progressText').textContent = txt;
+    }
+
+    // ===== 结果展示 =====
+    function showResults(results) {
+        var sec = document.getElementById('resultsSection');
+        sec.classList.add('active');
+        document.getElementById('resultsTitle').textContent = '识别结果（' + results.length + ' 份）';
+        var tabsHtml = '';
+        for (var i = 0; i < results.length; i++) {
+            var srcIcon = results[i].source_type === 'audio' ? '&#127925; ' : '';
+            tabsHtml += '<div class="results-tab' + (i === 0 ? ' active' : '') + '" onclick="switchTab(' + i + ')">' + srcIcon + esc(results[i].case_number || ('病历' + (i + 1))) + '</div>';
+        }
+        document.getElementById('resultsTabs').innerHTML = tabsHtml;
+        currentViewIndex = 0;
+        renderResult(results[0]);
+    }
+
+    function switchTab(idx) {
+        currentViewIndex = idx;
+        var tabs = document.querySelectorAll('.results-tab');
+        for (var i = 0; i < tabs.length; i++) tabs[i].classList.toggle('active', i === idx);
+        renderResult(currentResults[idx]);
+    }
+
+    function renderResult(result) {
+        var body = document.getElementById('resultsBody');
+        var data = result.data;
+        var conf = result.confidence || {};
+        var layout = result.display_layout || 'table';
+        var roleId = result.role_id || currentRole;
+
+        var html = '';
+
+        // 音频数据：显示原始转录文本
+        if (result.source_type === 'audio' && result.transcript) {
+            html += '<div style="background:linear-gradient(135deg,#fffbeb,#fef3c7);border:1px solid #fbbf24;border-radius:12px;padding:16px;margin-bottom:16px;">';
+            html += '<h4 style="margin:0 0 10px;color:#92400e;font-size:14px;">&#127908; 原始转录文本</h4>';
+            html += '<div style="max-height:200px;overflow-y:auto;font-size:13px;line-height:1.8;white-space:pre-wrap;color:#78350f;background:rgba(255,255,255,0.5);padding:12px;border-radius:8px;">';
+            html += esc(result.transcript);
+            html += '</div></div>';
+        }
+
+        // 质性分析（科研角色音频）
+        if (result.qualitative_analysis) {
+            html += renderQualitativeAnalysis(result.qualitative_analysis);
+        }
+
+        // 原有角色布局
+        if (roleId === 'nurse') {
+            html += renderNurseLayout(data, conf, result.template_name);
+        } else if (roleId === 'doctor') {
+            html += renderDoctorLayout(data, conf);
+        } else {
+            html += renderResearcherLayout(data, conf);
+        }
+
+        body.innerHTML = html;
+    }
+
+    function renderQualitativeAnalysis(qual) {
+        if (!qual) return '';
+        var h = '<div style="background:linear-gradient(135deg,#f5f3ff,#ede9fe);border:1px solid #a78bfa;border-radius:12px;padding:16px;margin-bottom:16px;">';
+        h += '<h4 style="margin:0 0 12px;color:#7c3aed;font-size:14px;">&#128202; 定性研究分析</h4>';
+
+        if (qual.themes && qual.themes.length) {
+            h += '<div style="margin-bottom:10px;"><strong style="color:#6d28d9;font-size:13px;">核心主题：</strong>';
+            for (var i = 0; i < qual.themes.length; i++) {
+                h += '<span style="display:inline-block;background:#ddd6fe;color:#5b21b6;padding:3px 10px;border-radius:10px;margin:3px;font-size:12px;">' + esc(qual.themes[i]) + '</span>';
+            }
+            h += '</div>';
+        }
+
+        if (qual.keywords && qual.keywords.length) {
+            h += '<div style="margin-bottom:10px;"><strong style="color:#6d28d9;font-size:13px;">关键词：</strong>';
+            h += '<span style="font-size:12px;color:#64748b;">' + esc(qual.keywords.join('、')) + '</span></div>';
+        }
+
+        if (qual.codes && qual.codes.length) {
+            h += '<div style="margin-bottom:10px;"><strong style="color:#6d28d9;font-size:13px;">编码分类：</strong>';
+            h += '<table class="data-table" style="margin-top:6px;font-size:12px;"><thead><tr><th>编码</th><th>相关文本</th></tr></thead><tbody>';
+            for (var j = 0; j < qual.codes.length; j++) {
+                var code = qual.codes[j];
+                var segs = code.segments ? code.segments.join('；') : '';
+                h += '<tr><td style="font-weight:600;white-space:nowrap;">' + esc(code.code) + '</td><td style="font-size:12px;color:#475569;">' + esc(segs) + '</td></tr>';
+            }
+            h += '</tbody></table></div>';
+        }
+
+        if (qual.sentiment) {
+            var sentColor = qual.sentiment.indexOf('积极') !== -1 ? '#059669' : (qual.sentiment.indexOf('消极') !== -1 ? '#dc2626' : '#64748b');
+            h += '<div style="margin-bottom:8px;"><strong style="color:#6d28d9;font-size:13px;">情感倾向：</strong>';
+            h += '<span style="color:' + sentColor + ';font-weight:600;">' + esc(qual.sentiment) + '</span></div>';
+        }
+
+        if (qual.summary) {
+            h += '<div style="font-size:13px;color:#475569;line-height:1.6;"><strong style="color:#6d28d9;">分析总结：</strong>' + esc(qual.summary) + '</div>';
+        }
+
+        h += '</div>';
+        return h;
+    }
+
+    // ===== 医生布局 =====
+    function renderDoctorLayout(data, conf) {
+        var h = '';
+        // 患者信息
+        var pi = data.patient_info || {};
+        if (Object.keys(pi).length) {
+            h += '<div class="nurse-info-cards"><div class="info-card"><h4>&#128100; 患者信息</h4>';
+            for (var k in pi) { if (pi[k]) h += '<div class="info-row"><span class="label">' + esc(k) + '</span><span class="value">' + esc(fv(pi[k])) + '</span></div>'; }
+            h += '</div></div>';
+        }
+        // 各字段表格
+        var sections = [
+            { key: 'chief_complaint', title: '&#128203; 主诉', single: true },
+            { key: 'present_illness', title: '&#128203; 现病史', single: true },
+            { key: 'past_history', title: '&#128203; 既往史', single: true },
+            { key: 'physical_exam', title: '&#129657; 体格检查', single: false },
+            { key: 'diagnosis', title: '&#127973; 诊断', list: true },
+            { key: 'treatment_plan', title: '&#128138; 治疗方案', single: false },
+            { key: 'surgery_record', title: '&#129656; 手术记录', single: true },
+            { key: 'discharge_summary', title: '&#128203; 出院小结', single: true },
+        ];
+        for (var i = 0; i < sections.length; i++) {
+            var s = sections[i];
+            var val = data[s.key];
+            if (!val || (typeof val === 'object' && !Object.keys(val).length) || (Array.isArray(val) && !val.length)) continue;
+            h += '<h4 style="margin:16px 0 8px;color:var(--role-color);">' + s.title + '</h4>';
+            if (s.single) {
+                h += '<div style="padding:10px 14px;background:#f8fafc;border-radius:8px;font-size:13px;">' + esc(fv(val)) + '</div>';
+            } else if (s.list) {
+                h += '<table class="data-table"><thead><tr><th>诊断名称</th><th>ICD-10编码</th></tr></thead><tbody>';
+                for (var j = 0; j < val.length; j++) {
+                    var d = val[j];
+                    h += '<tr><td>' + esc(d['诊断名称'] || '') + '</td><td>' + esc(d['ICD10编码'] || '') + '</td></tr>';
+                }
+                h += '</tbody></table>';
+            } else {
+                h += '<table class="data-table"><thead><tr><th>项目</th><th>内容</th></tr></thead><tbody>';
+                for (var k2 in val) { h += '<tr><td>' + esc(k2) + '</td><td>' + esc(fv(val[k2])) + '</td></tr>'; }
+                h += '</tbody></table>';
+            }
+        }
+        // 检验结果（医生检验模板）
+        var labs = data.lab_tests;
+        if (labs && Array.isArray(labs) && labs.length) {
+            h += '<h4 style="margin:16px 0 8px;color:var(--role-color);">&#129514; 检验结果</h4>';
+            h += renderLabTable(labs, conf);
+        }
+        // report_info
+        var ri = data.report_info;
+        if (ri && typeof ri === 'object' && Object.keys(ri).length) {
+            h += '<h4 style="margin:16px 0 8px;color:var(--role-color);">&#128203; 报告信息</h4>';
+            h += '<table class="data-table"><thead><tr><th>项目</th><th>内容</th></tr></thead><tbody>';
+            for (var rk in ri) { h += '<tr><td>' + esc(rk) + '</td><td>' + esc(fv(ri[rk])) + '</td></tr>'; }
+            h += '</tbody></table>';
+        }
+        if (!h) h = renderGenericTable(data, conf);
+        return h;
+    }
+
+    function renderLabTable(labs, conf) {
+        var lc = (conf && conf.lab_tests) ? conf.lab_tests : {};
+        var h = '<table class="data-table"><thead><tr><th>项目</th><th>缩写</th><th>数值</th><th>单位</th><th>参考范围</th><th>异常</th></tr></thead><tbody>';
+        for (var j = 0; j < labs.length; j++) {
+            var lab = labs[j];
+            var abn = lab['异常标注'] || '';
+            var ac = abn.indexOf('\u2191') !== -1 ? 'color:#dc2626;font-weight:600;' : (abn.indexOf('\u2193') !== -1 ? 'color:#2563eb;font-weight:600;' : '');
+            h += '<tr><td>' + esc(lab['项目名称'] || '') + '</td><td>' + esc(lab['英文缩写'] || '') + '</td>';
+            h += '<td style="' + ac + '">' + esc(fv(lab['数值'])) + '</td>';
+            h += '<td>' + esc(lab['单位'] || '') + '</td><td>' + esc(lab['参考范围'] || '') + '</td>';
+            h += '<td style="' + ac + '">' + esc(abn) + '</td></tr>';
+        }
+        h += '</tbody></table>';
+        return h;
+    }
+
+    // ===== 护士布局 =====
+    function renderNurseLayout(data, conf, templateName) {
+        var h = '';
+        // 患者信息
+        var pi = data.patient_info || {};
+        if (Object.keys(pi).length) {
+            h += '<div class="nurse-info-cards"><div class="info-card"><h4>&#128100; 患者信息</h4>';
+            for (var k in pi) { if (pi[k]) h += '<div class="info-row"><span class="label">' + esc(k) + '</span><span class="value">' + esc(fv(pi[k])) + '</span></div>'; }
+            h += '</div>';
+            // 生命体征
+            var vs = data.vital_signs;
+            if (vs && typeof vs === 'object' && Object.keys(vs).length) {
+                h += '<div class="info-card" style="background:linear-gradient(135deg,#fef2f2,#fce7f3);"><h4 style="color:#be123c;">&#10084;&#65039; 生命体征</h4>';
+                for (var vk in vs) { if (vs[vk] !== null && vs[vk] !== '') h += '<div class="info-row"><span class="label">' + esc(vk) + '</span><span class="value">' + esc(fv(vs[vk])) + '</span></div>'; }
+                h += '</div>';
+            }
+            h += '</div>';
+        }
+
+        // 量表评分 (Barthel/Morse/Braden)
+        var scaleKeys = ['barthel_items', 'morse_items', 'braden_items'];
+        var scaleNames = { barthel_items: 'Barthel自理能力', morse_items: 'Morse跌倒风险', braden_items: 'Braden压疮风险' };
+        var scaleMaxes = { barthel_items: 100, morse_items: 125, braden_items: 23 };
+        var foundScale = false;
+
+        for (var si = 0; si < scaleKeys.length; si++) {
+            var sk = scaleKeys[si];
+            var items = data[sk];
+            if (!items || !Array.isArray(items) || !items.length) continue;
+            foundScale = true;
+            var maxScore = scaleMaxes[sk] || 100;
+            h += '<div class="scale-section"><h4>&#128202; ' + (scaleNames[sk] || sk) + '</h4>';
+            for (var j = 0; j < items.length; j++) {
+                var it = items[j];
+                var score = it['评分'] !== null && it['评分'] !== undefined ? it['评分'] : it['score'];
+                var name = it['项目'] || it['item'] || ('项目' + (j + 1));
+                var maxItem = sk === 'barthel_items' ? (name === '床椅转移' || name === '平地行走' ? 15 : 10) : (sk === 'morse_items' ? 30 : 4);
+                var pct = score !== null && score !== undefined ? Math.min(100, Math.round(score / maxItem * 100)) : 0;
+                var barColor = pct > 70 ? '#059669' : (pct > 30 ? '#d97706' : '#dc2626');
+                if (sk === 'braden_items') barColor = pct > 70 ? '#059669' : (pct > 50 ? '#d97706' : '#dc2626');
+                h += '<div class="scale-item"><div class="scale-item-header"><span class="item-name">' + esc(name) + '</span><span class="item-score">' + (score !== null && score !== undefined ? score + '分' : '-') + '</span></div>';
+                h += '<div class="scale-progress"><div class="scale-progress-fill" style="width:' + pct + '%;background:' + barColor + ';"></div></div>';
+                if (it['备注'] || it['选项']) h += '<div class="item-note">' + esc(it['备注'] || it['选项'] || '') + '</div>';
+                h += '</div>';
+            }
+            // 总分
+            var total = data.total_score;
+            var level = data.dependency_level || data.risk_level || '';
+            if (total !== null && total !== undefined) {
+                var riskClass = 'low-risk';
+                var badgeClass = 'low';
+                if (sk === 'barthel_items') {
+                    if (total <= 40) { riskClass = 'high-risk'; badgeClass = 'high'; level = level || '重度依赖'; }
+                    else if (total <= 60) { riskClass = 'medium-risk'; badgeClass = 'medium'; level = level || '中度依赖'; }
+                    else if (total <= 99) { riskClass = 'low-risk'; badgeClass = 'low'; level = level || '轻度依赖'; }
+                    else { level = level || '自理'; }
+                } else if (sk === 'morse_items') {
+                    if (total >= 45) { riskClass = 'high-risk'; badgeClass = 'high'; level = level || '高风险'; }
+                    else if (total >= 25) { riskClass = 'medium-risk'; badgeClass = 'medium'; level = level || '中风险'; }
+                    else { level = level || '低风险'; }
+                } else if (sk === 'braden_items') {
+                    if (total <= 9) { riskClass = 'high-risk'; badgeClass = 'high'; level = level || '极高风险'; }
+                    else if (total <= 12) { riskClass = 'high-risk'; badgeClass = 'high'; level = level || '高风险'; }
+                    else if (total <= 14) { riskClass = 'medium-risk'; badgeClass = 'medium'; level = level || '中度风险'; }
+                    else { level = level || '低风险'; }
+                }
+                h += '<div class="total-score-box ' + riskClass + '"><span>总分: ' + total + ' 分</span><span class="risk-badge ' + badgeClass + '">' + esc(level) + '</span></div>';
+            }
+            h += '</div>';
+        }
+
+        // 疼痛评估
+        var pain = data.pain_assessment;
+        if (pain && typeof pain === 'object' && Object.keys(pain).length) {
+            h += '<div class="scale-section"><h4>&#128293; 疼痛评估</h4>';
+            h += '<table class="data-table"><tbody>';
+            for (var pk in pain) { h += '<tr><td style="width:120px;font-weight:600;">' + esc(pk) + '</td><td>' + esc(fv(pain[pk])) + '</td></tr>'; }
+            h += '</tbody></table></div>';
+        }
+
+        // 评估信息
+        var assess = data.assessment;
+        if (assess && typeof assess === 'object' && Object.keys(assess).length) {
+            h += '<div class="scale-section"><h4>&#128203; 护理评估</h4>';
+            h += '<table class="data-table"><tbody>';
+            for (var ak in assess) { if (assess[ak]) h += '<tr><td style="width:120px;font-weight:600;">' + esc(ak) + '</td><td>' + esc(fv(assess[ak])) + '</td></tr>'; }
+            h += '</tbody></table></div>';
+        }
+
+        // 护理记录
+        var records = data.vital_signs_records || data.nursing_measures || data.medication_execution;
+        if (records && Array.isArray(records) && records.length) {
+            h += renderGenericArrayTable(records, '护理记录');
+        }
+
+        // 自定义字段
+        var cf = data.custom_fields;
+        if (cf && typeof cf === 'object') {
+            h += '<div class="scale-section"><h4>&#128203; 提取数据</h4>';
+            h += '<table class="data-table"><tbody>';
+            for (var ck in cf) { h += '<tr><td style="width:140px;font-weight:600;">' + esc(ck) + '</td><td>' + esc(fv(cf[ck])) + '</td></tr>'; }
+            h += '</tbody></table></div>';
+        }
+
+        if (!h) h = renderGenericTable(data, conf);
+        return h;
+    }
+
+    // ===== 科研布局（兼容旧数据） =====
+    function renderResearcherLayout(data, conf) {
+        var h = '';
+        // 人口学
+        var demo = data.demographics;
+        if (demo && typeof demo === 'object' && Object.keys(demo).length) {
+            var dc = (conf.demographics) ? conf.demographics : {};
+            h += '<h4 style="margin:0 0 8px;color:var(--warning);">&#128100; 人口学资料</h4>';
+            h += '<table class="data-table"><thead><tr><th>字段</th><th>值</th><th>置信度</th></tr></thead><tbody>';
+            for (var dk in demo) {
+                var dconf = dc[dk]; var isLow = dconf !== undefined && dconf !== null && parseFloat(dconf) < 0.9;
+                h += '<tr><td>' + esc(dk) + '</td><td class="' + (isLow ? 'low-confidence' : '') + '">' + esc(fv(demo[dk])) + '</td><td>' + confBadge(dconf) + '</td></tr>';
+            }
+            h += '</tbody></table>';
+        }
+        // 检验
+        var labs = data.lab_tests;
+        if (labs && Array.isArray(labs) && labs.length) {
+            h += '<h4 style="margin:16px 0 8px;color:var(--success);">&#129514; 实验室检查</h4>';
+            h += renderLabTable(labs, conf);
+        }
+        // 诊疗
+        var treat = data.treatment;
+        if (treat && typeof treat === 'object' && Object.keys(treat).length) {
+            var tc = (conf.treatment) ? conf.treatment : {};
+            h += '<h4 style="margin:16px 0 8px;color:var(--primary);">&#127973; 诊疗资料</h4>';
+            h += '<table class="data-table"><thead><tr><th>字段</th><th>值</th><th>置信度</th></tr></thead><tbody>';
+            for (var tk in treat) {
+                var tconf = tc[tk]; var isLow2 = tconf !== undefined && tconf !== null && parseFloat(tconf) < 0.9;
+                h += '<tr><td>' + esc(tk) + '</td><td class="' + (isLow2 ? 'low-confidence' : '') + '">' + esc(fv(treat[tk])) + '</td><td>' + confBadge(tconf) + '</td></tr>';
+            }
+            h += '</tbody></table>';
+        }
+        // 如果是新格式没有上述字段，通用渲染
+        if (!demo && !labs && !treat) h = renderGenericTable(data, conf);
+        return h;
+    }
+
+    // ===== 通用渲染 =====
+    function renderGenericTable(data, conf) {
+        var h = '<table class="data-table"><thead><tr><th>字段</th><th>值</th></tr></thead><tbody>';
+        for (var k in data) {
+            if (k === 'confidence' || k === 'patient_info') continue;
+            var v = data[k];
+            if (typeof v === 'object' && v !== null) {
+                if (Array.isArray(v)) {
+                    h += '<tr><td colspan="2" style="font-weight:600;background:#f1f5f9;">' + esc(k) + '</td></tr>';
+                    for (var i = 0; i < v.length; i++) {
+                        if (typeof v[i] === 'object') {
+                            for (var sk in v[i]) h += '<tr><td style="padding-left:24px;">' + esc(sk) + '</td><td>' + esc(fv(v[i][sk])) + '</td></tr>';
+                        } else h += '<tr><td style="padding-left:24px;">' + (i + 1) + '</td><td>' + esc(fv(v[i])) + '</td></tr>';
+                    }
+                } else {
+                    h += '<tr><td colspan="2" style="font-weight:600;background:#f1f5f9;">' + esc(k) + '</td></tr>';
+                    for (var sk2 in v) h += '<tr><td style="padding-left:24px;">' + esc(sk2) + '</td><td>' + esc(fv(v[sk2])) + '</td></tr>';
+                }
+            } else {
+                h += '<tr><td>' + esc(k) + '</td><td>' + esc(fv(v)) + '</td></tr>';
+            }
+        }
+        h += '</tbody></table>';
+        return h;
+    }
+
+    function renderGenericArrayTable(arr, title) {
+        if (!arr || !arr.length) return '';
+        var h = '<div class="scale-section"><h4>&#128203; ' + esc(title) + '</h4>';
+        var keys = Object.keys(arr[0]);
+        h += '<table class="data-table"><thead><tr>';
+        for (var i = 0; i < keys.length; i++) h += '<th>' + esc(keys[i]) + '</th>';
+        h += '</tr></thead><tbody>';
+        for (var j = 0; j < arr.length; j++) {
+            h += '<tr>';
+            for (var k = 0; k < keys.length; k++) h += '<td>' + esc(fv(arr[j][keys[k]])) + '</td>';
+            h += '</tr>';
+        }
+        h += '</tbody></table></div>';
+        return h;
+    }
+
+    // ===== 导出 =====
+    function exportData() { window.location.href = '/export_all?role_id=' + currentRole; }
+
+    // ===== 历史记录 =====
+    function refreshHistory() {
+        fetch('/records?role_id=' + currentRole)
+        .then(function(r) { return r.json(); })
+        .then(function(data) { if (data.status === 'success') renderHistory(data.records); });
+    }
+
+    function renderHistory(records) {
+        var c = document.getElementById('historyList');
+        if (!records || !records.length) { c.innerHTML = '<div class="empty-state"><div class="empty-icon">&#128196;</div><p>暂无识别记录</p></div>'; return; }
+        var h = '';
+        for (var i = 0; i < records.length; i++) {
+            var r = records[i];
+            var rn = roleNames[r.role_id] || r.role_id;
+            var rc = roleColors[r.role_id] || '#64748b';
+            var srcIcon = r.source_type === 'audio' ? '&#127925; ' : '&#128196; ';
+            h += '<div class="history-item"><div class="info"><span class="case-no">' + srcIcon + esc(r.case_number) + '<span class="role-tag" style="background:' + rc + '20;color:' + rc + ';">' + esc(rn) + '</span></span>';
+            h += '<span class="meta">' + esc(r.filename) + ' | ' + r.create_time + '</span></div>';
+            h += '<div class="actions"><button class="btn-sm" onclick="viewRecord(\'' + r.id + '\')">查看</button>';
+            h += '<button class="btn-sm danger" onclick="deleteRecord(\'' + r.id + '\')">删除</button></div></div>';
+        }
+        c.innerHTML = h;
+    }
+
+    function viewRecord(id) {
+        fetch('/record/' + id)
+        .then(function(r) { return r.json(); })
+        .then(function(data) {
+            if (data.status === 'success') {
+                var d = data.data;
+                currentResults = [{
+                    case_number: d.case_number, filename: d.filename,
+                    role_id: d.role_id, template_name: d.template_name,
+                    display_layout: d.display_layout,
+                    source_type: d.source_type || 'image',
+                    transcript: d.audio_transcript,
+                    qualitative_analysis: d.qualitative_data,
+                    data: d.extracted_data, confidence: d.confidence, create_time: d.create_time
+                }];
+                showResults(currentResults);
+                document.getElementById('resultsSection').scrollIntoView({ behavior: 'smooth' });
+            }
+        });
+    }
+
+    function deleteRecord(id) {
+        if (!confirm('确定删除？')) return;
+        fetch('/record/' + id, { method: 'DELETE' })
+        .then(function(r) { return r.json(); })
+        .then(function(d) { if (d.status === 'success') { showToast('已删除', 'success'); refreshHistory(); refreshStats(); } });
+    }
+
+    function refreshStats() {
+        fetch('/stats').then(function(r) { return r.json(); }).then(function(d) {
+            if (d.status === 'success') document.getElementById('recordCount').textContent = '已识别: ' + d.total_records + ' 份';
+        });
+    }
+
+    function cleanAll() {
+        if (!confirm('清空所有数据？不可恢复。')) return;
+        fetch('/clean', { method: 'POST' })
+        .then(function(r) { return r.json(); })
+        .then(function(d) { if (d.status === 'success') { showToast('已清空', 'success'); refreshHistory(); refreshStats(); document.getElementById('resultsSection').classList.remove('active'); currentResults = []; } });
+    }
+
+    // ===== 模板管理 =====
+    var roleModalTitles = {
+        doctor: '&#128203; 医生病历模板管理',
+        nurse: '&#128221; 护理量表模板管理',
+        researcher: '&#128202; 科研数据模板管理'
+    };
+    var roleFormLabels = {
+        doctor: { name: '模板名称', namePh: '如: 门诊病历模板', fields: '提取字段（每行一个）', fieldsPh: '主诉\n现病史\n体格检查\n诊断\n治疗方案', showScore: false },
+        nurse: { name: '模板名称', namePh: '如: 跌倒后再评估表', fields: '提取字段（每行一个）', fieldsPh: '患者姓名\n评估日期\n压疮部位\n皮肤状态\nBraden评分\n护理措施', showScore: true },
+        researcher: { name: '模板名称', namePh: '如: 心血管研究数据模板', fields: '提取字段（每行一个）', fieldsPh: '入组时间\n主要终点事件\n随访日期\n血压\n血脂\n用药情况', showScore: false }
+    };
+
+    function openTemplateModal() {
+        var cfg = roleFormLabels[currentRole] || roleFormLabels.nurse;
+        document.querySelector('#templateModal .modal-header h2').innerHTML = roleModalTitles[currentRole] || roleModalTitles.nurse;
+        document.querySelector('#templateModal .modal-header p').textContent = '管理系统内置模板与自定义模板';
+        document.getElementById('newTplName').placeholder = cfg.namePh;
+        document.getElementById('newTplFields').placeholder = cfg.fieldsPh;
+        document.getElementById('newTplScore').parentElement.style.display = cfg.showScore ? 'block' : 'none';
+        document.getElementById('templateModal').classList.add('active');
+        loadTemplateList();
+    }
+
+    function closeTemplateModal() { document.getElementById('templateModal').classList.remove('active'); }
+
+    function loadTemplateList() {
+        fetch('/api/templates/' + currentRole)
+        .then(function(r) { return r.json(); })
+        .then(function(data) {
+            if (data.status !== 'success') return;
+            var c = document.getElementById('templateListInModal');
+            var h = '';
+            for (var i = 0; i < data.templates.length; i++) {
+                var t = data.templates[i];
+                h += '<div class="tpl-item"><span>' + esc(t.template_name) + '<span class="tpl-type ' + (t.template_type === 'custom' ? 'custom' : '') + '">' + (t.template_type === 'fixed' ? '系统' : '自定义') + '</span></span>';
+                if (t.template_type === 'custom') h += '<button class="del-btn" onclick="deleteTemplate(\'' + t.template_id + '\')">&#128465;</button>';
+                h += '</div>';
+            }
+            c.innerHTML = h || '<p style="color:var(--text-secondary);font-size:13px;">暂无模板</p>';
+        });
+    }
+
+    function createCustomTemplate() {
+        var name = document.getElementById('newTplName').value.trim();
+        var fieldsText = document.getElementById('newTplFields').value;
+        var includeScore = document.getElementById('newTplScore').checked;
+        if (!name || !fieldsText.trim()) { showToast('请填写名称和字段', 'error'); return; }
+        var fields = fieldsText.split('\n').map(function(f) { return f.trim(); }).filter(function(f) { return f; });
+        fetch('/api/templates', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ role_id: currentRole, template_name: name, fields: fields, include_score: includeScore })
+        })
+        .then(function(r) { return r.json(); })
+        .then(function(d) {
+            if (d.status === 'success') {
+                showToast('模板创建成功', 'success');
+                document.getElementById('newTplName').value = '';
+                document.getElementById('newTplFields').value = '';
+                loadTemplateList();
+                loadTemplates(currentRole);
+            } else showToast(d.msg, 'error');
+        });
+    }
+
+    function deleteTemplate(id) {
+        if (!confirm('确定删除此模板？')) return;
+        fetch('/api/templates/' + id, { method: 'DELETE' })
+        .then(function(r) { return r.json(); })
+        .then(function(d) {
+            if (d.status === 'success') { showToast('已删除', 'success'); loadTemplateList(); loadTemplates(currentRole); }
+            else showToast(d.msg, 'error');
+        });
+    }
+
+    // ===== 工具函数 =====
+    function esc(s) { if (s === null || s === undefined) return ''; var d = document.createElement('div'); d.textContent = String(s); return d.innerHTML; }
+    function fv(v) { if (v === null || v === undefined || v === '') return '-'; if (Array.isArray(v)) return v.join('; '); return String(v); }
+    function confBadge(c) {
+        if (c === undefined || c === null || c === '') return '<span style="color:#94a3b8;">-</span>';
+        var v = parseFloat(c); if (isNaN(v)) return '-';
+        return '<span class="confidence-badge ' + (v >= 0.9 ? 'confidence-high' : 'confidence-low') + '">' + Math.round(v * 100) + '%</span>';
+    }
+    </script>
+</body>
+</html>

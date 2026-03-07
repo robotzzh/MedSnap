@@ -162,6 +162,34 @@
         .empty-state { padding: 48px; text-align: center; color: var(--text-secondary); }
         .empty-state .icon { font-size: 48px; margin-bottom: 12px; opacity: 0.4; }
 
+        /* ===== Export Modal ===== */
+        .export-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); display: none; justify-content: center; align-items: center; z-index: 9998; }
+        .export-modal { background: white; border-radius: 20px; padding: 0; max-width: 680px; width: 92%; max-height: 85vh; display: flex; flex-direction: column; box-shadow: 0 30px 80px rgba(0,0,0,0.25); }
+        .export-modal-header { padding: 20px 24px; border-bottom: 1px solid var(--border); }
+        .export-modal-header h2 { font-size: 18px; margin-bottom: 4px; }
+        .export-modal-header p { font-size: 13px; color: var(--text-secondary); }
+        .export-filters { display: flex; align-items: center; gap: 10px; padding: 14px 24px; border-bottom: 1px solid var(--border); flex-wrap: wrap; }
+        .export-filters select { padding: 6px 10px; border: 1px solid var(--border); border-radius: 8px; font-size: 12px; background: white; }
+        .export-filters .btn-sm { font-size: 12px; }
+        .export-record-list { flex: 1; overflow-y: auto; max-height: 400px; }
+        .export-record-item { display: flex; align-items: center; gap: 12px; padding: 12px 24px; border-bottom: 1px solid #f1f5f9; cursor: pointer; transition: background 0.15s; }
+        .export-record-item:hover { background: #f8fafc; }
+        .export-record-item input[type="checkbox"] { flex-shrink: 0; width: 16px; height: 16px; cursor: pointer; }
+        .export-record-item .info { flex: 1; display: flex; flex-direction: column; gap: 2px; }
+        .export-record-item .case-no { font-weight: 600; font-size: 13px; }
+        .export-record-item .meta { font-size: 11px; color: var(--text-secondary); }
+        .export-modal-footer { padding: 16px 24px; border-top: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+        .export-modal-footer .export-count { font-size: 13px; color: var(--text-secondary); }
+        .export-modal-footer .export-actions { display: flex; gap: 8px; }
+        .export-btn { padding: 8px 18px; border: none; border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer; transition: all 0.2s; }
+        .export-btn.primary { background: var(--primary); color: white; }
+        .export-btn.primary:hover { opacity: 0.9; }
+        .export-btn.primary:disabled { opacity: 0.5; cursor: not-allowed; }
+        .export-btn.secondary { background: #f1f5f9; color: var(--text); }
+        .export-btn.secondary:hover { background: #e2e8f0; }
+        .export-btn.cancel { background: transparent; color: var(--text-secondary); border: 1px solid var(--border); }
+        .export-btn.cancel:hover { background: #f8fafc; }
+
         /* ===== Toast ===== */
         .toast-container { position: fixed; top: 70px; right: 24px; z-index: 1000; }
         .toast { padding: 12px 20px; border-radius: 12px; font-size: 14px; margin-bottom: 10px; box-shadow: 0 4px 20px rgba(0,0,0,0.15); animation: toastIn 0.3s; }
@@ -180,6 +208,12 @@
         }
 
         .footer { text-align: center; padding: 24px; font-size: 12px; color: var(--text-secondary); }
+        .privacy-bar {
+            background: linear-gradient(135deg, #ecfdf5, #d1fae5);
+            border: 1px solid #a7f3d0; border-radius: 10px;
+            padding: 10px 20px; margin-bottom: 20px;
+            display: flex; align-items: center; gap: 10px; font-size: 13px; color: #065f46;
+        }
 
         /* ===== Template Modal ===== */
         .modal-content { max-width: 800px; width: 94%; background: white; border-radius: 20px; padding: 36px; max-height: 90vh; overflow-y: auto; }
@@ -388,6 +422,10 @@
     <div class="toast-container" id="toastContainer"></div>
 
     <div class="container">
+        <div class="privacy-bar">
+            <span>&#128737;</span>
+            <span><strong>隐私保障：</strong>所有数据均在本地处理和存储，敏感信息（身份证号、手机号、姓名、地址等）已进行自动脱敏处理，脱敏后再进行AI分析。</span>
+        </div>
         <!-- Research Method Selection -->
         <div class="method-tabs">
             <div class="method-tab quantitative active" onclick="switchMethod('quantitative')">
@@ -547,7 +585,7 @@
         </div>
     </div>
 
-    <div class="footer">MedSnap 临床数据智能平台 | 数据仅存储于本地 | 请勿用于临床诊断 | <a href="javascript:void(0)" onclick="showGuide()" style="color:var(--primary);text-decoration:none;">使用指南</a></div>
+    <div class="footer">MedSnap 临床数据智能平台 | 数据仅存储于本地 | 敏感信息已自动脱敏 | 请勿用于临床诊断 | <a href="javascript:void(0)" onclick="showGuide()" style="color:var(--primary);text-decoration:none;">使用指南</a></div>
 
     <!-- User Guide Modal -->
     <div class="guide-overlay hidden" id="guideOverlay">
@@ -758,6 +796,45 @@
                 <div class="form-actions">
                     <button class="btn-cancel" onclick="showListView()">取消</button>
                     <button class="btn-save" onclick="saveTemplate()">保存模板</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Export Selection Modal -->
+    <div class="export-overlay" id="exportOverlay">
+        <div class="export-modal">
+            <div class="export-modal-header">
+                <h2>&#128229; 导出数据</h2>
+                <p>选择要导出的记录，支持按角色和模块筛选</p>
+            </div>
+            <div class="export-filters">
+                <label style="font-size:12px;font-weight:600;">角色:</label>
+                <select id="exportFilterRole" onchange="loadExportRecords()">
+                    <option value="">全部</option>
+                    <option value="doctor">临床医生</option>
+                    <option value="nurse">护士</option>
+                    <option value="researcher">临床科研</option>
+                </select>
+                <label style="font-size:12px;font-weight:600;">模块:</label>
+                <select id="exportFilterModule" onchange="loadExportRecords()">
+                    <option value="">全部</option>
+                    <option value="image_ocr">图片识别</option>
+                    <option value="voice_input">语音输入</option>
+                    <option value="text_input">文本输入</option>
+                    <option value="qualitative">质性研究</option>
+                </select>
+                <button class="btn-sm" onclick="toggleExportSelectAll()" id="exportSelectAllBtn">全选</button>
+            </div>
+            <div class="export-record-list" id="exportRecordList">
+                <div class="empty-state" style="padding:30px;"><p style="font-size:13px;">加载中...</p></div>
+            </div>
+            <div class="export-modal-footer">
+                <span class="export-count" id="exportCount">已选 0 条记录</span>
+                <div class="export-actions">
+                    <button class="export-btn cancel" onclick="closeExportModal()">取消</button>
+                    <button class="export-btn secondary" onclick="doExportAll()">导出全部</button>
+                    <button class="export-btn primary" id="exportSelectedBtn" onclick="doExportSelected()" disabled>导出选中</button>
                 </div>
             </div>
         </div>
@@ -1421,7 +1498,104 @@ function refreshStats() {
 }
 
 /* ===== Export & Clean ===== */
-function exportData() { window.location.href = '/export_all'; }
+function exportData() {
+    document.getElementById('exportOverlay').style.display = 'flex';
+    loadExportRecords();
+}
+
+function closeExportModal() {
+    document.getElementById('exportOverlay').style.display = 'none';
+}
+
+function loadExportRecords() {
+    var role = document.getElementById('exportFilterRole').value;
+    var mod = document.getElementById('exportFilterModule').value;
+    var url = '/records?';
+    if (role) url += 'role_id=' + role + '&';
+    if (mod) url += 'module_type=' + mod;
+    fetch(url)
+    .then(function(r) { return r.json(); })
+    .then(function(data) {
+        if (data.status !== 'success') return;
+        var list = document.getElementById('exportRecordList');
+        if (!data.records.length) {
+            list.innerHTML = '<div class="empty-state" style="padding:30px;"><div class="icon">&#128196;</div><p style="font-size:13px;">暂无匹配记录</p></div>';
+            updateExportCount();
+            return;
+        }
+        var html = '';
+        var moduleNames = { image_ocr: '图片识别', voice_input: '语音输入', text_input: '文本输入', qualitative: '质性研究', dynamic_extract: '动态提取' };
+        for (var i = 0; i < data.records.length; i++) {
+            var r = data.records[i];
+            var tagBg = roleColors[r.role_id] || '#64748b';
+            var modName = moduleNames[r.module_type] || r.module_type || '';
+            html += '<label class="export-record-item">';
+            html += '<input type="checkbox" class="export-cb" value="' + r.id + '" onchange="updateExportCount()">';
+            html += '<div class="info">';
+            html += '<span class="case-no">' + esc(r.case_number);
+            if (r.role_id) html += ' <span class="tag" style="background:' + tagBg + '20;color:' + tagBg + ';">' + (roleNames[r.role_id] || r.role_id) + '</span>';
+            html += '</span>';
+            html += '<span class="meta">' + esc(r.filename || '') + ' | ' + modName + ' | ' + (r.create_time || '') + '</span>';
+            html += '</div></label>';
+        }
+        list.innerHTML = html;
+        updateExportCount();
+    });
+}
+
+function toggleExportSelectAll() {
+    var cbs = document.querySelectorAll('.export-cb');
+    var allChecked = true;
+    for (var i = 0; i < cbs.length; i++) { if (!cbs[i].checked) { allChecked = false; break; } }
+    for (var j = 0; j < cbs.length; j++) cbs[j].checked = !allChecked;
+    updateExportCount();
+}
+
+function updateExportCount() {
+    var cbs = document.querySelectorAll('.export-cb:checked');
+    var count = cbs.length;
+    document.getElementById('exportCount').textContent = '已选 ' + count + ' 条记录';
+    document.getElementById('exportSelectedBtn').disabled = (count === 0);
+}
+
+function doExportSelected() {
+    var cbs = document.querySelectorAll('.export-cb:checked');
+    var ids = [];
+    for (var i = 0; i < cbs.length; i++) ids.push(cbs[i].value);
+    if (!ids.length) { showToast('请至少选择一条记录', 'error'); return; }
+
+    showToast('正在生成导出文件...', 'info');
+    fetch('/export', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ record_ids: ids })
+    })
+    .then(function(resp) {
+        var ct = resp.headers.get('Content-Type') || '';
+        if (ct.indexOf('json') !== -1) {
+            return resp.json().then(function(d) { showToast(d.msg || '导出失败', 'error'); });
+        }
+        return resp.blob().then(function(blob) {
+            var a = document.createElement('a');
+            a.href = URL.createObjectURL(blob);
+            var disp = resp.headers.get('Content-Disposition') || '';
+            var match = disp.match(/filename\*?=(?:UTF-8'')?["']?([^"';\n]+)/i);
+            a.download = match ? decodeURIComponent(match[1]) : '临床数据_选中导出.xlsx';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(a.href);
+            showToast('导出成功（' + ids.length + ' 条记录）', 'success');
+            closeExportModal();
+        });
+    })
+    .catch(function(err) { showToast('导出失败: ' + err.message, 'error'); });
+}
+
+function doExportAll() {
+    window.location.href = '/export_all';
+    closeExportModal();
+}
 
 function cleanAll() {
     if (!confirm('清空所有数据？不可恢复。')) return;
@@ -1669,19 +1843,17 @@ function showTemplateDetail(templateId) {
             return;
         }
         var t = data.template;
-        document.getElementById('detailTemplateName').innerHTML = '&#128203; ' + esc(t.template_name) + (t.template_type === 'system' ? ' <span style="font-size:12px;color:var(--text-secondary);">(系统模板 - 只读)</span>' : '');
+        var isSystem = t.template_type === 'system';
+        document.getElementById('detailTemplateName').innerHTML = '&#128203; ' + esc(t.template_name) + (isSystem ? ' <span style="font-size:12px;color:var(--text-secondary);">(系统模板)</span>' : '');
         document.getElementById('detailFieldCount').textContent = (t.fields ? t.fields.length : 0) + ' 个字段';
         
-        var isReadonly = t.template_type === 'system';
         var html = '';
         if (t.fields && t.fields.length) {
             t.fields.forEach(function(f, idx) {
                 html += '<div class="field-list-item" data-field-index="' + idx + '">';
                 html += '<span class="field-index">' + (idx + 1) + '</span>';
-                html += '<input type="text" class="field-edit-input" value="' + esc(f) + '"' + (isReadonly ? ' readonly' : '') + '>';
-                if (!isReadonly) {
-                    html += '<button class="field-delete-btn" onclick="deleteFieldItem(this)" title="删除">&#128465;</button>';
-                }
+                html += '<input type="text" class="field-edit-input" value="' + esc(f) + '">';
+                html += '<button class="field-delete-btn" onclick="deleteFieldItem(this)" title="删除">&#128465;</button>';
                 html += '</div>';
             });
         } else {
@@ -1689,9 +1861,9 @@ function showTemplateDetail(templateId) {
         }
         fieldList.innerHTML = html;
         
-        // Hide add field and save for system templates
-        document.querySelector('.add-new-field-row').style.display = isReadonly ? 'none' : 'flex';
-        document.querySelector('.btn-save-fields').style.display = isReadonly ? 'none' : 'block';
+        // Always show add field and save buttons
+        document.querySelector('.add-new-field-row').style.display = 'flex';
+        document.querySelector('.btn-save-fields').style.display = 'block';
     })
     .catch(function(err) {
         fieldList.innerHTML = '<p style="color:var(--danger);text-align:center;padding:20px;">加载失败</p>';
@@ -1781,9 +1953,6 @@ function saveDetailFields() {
         return;
     }
     
-    // Get template name from detail panel
-    var templateName = document.getElementById('detailTemplateName').textContent.replace(/[📋\s（系统模板.*）]/g, '').trim();
-    
     fetch('/api/templates/' + selectedTemplateId, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
@@ -1796,6 +1965,8 @@ function saveDetailFields() {
     .then(function(data) {
         if (data.status === 'success') {
             showToast('字段已保存', 'success');
+            // Update TEMPLATE_FIELDS cache: re-fetch detail
+            showTemplateDetail(selectedTemplateId);
             loadTemplateGrid();
             loadTemplates();
         } else {
@@ -1875,10 +2046,8 @@ document.addEventListener('DOMContentLoaded', function() {
     refreshHistory();
     refreshStats();
 
-    // Show guide on first visit
-    if (!localStorage.getItem('medsnap_guide_seen')) {
-        setTimeout(function() { showGuide(); }, 800);
-    }
+    // Show guide every time the app loads
+    setTimeout(function() { showGuide(); }, 800);
 });
 </script>
 </body>
