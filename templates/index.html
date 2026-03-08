@@ -175,6 +175,11 @@
         .toast.info { background: #eff6ff; color: #1e40af; border: 1px solid #bfdbfe; }
         @keyframes toastIn { from { opacity: 0; transform: translateX(40px); } to { opacity: 1; transform: translateX(0); } }
 
+        /* ===== Template Selector ===== */
+        .template-selector { background: #f8fafc; border: 1px solid var(--border); border-radius: 12px; padding: 16px; margin-bottom: 20px; }
+        .template-selector .config-row { margin-bottom: 12px; }
+        .template-selector .category-tabs { margin-bottom: 0; }
+
         /* ===== Category Tabs ===== */
         .category-tabs { display: flex; gap: 6px; margin-bottom: 8px; }
         .category-tab { padding: 6px 16px; border-radius: 20px; font-size: 13px; font-weight: 500; cursor: pointer;
@@ -201,6 +206,24 @@
                            border-radius: 12px; font-size: 15px; font-weight: 600; cursor: pointer; color: white;
                            background: linear-gradient(135deg, #059669, #10b981); transition: all 0.3s; box-shadow: 0 4px 12px rgba(5,150,105,0.3); }
         .stats-entry-btn:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(5,150,105,0.4); }
+
+        /* ===== Qualitative Entry Card ===== */
+        .qual-entry-card { margin-top: 16px; padding: 24px; border: 2px solid #c4b5fd; border-radius: 16px;
+                           background: linear-gradient(135deg, #f5f3ff, #ede9fe); position: relative; overflow: hidden; }
+        .qual-entry-card::before { content: ''; position: absolute; top: -40px; right: -40px; width: 120px; height: 120px;
+                                   background: radial-gradient(circle, rgba(124,58,237,0.08) 0%, transparent 70%); border-radius: 50%; }
+        .qual-entry-header { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; }
+        .qual-entry-header .icon { font-size: 32px; }
+        .qual-entry-header h4 { font-size: 17px; font-weight: 700; color: #5b21b6; }
+        .qual-entry-desc { font-size: 13px; color: #6d28d9; margin-bottom: 16px; line-height: 1.6; }
+        .qual-features { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 18px; }
+        .qual-feature-tag { font-size: 12px; padding: 4px 12px; border-radius: 20px;
+                            background: white; color: #7c3aed; border: 1px solid #ddd6fe; font-weight: 500; }
+        .qual-entry-btn { display: inline-flex; align-items: center; gap: 8px; padding: 12px 28px; border: none;
+                          border-radius: 12px; font-size: 15px; font-weight: 600; cursor: pointer; color: white;
+                          background: linear-gradient(135deg, #7c3aed, #8b5cf6); transition: all 0.3s;
+                          box-shadow: 0 4px 12px rgba(124,58,237,0.3); }
+        .qual-entry-btn:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(124,58,237,0.4); }
 
         /* ===== Responsive ===== */
         @media (max-width: 768px) {
@@ -443,12 +466,14 @@
         <div class="module-panel active" id="panel-quantitative">
             <div class="module-header">
                 <h3>&#128202; 定量研究模块</h3>
+            </div>
+            <div class="template-selector">
+                <div class="category-tabs">
+                    <span class="category-tab" data-cat="diagnosis" onclick="switchCategory('diagnosis')">诊疗</span>
+                    <span class="category-tab" data-cat="nursing" onclick="switchCategory('nursing')">护理</span>
+                    <span class="category-tab active" data-cat="other" onclick="switchCategory('other')">其他</span>
+                </div>
                 <div class="config-row">
-                    <div class="category-tabs">
-                        <span class="category-tab" data-cat="diagnosis" onclick="switchCategory('diagnosis')">诊疗</span>
-                        <span class="category-tab" data-cat="nursing" onclick="switchCategory('nursing')">护理</span>
-                        <span class="category-tab active" data-cat="other" onclick="switchCategory('other')">其他</span>
-                    </div>
                     <label>模板:</label>
                     <select id="quantTemplate"></select>
                     <button class="nav-btn" style="color:var(--text);border-color:var(--border);" onclick="openTemplateModal()">管理模板</button>
@@ -514,6 +539,24 @@
                     <span class="stats-feature-tag">数据导出</span>
                 </div>
                 <button class="stats-entry-btn" onclick="location.href='/statistics'">&#128200; 进入统计分析平台 &#8594;</button>
+            </div>
+
+            <!-- Qualitative Analysis Entry Card -->
+            <div class="qual-entry-card">
+                <div class="qual-entry-header">
+                    <span class="icon">&#128300;</span>
+                    <h4>质性分析工作台</h4>
+                </div>
+                <p class="qual-entry-desc">基于学术标准的四步法质性分析流程，支持深度访谈、焦点小组和观察记录的系统化分析，自动完成从初始编码到层级化输出的全流程。</p>
+                <div class="qual-features">
+                    <span class="qual-feature-tag">深度访谈分析</span>
+                    <span class="qual-feature-tag">焦点小组分析</span>
+                    <span class="qual-feature-tag">观察记录分析</span>
+                    <span class="qual-feature-tag">四步法编码</span>
+                    <span class="qual-feature-tag">主题聚类</span>
+                    <span class="qual-feature-tag">代表性引用</span>
+                </div>
+                <button class="qual-entry-btn" onclick="switchMethod('qualitative')">&#128300; 进入质性分析 &#8594;</button>
             </div>
         </div>
 
