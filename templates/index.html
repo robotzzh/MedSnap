@@ -1327,22 +1327,26 @@ function renderResult(result) {
 
 function renderDataRows(obj, prefix) {
     var rows = [];
+    var skipPrefixes = ['patient_info', 'custom_fields', 'demographics'];
     for (var k in obj) {
         if (k === 'confidence') continue;
         var v = obj[k];
-        var label = prefix ? prefix + '.' + k : k;
+        var fullLabel = prefix ? prefix + '.' + k : k;
         if (v && typeof v === 'object' && !Array.isArray(v)) {
-            rows = rows.concat(renderDataRows(v, label));
+            // For known wrapper keys, pass empty prefix so children show clean names
+            var childPrefix = (skipPrefixes.indexOf(k) !== -1 && !prefix) ? '' : fullLabel;
+            rows = rows.concat(renderDataRows(v, childPrefix));
         } else if (Array.isArray(v)) {
             v.forEach(function(item, i) {
                 if (typeof item === 'object') {
-                    rows = rows.concat(renderDataRows(item, label + '[' + i + ']'));
+                    rows = rows.concat(renderDataRows(item, fullLabel + '[' + i + ']'));
                 } else {
-                    rows.push('<tr><td>' + esc(label + '[' + i + ']') + '</td><td>' + esc(item) + '</td></tr>');
+                    rows.push('<tr><td>' + esc(fullLabel + '[' + i + ']') + '</td><td>' + esc(item) + '</td></tr>');
                 }
             });
         } else {
-            rows.push('<tr><td>' + esc(label) + '</td><td>' + esc(v) + '</td></tr>');
+            var displayLabel = fullLabel;
+            rows.push('<tr><td>' + esc(displayLabel) + '</td><td>' + esc(v) + '</td></tr>');
         }
     }
     return rows;
