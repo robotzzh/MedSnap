@@ -448,32 +448,18 @@
             <span>&#128737;</span>
             <span><strong>隐私保障：</strong>所有数据均在本地处理和存储，敏感信息（身份证号、手机号、姓名、地址等）已进行自动脱敏处理，脱敏后再进行AI分析。</span>
         </div>
-        <!-- Research Method Selection -->
-        <div class="method-tabs">
-            <div class="method-tab quantitative active" onclick="switchMethod('quantitative')">
-                <div class="tab-icon">&#128202;</div>
-                <h3>定量研究</h3>
-                <p>结构化提取 · 统计分析 · 数据可视化</p>
-            </div>
-            <div class="method-tab qualitative" onclick="switchMethod('qualitative')">
-                <div class="tab-icon">&#128300;</div>
-                <h3>质性分析</h3>
-                <p>访谈分析 · 主题编码 · 概念网络 · 情感分析</p>
-            </div>
-        </div>
+        <!-- Research Method Tabs removed - qualitative accessed via entry card -->
 
         <!-- Quantitative Research Module -->
         <div class="module-panel active" id="panel-quantitative">
             <div class="module-header">
                 <h3>&#128202; 定量研究模块</h3>
-            </div>
-            <div class="template-selector">
-                <div class="category-tabs">
-                    <span class="category-tab" data-cat="diagnosis" onclick="switchCategory('diagnosis')">诊疗</span>
-                    <span class="category-tab" data-cat="nursing" onclick="switchCategory('nursing')">护理</span>
-                    <span class="category-tab active" data-cat="other" onclick="switchCategory('other')">其他</span>
-                </div>
                 <div class="config-row">
+                    <div class="category-tabs">
+                        <span class="category-tab" data-cat="diagnosis" onclick="switchCategory('diagnosis')">诊疗</span>
+                        <span class="category-tab" data-cat="nursing" onclick="switchCategory('nursing')">护理</span>
+                        <span class="category-tab active" data-cat="other" onclick="switchCategory('other')">其他</span>
+                    </div>
                     <label>模板:</label>
                     <select id="quantTemplate"></select>
                     <button class="nav-btn" style="color:var(--text);border-color:var(--border);" onclick="openTemplateModal()">管理模板</button>
@@ -542,7 +528,7 @@
             </div>
 
             <!-- Qualitative Analysis Entry Card -->
-            <div class="qual-entry-card">
+            <div class="qual-entry-card" id="qualEntryCard">
                 <div class="qual-entry-header">
                     <span class="icon">&#128300;</span>
                     <h4>质性分析工作台</h4>
@@ -556,55 +542,58 @@
                     <span class="qual-feature-tag">主题聚类</span>
                     <span class="qual-feature-tag">代表性引用</span>
                 </div>
-                <button class="qual-entry-btn" onclick="switchMethod('qualitative')">&#128300; 进入质性分析 &#8594;</button>
+                <button class="qual-entry-btn" onclick="toggleQualPanel()">&#128300; 进入质性分析 &#8594;</button>
             </div>
-        </div>
 
-        <!-- Qualitative Analysis Module -->
-        <div class="module-panel" id="panel-qualitative">
-            <div class="module-header">
-                <h3>&#128300; 质性分析模块 <span class="role-tag" id="qualRoleTag" style="background:#fef3c7;color:#92400e;">临床科研</span></h3>
-                <div class="config-row">
-                    <label>分析类型:</label>
-                    <select id="qualType">
-                        <option value="interview">深度访谈分析</option>
-                        <option value="focus_group">焦点小组分析</option>
-                        <option value="observation">观察记录分析</option>
-                    </select>
+            <!-- Qualitative Analysis Panel (inside quantitative module, toggled by entry card) -->
+            <div id="qualPanel" style="display:none;">
+                <div style="margin-top:16px; background:var(--card); border:2px solid #c4b5fd; border-radius:16px; padding:24px;">
+                    <div class="module-header">
+                        <h3>&#128300; 质性分析模块</h3>
+                        <div class="config-row">
+                            <label>分析类型:</label>
+                            <select id="qualType">
+                                <option value="interview">深度访谈分析</option>
+                                <option value="focus_group">焦点小组分析</option>
+                                <option value="observation">观察记录分析</option>
+                            </select>
+                            <button class="nav-btn" style="color:#7c3aed;border-color:#c4b5fd;" onclick="toggleQualPanel()">&#8592; 收起</button>
+                        </div>
+                    </div>
+
+                    <div class="source-tabs">
+                        <div class="source-tab active" onclick="switchSource('qualitative', 'text')">&#128221; 文本输入</div>
+                        <div class="source-tab" onclick="switchSource('qualitative', 'voice')">&#127908; 语音上传</div>
+                        <div class="source-tab" onclick="switchSource('qualitative', 'image')">&#128248; 图片上传</div>
+                    </div>
+
+                    <div class="source-panel active" id="qual-text">
+                        <textarea class="text-area" id="qualTextInput" placeholder="在此粘贴访谈转录文本、焦点小组记录、观察笔记...&#10;&#10;系统将自动进行主题编码、关键词提取、情感分析等质性研究分析。"></textarea>
+                        <button class="btn btn-success btn-block" onclick="processQualitative('text')">开始质性分析</button>
+                    </div>
+
+                    <div class="source-panel" id="qual-voice">
+                        <input type="file" id="qualVoiceInput" class="file-input" multiple accept=".wav,.mp3,.m4a,.aac,.flac,.amr,.opus">
+                        <div class="dropzone" id="qualVoiceZone" onclick="document.getElementById('qualVoiceInput').click()">
+                            <div class="drop-icon">&#127908;</div>
+                            <h4>上传访谈录音文件</h4>
+                            <p>支持 WAV / MP3 / M4A / AAC / FLAC 格式，系统将自动转录并分析</p>
+                        </div>
+                        <div class="file-list" id="qualVoiceList"></div>
+                        <button class="btn btn-success btn-block" onclick="processQualitative('voice')" id="qualVoiceBtn" disabled>开始转录并分析</button>
+                    </div>
+
+                    <div class="source-panel" id="qual-image">
+                        <input type="file" id="qualImageInput" class="file-input" multiple accept=".jpg,.jpeg,.png,.pdf">
+                        <div class="dropzone" id="qualImageZone" onclick="document.getElementById('qualImageInput').click()">
+                            <div class="drop-icon">&#128248;</div>
+                            <h4>上传访谈记录图片/PDF</h4>
+                            <p>支持 JPG / PNG / PDF 格式，系统将OCR识别后进行质性分析</p>
+                        </div>
+                        <div class="file-list" id="qualImageList"></div>
+                        <button class="btn btn-success btn-block" onclick="processQualitative('image')" id="qualImageBtn" disabled>开始识别并分析</button>
+                    </div>
                 </div>
-            </div>
-
-            <div class="source-tabs">
-                <div class="source-tab active" onclick="switchSource('qualitative', 'text')">&#128221; 文本输入</div>
-                <div class="source-tab" onclick="switchSource('qualitative', 'voice')">&#127908; 语音上传</div>
-                <div class="source-tab" onclick="switchSource('qualitative', 'image')">&#128248; 图片上传</div>
-            </div>
-
-            <div class="source-panel active" id="qual-text">
-                <textarea class="text-area" id="qualTextInput" placeholder="在此粘贴访谈转录文本、焦点小组记录、观察笔记...&#10;&#10;系统将自动进行主题编码、关键词提取、情感分析等质性研究分析。"></textarea>
-                <button class="btn btn-success btn-block" onclick="processQualitative('text')">开始质性分析</button>
-            </div>
-
-            <div class="source-panel" id="qual-voice">
-                <input type="file" id="qualVoiceInput" class="file-input" multiple accept=".wav,.mp3,.m4a,.aac,.flac,.amr,.opus">
-                <div class="dropzone" id="qualVoiceZone" onclick="document.getElementById('qualVoiceInput').click()">
-                    <div class="drop-icon">&#127908;</div>
-                    <h4>上传访谈录音文件</h4>
-                    <p>支持 WAV / MP3 / M4A / AAC / FLAC 格式，系统将自动转录并分析</p>
-                </div>
-                <div class="file-list" id="qualVoiceList"></div>
-                <button class="btn btn-success btn-block" onclick="processQualitative('voice')" id="qualVoiceBtn" disabled>开始转录并分析</button>
-            </div>
-
-            <div class="source-panel" id="qual-image">
-                <input type="file" id="qualImageInput" class="file-input" multiple accept=".jpg,.jpeg,.png,.pdf">
-                <div class="dropzone" id="qualImageZone" onclick="document.getElementById('qualImageInput').click()">
-                    <div class="drop-icon">&#128248;</div>
-                    <h4>上传访谈记录图片/PDF</h4>
-                    <p>支持 JPG / PNG / PDF 格式，系统将OCR识别后进行质性分析</p>
-                </div>
-                <div class="file-list" id="qualImageList"></div>
-                <button class="btn btn-success btn-block" onclick="processQualitative('image')" id="qualImageBtn" disabled>开始识别并分析</button>
             </div>
         </div>
 
@@ -961,19 +950,29 @@ function switchCategory(cat) {
 /* ===== Research Method Switch ===== */
 function switchMethod(method) {
     currentMethod = method;
-    document.querySelectorAll('.method-tab').forEach(function(t) { t.classList.remove('active'); });
-    document.querySelector('.method-tab.' + method).classList.add('active');
-    document.querySelectorAll('.module-panel').forEach(function(p) { p.classList.remove('active'); });
-    document.getElementById('panel-' + method).classList.add('active');
+}
+
+function toggleQualPanel() {
+    var panel = document.getElementById('qualPanel');
+    var card = document.getElementById('qualEntryCard');
+    if (panel.style.display === 'none') {
+        panel.style.display = 'block';
+        card.querySelector('.qual-entry-btn').innerHTML = '&#128300; 收起质性分析 &#8595;';
+        panel.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    } else {
+        panel.style.display = 'none';
+        card.querySelector('.qual-entry-btn').innerHTML = '&#128300; 进入质性分析 &#8594;';
+    }
 }
 
 /* ===== Data Source Switch ===== */
 function switchSource(module, source) {
     var prefix = module === 'qualitative' ? 'qual' : 'quant';
-    var tabs = document.querySelectorAll('#panel-' + module + ' .source-tab');
+    var container = module === 'qualitative' ? document.getElementById('qualPanel') : document.getElementById('panel-quantitative');
+    var tabs = container.querySelectorAll('.source-tab');
     tabs.forEach(function(t) { t.classList.remove('active'); });
     event.target.classList.add('active');
-    document.querySelectorAll('#panel-' + module + ' .source-panel').forEach(function(p) { p.classList.remove('active'); });
+    container.querySelectorAll('.source-panel').forEach(function(p) { p.classList.remove('active'); });
     document.getElementById(prefix + '-' + source).classList.add('active');
 }
 
