@@ -107,10 +107,10 @@ def is_text_file(filename):
 
 
 # ========== 角色与模板配置 ==========
-ROLE_CONFIGS = {
-    'doctor': {'name': '临床医生', 'color': '#2563eb', 'icon': 'doctor'},
-    'nurse':  {'name': '护士',     'color': '#059669', 'icon': 'nurse'},
-    'researcher': {'name': '临床科研', 'color': '#d97706', 'icon': 'researcher'},
+CATEGORY_CONFIGS = {
+    'diagnosis': {'name': '诊疗', 'color': '#2563eb'},
+    'nursing':   {'name': '护理', 'color': '#059669'},
+    'other':     {'name': '其他', 'color': '#d97706'},
 }
 
 # ========== 内置模板Prompt定义 ==========
@@ -724,34 +724,43 @@ def _init_builtin_templates():
     c = conn.cursor()
 
     now = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+
+    # 数据迁移：将旧 role_id 映射到新分类 ID（幂等操作）
+    c.execute("UPDATE extraction_templates SET role_id='diagnosis' WHERE role_id='doctor'")
+    c.execute("UPDATE extraction_templates SET role_id='nursing'   WHERE role_id='nurse'")
+    c.execute("UPDATE extraction_templates SET role_id='other'     WHERE role_id='researcher'")
+    c.execute("UPDATE medical_records SET role_id='diagnosis' WHERE role_id='doctor'")
+    c.execute("UPDATE medical_records SET role_id='nursing'   WHERE role_id='nurse'")
+    c.execute("UPDATE medical_records SET role_id='other'     WHERE role_id='researcher'")
+
     templates = [
-        # 临床医生模板
-        ('tpl_doctor_medical', 'doctor', '门诊/住院病历', 'fixed',
+        # 诊疗模板
+        ('tpl_doctor_medical', 'diagnosis', '门诊/住院病历', 'fixed',
          PROMPT_DOCTOR_MEDICAL_RECORD, 'table', now),
-        ('tpl_doctor_lab', 'doctor', '检查检验结果', 'fixed',
+        ('tpl_doctor_lab', 'diagnosis', '检查检验结果', 'fixed',
          PROMPT_DOCTOR_LAB_RESULTS, 'table', now),
-        # 护士模板
-        ('tpl_nurse_admission', 'nurse', '入院护理评估表', 'fixed',
+        # 护理模板
+        ('tpl_nurse_admission', 'nursing', '入院护理评估表', 'fixed',
          PROMPT_NURSE_ADMISSION, 'card', now),
-        ('tpl_nurse_barthel', 'nurse', 'Barthel自理能力量表', 'fixed',
+        ('tpl_nurse_barthel', 'nursing', 'Barthel自理能力量表', 'fixed',
          PROMPT_NURSE_BARTHEL, 'scale', now),
-        ('tpl_nurse_morse', 'nurse', 'Morse跌倒风险量表', 'fixed',
+        ('tpl_nurse_morse', 'nursing', 'Morse跌倒风险量表', 'fixed',
          PROMPT_NURSE_MORSE, 'scale', now),
-        ('tpl_nurse_braden', 'nurse', 'Braden压疮风险量表', 'fixed',
+        ('tpl_nurse_braden', 'nursing', 'Braden压疮风险量表', 'fixed',
          PROMPT_NURSE_BRADEN, 'scale', now),
-        ('tpl_nurse_pain', 'nurse', 'NRS/VAS疼痛评估', 'fixed',
+        ('tpl_nurse_pain', 'nursing', 'NRS/VAS疼痛评估', 'fixed',
          PROMPT_NURSE_PAIN, 'card', now),
-        ('tpl_nurse_record', 'nurse', '护理记录单', 'fixed',
+        ('tpl_nurse_record', 'nursing', '护理记录单', 'fixed',
          PROMPT_NURSE_RECORD, 'table', now),
-        # 科研模板
-        ('tpl_researcher_default', 'researcher', '综合科研数据提取', 'fixed',
+        # 其他模板
+        ('tpl_researcher_default', 'other', '综合科研数据提取', 'fixed',
          PROMPT_RESEARCHER, 'table', now),
         # 音频模板
-        ('tpl_audio_doctor', 'doctor', '医患对话录音', 'fixed',
+        ('tpl_audio_doctor', 'diagnosis', '医患对话录音', 'fixed',
          PROMPT_AUDIO_DOCTOR, 'table', now),
-        ('tpl_audio_nurse', 'nurse', '护理交班录音', 'fixed',
+        ('tpl_audio_nurse', 'nursing', '护理交班录音', 'fixed',
          PROMPT_AUDIO_NURSE, 'card', now),
-        ('tpl_audio_researcher', 'researcher', '研究访谈录音', 'fixed',
+        ('tpl_audio_researcher', 'other', '研究访谈录音', 'fixed',
          PROMPT_AUDIO_RESEARCHER, 'table', now),
     ]
 
@@ -762,7 +771,7 @@ def _init_builtin_templates():
 
     # 迁移旧数据：标记为科研角色
     c.execute('''UPDATE medical_records
-        SET role_id='researcher', template_id='tpl_researcher_default'
+        SET role_id='other', template_id='tpl_researcher_default'
         WHERE role_id IS NULL''')
 
     conn.commit()
@@ -1481,8 +1490,8 @@ def generate_excel(data_list):
     # 按角色分组
     grouped = {}
     for item in data_list:
-        role = item.get('role_id', 'researcher')
-        role_name = ROLE_CONFIGS.get(role, {}).get('name', role)
+        role = item.get('role_id', 'other')
+        role_name = CATEGORY_CONFIGS.get(role, {}).get('name', role)
         grouped.setdefault(role_name, []).append(item)
 
     excel_path = os.path.join(
@@ -1599,11 +1608,11 @@ def _collect_low_conf(conf, low_conf_fields):
 
 @app.route('/api/roles', methods=['GET'])
 def api_get_roles():
-    """获取角色列表"""
+    """获取分类列表"""
     conn = get_db()
     c = conn.cursor()
     roles = []
-    for role_id, cfg in ROLE_CONFIGS.items():
+    for role_id, cfg in CATEGORY_CONFIGS.items():
         c.execute("SELECT COUNT(*) as cnt FROM extraction_templates WHERE role_id=? AND is_active=1",
                   (role_id,))
         count = c.fetchone()['cnt']
@@ -1611,7 +1620,6 @@ def api_get_roles():
             'role_id': role_id,
             'name': cfg['name'],
             'color': cfg['color'],
-            'icon': cfg['icon'],
             'template_count': count
         })
     conn.close()
@@ -1655,11 +1663,11 @@ def _generate_template_prompt(role_id, fields, include_score=False):
     if include_score:
         score_rule = "3. 如果字段是评分项，提取纯数字评分。如有总分，一并计算。\n"
 
-    if role_id == 'doctor':
+    if role_id == 'diagnosis':
         ai_prompt = DOCTOR_CUSTOM_PROMPT_TEMPLATE.format(
             field_schema=field_schema, field_names=field_names)
         display_layout = 'table'
-    elif role_id == 'researcher':
+    elif role_id == 'other':
         ai_prompt = RESEARCHER_CUSTOM_PROMPT_TEMPLATE.format(
             field_schema=field_schema, field_names=field_names)
         display_layout = 'table'
@@ -1840,18 +1848,18 @@ def api_extract_fields_from_text():
     try:
         data = request.get_json()
         text = (data.get('text', '') or '').strip()
-        role_id = data.get('role_id', 'researcher')
+        role_id = data.get('role_id', 'other')
 
         if len(text) < 5:
             return jsonify({"status": "error", "msg": "请输入更多文本内容（至少5个字符）"})
 
-        if role_id not in ('doctor', 'nurse', 'researcher'):
-            role_id = 'researcher'
+        if role_id not in ('diagnosis', 'nursing', 'other'):
+            role_id = 'other'
 
         role_hints = {
-            'doctor': '临床医生',
-            'nurse': '护理人员',
-            'researcher': '临床科研人员'
+            'diagnosis': '诊疗数据提取',
+            'nursing': '护理评估数据提取',
+            'other': '综合数据提取'
         }
         role_hint = role_hints[role_id]
 
@@ -2007,7 +2015,7 @@ def api_extract_selected_fields():
         return jsonify({"status": "error", "msg": "无数据"})
 
     selected_fields = data.get('selected_fields', [])
-    role_id = data.get('role_id', 'researcher')
+    role_id = data.get('role_id', 'other')
     cached_raw_data = data.get('raw_data')
     text_content = data.get('text_content', '').strip()
 
@@ -2097,7 +2105,7 @@ def upload_and_recognize():
     if not files or files[0].filename == '':
         return jsonify({"status": "error", "msg": "未选择有效文件"})
 
-    role_id = request.form.get('role_id', 'researcher')
+    role_id = request.form.get('role_id', 'other')
     template_id = request.form.get('template_id', 'tpl_researcher_default')
     module_type = request.form.get('module_type', '')  # 由前端指定
 
@@ -2318,7 +2326,7 @@ def _process_audio_file(audio_path, filename, role_id, template_id,
 
         # 3. 质性分析（仅科研角色）
         qual_result = None
-        if role_id == 'researcher':
+        if role_id == 'other':
             try:
                 qual_result = qualitative_analysis(transcript_text)
             except Exception as e:
@@ -2369,7 +2377,7 @@ def _process_audio_file(audio_path, filename, role_id, template_id,
 @app.route('/upload_text', methods=['POST'])
 def upload_text():
     """文本输入模块：处理粘贴文本或txt/docx文件上传"""
-    role_id = request.form.get('role_id', 'researcher')
+    role_id = request.form.get('role_id', 'other')
     template_id = request.form.get('template_id', 'tpl_researcher_default')
     text_content = request.form.get('text_content', '').strip()
 
@@ -2690,7 +2698,7 @@ def get_records():
             "id": row['id'],
             "case_number": row['case_number'],
             "filename": row['original_filename'],
-            "role_id": row['role_id'] or 'researcher',
+            "role_id": row['role_id'] or 'other',
             "template_id": row['template_id'] or '',
             "create_time": row['create_time'],
             "source_type": row['source_type'] or 'image',
@@ -2721,7 +2729,7 @@ def get_record_detail(record_id):
     if not row:
         return jsonify({"status": "error", "msg": "记录不存在"})
 
-    role_id = row['role_id'] or 'researcher'
+    role_id = row['role_id'] or 'other'
 
     # 兼容旧数据
     if row['extracted_data']:
@@ -2845,7 +2853,7 @@ def _rows_to_export_list(rows):
     c = conn.cursor()
     data_list = []
     for row in rows:
-        role_id = row['role_id'] or 'researcher'
+        role_id = row['role_id'] or 'other'
         template_name = ''
         if row['template_id']:
             c.execute("SELECT template_name FROM extraction_templates WHERE template_id=?",
@@ -2905,7 +2913,7 @@ def get_stats():
     c.execute("SELECT role_id, COUNT(*) as cnt FROM medical_records GROUP BY role_id")
     by_role = {}
     for row in c.fetchall():
-        by_role[row['role_id'] or 'researcher'] = row['cnt']
+        by_role[row['role_id'] or 'other'] = row['cnt']
     conn.close()
     return jsonify({"status": "success", "total_records": total, "by_role": by_role})
 

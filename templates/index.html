@@ -18,39 +18,16 @@
             --text-secondary: #64748b;
             --border: #e2e8f0;
             --shadow: 0 4px 24px rgba(0,0,0,0.08);
-            --role-color: #d97706;
         }
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Microsoft YaHei", sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; line-height: 1.6; }
 
-        /* ===== Role Startup Overlay ===== */
-        .role-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: linear-gradient(135deg, #1e3a8a 0%, #3b82f6 50%, #60a5fa 100%); display: flex; justify-content: center; align-items: center; z-index: 9999; transition: opacity 0.5s, visibility 0.5s; }
-        .role-overlay.hidden { opacity: 0; visibility: hidden; }
-        .role-box { background: white; border-radius: 24px; padding: 48px; max-width: 750px; width: 92%; text-align: center; box-shadow: 0 30px 80px rgba(0,0,0,0.3); }
-        .role-box h1 { font-size: 32px; margin-bottom: 8px; background: linear-gradient(135deg, #1e40af, #3b82f6); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
-        .role-box .subtitle { color: var(--text-secondary); font-size: 15px; margin-bottom: 36px; }
-        .role-cards { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; margin-bottom: 32px; }
-        .role-card { padding: 28px 20px; border: 3px solid var(--border); border-radius: 20px; cursor: pointer; transition: all 0.3s; background: #fafbfc; }
-        .role-card:hover { transform: translateY(-6px); box-shadow: 0 12px 32px rgba(0,0,0,0.12); }
-        .role-card.selected { border-color: var(--primary); background: linear-gradient(135deg, #eff6ff, #dbeafe); }
-        .role-card.selected.doctor { border-color: #2563eb; background: linear-gradient(135deg, #eff6ff, #dbeafe); }
-        .role-card.selected.nurse { border-color: #059669; background: linear-gradient(135deg, #ecfdf5, #d1fae5); }
-        .role-card.selected.researcher { border-color: #d97706; background: linear-gradient(135deg, #fffbeb, #fef3c7); }
-        .role-card .icon { font-size: 56px; margin-bottom: 16px; }
-        .role-card h3 { font-size: 18px; margin-bottom: 8px; }
-        .role-card p { font-size: 12px; color: var(--text-secondary); line-height: 1.6; }
-        .role-box .confirm-btn { width: 100%; padding: 16px; font-size: 17px; font-weight: 600; border: none; border-radius: 14px; cursor: pointer; background: linear-gradient(135deg, #2563eb, #3b82f6); color: white; transition: all 0.3s; }
-        .role-box .confirm-btn:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(37,99,235,0.4); }
 
         /* ===== Navbar ===== */
-        .navbar { background: linear-gradient(135deg, #1e40af, var(--role-color)); color: white; padding: 14px 0; position: sticky; top: 0; z-index: 100; box-shadow: 0 2px 12px rgba(0,0,0,0.15); }
+        .navbar { background: linear-gradient(135deg, #1e40af, #3b82f6); color: white; padding: 14px 0; position: sticky; top: 0; z-index: 100; box-shadow: 0 2px 12px rgba(0,0,0,0.15); }
         .navbar-inner { max-width: 1100px; margin: 0 auto; padding: 0 24px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px; }
         .navbar h1 { font-size: 18px; font-weight: 700; }
         .nav-actions { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
-        .role-badge { display: flex; align-items: center; gap: 8px; background: rgba(255,255,255,0.2); padding: 6px 14px; border-radius: 20px; cursor: pointer; }
-        .role-badge:hover { background: rgba(255,255,255,0.3); }
-        .role-badge .dot { width: 10px; height: 10px; border-radius: 50%; }
-        .role-badge span { font-size: 13px; font-weight: 500; }
         .nav-btn { background: rgba(255,255,255,0.15); color: white; border: 1px solid rgba(255,255,255,0.25); padding: 6px 14px; border-radius: 8px; cursor: pointer; font-size: 12px; }
         .nav-btn:hover { background: rgba(255,255,255,0.25); }
         .record-count { background: rgba(255,255,255,0.2); padding: 4px 12px; border-radius: 20px; font-size: 13px; }
@@ -74,7 +51,7 @@
         .module-panel.active { display: block; }
         .module-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; flex-wrap: wrap; gap: 12px; }
         .module-header h3 { font-size: 18px; display: flex; align-items: center; gap: 10px; }
-        .module-header .role-tag { font-size: 12px; padding: 4px 12px; border-radius: 12px; font-weight: 500; }
+        .module-header .role-tag { display: none; }
 
         /* ===== Data Source Tabs ===== */
         .source-tabs { display: flex; border-bottom: 2px solid var(--border); margin-bottom: 20px; }
@@ -198,6 +175,16 @@
         .toast.info { background: #eff6ff; color: #1e40af; border: 1px solid #bfdbfe; }
         @keyframes toastIn { from { opacity: 0; transform: translateX(40px); } to { opacity: 1; transform: translateX(0); } }
 
+        /* ===== Category Tabs ===== */
+        .category-tabs { display: flex; gap: 6px; margin-bottom: 8px; }
+        .category-tab { padding: 6px 16px; border-radius: 20px; font-size: 13px; font-weight: 500; cursor: pointer;
+                        border: 1px solid var(--border); background: white; color: var(--text-secondary); transition: all 0.2s; }
+        .category-tab:hover { border-color: var(--primary); color: var(--primary); }
+        .category-tab.active { background: var(--primary); color: white; border-color: var(--primary); }
+        .category-tab.active[data-cat="diagnosis"] { background: #2563eb; border-color: #2563eb; }
+        .category-tab.active[data-cat="nursing"] { background: #059669; border-color: #059669; }
+        .category-tab.active[data-cat="other"] { background: #d97706; border-color: #d97706; }
+
         /* ===== Stats Entry Card ===== */
         .stats-entry-card { margin-top: 20px; padding: 24px; border: 2px solid #a7f3d0; border-radius: 16px;
                             background: linear-gradient(135deg, #ecfdf5, #f0fdf4); position: relative; overflow: hidden; }
@@ -217,7 +204,6 @@
 
         /* ===== Responsive ===== */
         @media (max-width: 768px) {
-            .role-cards { grid-template-columns: 1fr; }
             .method-tabs { grid-template-columns: 1fr; }
             .navbar-inner { flex-direction: column; }
             .source-tabs { overflow-x: auto; }
@@ -419,41 +405,11 @@
     <script src="https://cdn.jsdelivr.net/npm/echarts@5.5.1/dist/echarts.min.js"></script>
 </head>
 <body>
-    <!-- Role Selection Overlay -->
-    <div class="role-overlay" id="roleOverlay">
-        <div class="role-box">
-            <h1>&#9879; MedSnap</h1>
-            <p class="subtitle">临床数据智能分析平台 — 请选择您的角色身份</p>
-            <div class="role-cards">
-                <div class="role-card doctor" onclick="selectRole('doctor')">
-                    <div class="icon">&#128104;&#8205;&#9877;&#65039;</div>
-                    <h3>临床医生</h3>
-                    <p>门诊/住院病历识别<br>检验报告分析<br>手术记录提取</p>
-                </div>
-                <div class="role-card nurse" onclick="selectRole('nurse')">
-                    <div class="icon">&#128105;&#8205;&#9877;&#65039;</div>
-                    <h3>护士</h3>
-                    <p>护理量表评估<br>Barthel/Morse/Braden<br>生命体征记录</p>
-                </div>
-                <div class="role-card researcher selected" onclick="selectRole('researcher')">
-                    <div class="icon">&#128300;</div>
-                    <h3>临床科研</h3>
-                    <p>科研数据提取<br>质性/定量研究<br>统计可视化</p>
-                </div>
-            </div>
-            <button class="confirm-btn" onclick="confirmRole()">确认并进入系统</button>
-        </div>
-    </div>
-
     <!-- Navbar -->
     <nav class="navbar" id="navbar">
         <div class="navbar-inner">
             <h1>&#9879; MedSnap 临床数据智能平台</h1>
             <div class="nav-actions">
-                <div class="role-badge" onclick="showRoleOverlay()" title="点击切换角色">
-                    <span class="dot" id="roleDot" style="background:#d97706;"></span>
-                    <span id="roleLabel">临床科研</span>
-                </div>
                 <span class="record-count" id="recordCount">已处理: 0 份</span>
                 <button class="nav-btn" onclick="location.href='/statistics'">统计分析</button>
                 <button class="nav-btn" onclick="exportData()">导出数据</button>
@@ -486,9 +442,14 @@
         <!-- Quantitative Research Module -->
         <div class="module-panel active" id="panel-quantitative">
             <div class="module-header">
-                <h3>&#128202; 定量研究模块 <span class="role-tag" id="quantRoleTag" style="background:#fef3c7;color:#92400e;">临床科研</span></h3>
+                <h3>&#128202; 定量研究模块</h3>
                 <div class="config-row">
-                    <label>识别模板:</label>
+                    <div class="category-tabs">
+                        <span class="category-tab" data-cat="diagnosis" onclick="switchCategory('diagnosis')">诊疗</span>
+                        <span class="category-tab" data-cat="nursing" onclick="switchCategory('nursing')">护理</span>
+                        <span class="category-tab active" data-cat="other" onclick="switchCategory('other')">其他</span>
+                    </div>
+                    <label>模板:</label>
                     <select id="quantTemplate"></select>
                     <button class="nav-btn" style="color:var(--text);border-color:var(--border);" onclick="openTemplateModal()">管理模板</button>
                 </div>
@@ -898,15 +859,15 @@
         <div class="export-modal">
             <div class="export-modal-header">
                 <h2>&#128229; 导出数据</h2>
-                <p>选择要导出的记录，支持按角色和模块筛选</p>
+                <p>选择要导出的记录，支持按类别和模块筛选</p>
             </div>
             <div class="export-filters">
-                <label style="font-size:12px;font-weight:600;">角色:</label>
+                <label style="font-size:12px;font-weight:600;">类别:</label>
                 <select id="exportFilterRole" onchange="loadExportRecords()">
                     <option value="">全部</option>
-                    <option value="doctor">临床医生</option>
-                    <option value="nurse">护士</option>
-                    <option value="researcher">临床科研</option>
+                    <option value="diagnosis">诊疗</option>
+                    <option value="nursing">护理</option>
+                    <option value="other">其他</option>
                 </select>
                 <label style="font-size:12px;font-weight:600;">模块:</label>
                 <select id="exportFilterModule" onchange="loadExportRecords()">
@@ -934,58 +895,23 @@
 
 <script>
 /* ===== Global State ===== */
-var currentRole = 'researcher';
+var currentCategory = 'other';
 var currentMethod = 'quantitative';
 var currentResults = [];
 var files = { qualVoice: [], qualImage: [], quantImage: [], quantVoice: [] };
 var previewCache = null;
 var previewSource = '';
 var selectedTemplateId = null;
-var roleColors = { doctor: '#2563eb', nurse: '#059669', researcher: '#d97706' };
-var roleNames = { doctor: '临床医生', nurse: '护士', researcher: '临床科研' };
-var roleIcons = { doctor: '&#128104;&#8205;&#9877;&#65039;', nurse: '&#128105;&#8205;&#9877;&#65039;', researcher: '&#128300;' };
+var categoryColors = { diagnosis: '#2563eb', nursing: '#059669', other: '#d97706' };
+var categoryNames = { diagnosis: '诊疗', nursing: '护理', other: '其他' };
 
-/* ===== Role Selection ===== */
-function selectRole(role) {
-    currentRole = role;
-    var cards = document.querySelectorAll('.role-card');
-    cards.forEach(function(c) { c.classList.remove('selected'); });
-    document.querySelector('.role-card.' + role).classList.add('selected');
-}
-
-function confirmRole() {
-    localStorage.setItem('medsnap_role', currentRole);
-    hideRoleOverlay();
-    applyRole();
-    showToast('已切换至「' + roleNames[currentRole] + '」模式', 'success');
-}
-
-function hideRoleOverlay() {
-    document.getElementById('roleOverlay').classList.add('hidden');
-}
-
-function showRoleOverlay() {
-    var overlay = document.getElementById('roleOverlay');
-    overlay.classList.remove('hidden');
-    selectRole(currentRole);
-}
-
-function applyRole() {
-    // Update navbar
-    document.getElementById('roleDot').style.background = roleColors[currentRole];
-    document.getElementById('roleLabel').textContent = roleNames[currentRole];
-    document.getElementById('navbar').style.background = 'linear-gradient(135deg, #1e40af, ' + roleColors[currentRole] + ')';
-    document.documentElement.style.setProperty('--role-color', roleColors[currentRole]);
-    
-    // Update module role tags
-    var tagColors = { doctor: ['#dbeafe','#1e40af'], nurse: ['#d1fae5','#065f46'], researcher: ['#fef3c7','#92400e'] };
-    var tc = tagColors[currentRole];
-    ['qualRoleTag', 'quantRoleTag'].forEach(function(id) {
-        var el = document.getElementById(id);
-        if (el) { el.style.background = tc[0]; el.style.color = tc[1]; el.textContent = roleNames[currentRole]; }
-    });
-    
-    // Reload templates
+/* ===== Category Switch ===== */
+function switchCategory(cat) {
+    currentCategory = cat;
+    document.querySelectorAll('.category-tab').forEach(function(t) { t.classList.remove('active'); });
+    var el = document.querySelector('.category-tab[data-cat="' + cat + '"]');
+    if (el) el.classList.add('active');
+    localStorage.setItem('medsnap_category', cat);
     loadTemplates();
 }
 
@@ -1010,7 +936,7 @@ function switchSource(module, source) {
 
 /* ===== Template Loading ===== */
 function loadTemplates() {
-    fetch('/api/templates/' + currentRole)
+    fetch('/api/templates/' + currentCategory)
     .then(function(r) { return r.json(); })
     .then(function(data) {
         if (data.status !== 'success') return;
@@ -1153,7 +1079,7 @@ function executeSelectedExtraction() {
     });
     if (!selected.length) { showToast('请至少选择一个字段', 'error'); return; }
 
-    var body = { selected_fields: selected, role_id: currentRole };
+    var body = { selected_fields: selected, role_id: currentCategory };
     if (previewCache) body.raw_data = previewCache;
     if (previewSource === 'text') body.text_content = document.getElementById('quantTextInput').value.trim();
 
@@ -1259,7 +1185,7 @@ function processQuantitative(source) {
     if (!templateId) { showToast('请选择识别模板', 'error'); return; }
     
     var fd = new FormData();
-    fd.append('role_id', currentRole);
+    fd.append('role_id', currentCategory);
     fd.append('template_id', templateId);
     
     if (source === 'text') {
@@ -1553,9 +1479,9 @@ function refreshHistory() {
         if (!data.records.length) { list.innerHTML = '<div class="empty-state"><div class="icon">&#128196;</div><p>暂无处理记录</p></div>'; return; }
         var html = '';
         data.records.forEach(function(r) {
-            var tagBg = roleColors[r.role_id] || '#64748b';
+            var tagBg = categoryColors[r.role_id] || '#64748b';
             html += '<div class="history-item"><div class="info"><span class="case-no">' + esc(r.case_number);
-            if (r.role_id) html += '<span class="tag" style="background:' + tagBg + '20;color:' + tagBg + ';">' + (roleNames[r.role_id] || r.role_id) + '</span>';
+            if (r.role_id) html += '<span class="tag" style="background:' + tagBg + '20;color:' + tagBg + ';">' + (categoryNames[r.role_id] || r.role_id) + '</span>';
             html += '</span><span class="meta">' + esc(r.filename || '') + ' | ' + r.create_time + '</span></div>';
             html += '<div><button class="btn-sm" onclick="viewRecord(\'' + r.id + '\')">查看</button> ';
             html += '<button class="btn-sm danger" onclick="deleteRecord(\'' + r.id + '\')">删除</button></div></div>';
@@ -1619,13 +1545,13 @@ function loadExportRecords() {
         var moduleNames = { image_ocr: '图片识别', voice_input: '语音输入', text_input: '文本输入', qualitative: '质性研究', dynamic_extract: '动态提取' };
         for (var i = 0; i < data.records.length; i++) {
             var r = data.records[i];
-            var tagBg = roleColors[r.role_id] || '#64748b';
+            var tagBg = categoryColors[r.role_id] || '#64748b';
             var modName = moduleNames[r.module_type] || r.module_type || '';
             html += '<label class="export-record-item">';
             html += '<input type="checkbox" class="export-cb" value="' + r.id + '" onchange="updateExportCount()">';
             html += '<div class="info">';
             html += '<span class="case-no">' + esc(r.case_number);
-            if (r.role_id) html += ' <span class="tag" style="background:' + tagBg + '20;color:' + tagBg + ';">' + (roleNames[r.role_id] || r.role_id) + '</span>';
+            if (r.role_id) html += ' <span class="tag" style="background:' + tagBg + '20;color:' + tagBg + ';">' + (categoryNames[r.role_id] || r.role_id) + '</span>';
             html += '</span>';
             html += '<span class="meta">' + esc(r.filename || '') + ' | ' + modName + ' | ' + (r.create_time || '') + '</span>';
             html += '</div></label>';
@@ -1704,12 +1630,12 @@ function cleanAll() {
 }
 
 /* ===== Template Modal ===== */
-var rolePresetFields = {
-    doctor: {
+var categoryPresetFields = {
+    diagnosis: {
         '门诊/住院病历': ['主诉','现病史','既往史','个人史','家族史','过敏史','体格检查','专科检查','辅助检查','诊断','诊疗计划','处理意见'],
         '检查检验结果': ['项目名称','结果','参考值','单位','异常提示','标本类型','采集时间','报告时间']
     },
-    nurse: {
+    nursing: {
         '护理评估表': ['生命体征','意识状态','皮肤完整性','跌倒风险','压疮风险','护理措施'],
         'Morse跌倒风险': ['跌倒史','继发诊断','步行辅助','静脉输液/肝素锁','步态','认知状态'],
         'Barthel自理能力': ['进食','洗澡','修饰','穿衣','控制大便','控制小便','如厕','床椅转移','平地行走','上下楼梯'],
@@ -1717,7 +1643,7 @@ var rolePresetFields = {
         'NRS/VAS疼痛评估': ['疼痛部位','疼痛性质','疼痛强度','诱发因素','缓解因素','伴随症状','疼痛持续时间'],
         '入院护理评估': ['一般资料','过敏史','既往史','用药史','皮肤黏膜','营养状况','排泄','吞咽功能','心理状态','睡眠','饮食','专科情况','护理问题']
     },
-    researcher: {
+    other: {
         '综合科研数据': ['人口学特征','实验室检查','主要终点事件','随访日期','血压','血脂','用药情况','治疗结局']
     }
 };
@@ -1823,7 +1749,7 @@ function analyzeFieldsFromText() {
     fetch('/api/extract_fields_from_text', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ text: text, role_id: currentRole })
+        body: JSON.stringify({ text: text, role_id: currentCategory })
     })
     .then(function(r) { return r.json(); })
     .then(function(data) {
@@ -1943,7 +1869,7 @@ function resetAiExtract() {
 // ========== END AI 智能提取字段功能 ==========
 
 function renderPresetCheckboxes() {
-    var presets = rolePresetFields[currentRole] || rolePresetFields.researcher;
+    var presets = categoryPresetFields[currentCategory] || categoryPresetFields.other;
     var html = '';
     for (var category in presets) {
         html += '<div style="margin-bottom:14px;">';
@@ -2004,7 +1930,7 @@ function saveTemplate() {
     if (!name) { showToast('请填写模板名称', 'error'); return; }
     if (!fields.length) { showToast('请至少选择或添加一个字段', 'error'); return; }
 
-    var body = JSON.stringify({ role_id: currentRole, template_name: name, fields: fields, include_score: includeScore });
+    var body = JSON.stringify({ role_id: currentCategory, template_name: name, fields: fields, include_score: includeScore });
     var url = editId ? '/api/templates/' + editId : '/api/templates';
     var method = editId ? 'PUT' : 'POST';
 
@@ -2038,7 +1964,7 @@ function deleteTemplate(templateId) {
 }
 
 function loadTemplateGrid() {
-    fetch('/api/templates/' + currentRole)
+    fetch('/api/templates/' + currentCategory)
     .then(function(r) { return r.json(); })
     .then(function(data) {
         if (data.status !== 'success') return;
@@ -2207,7 +2133,7 @@ function saveDetailFields() {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-            role_id: currentRole,
+            role_id: currentCategory,
             fields: fields
         })
     })
@@ -2277,12 +2203,11 @@ function guideNav(dir) {
 
 /* ===== Init ===== */
 document.addEventListener('DOMContentLoaded', function() {
-    // Check saved role
-    var saved = localStorage.getItem('medsnap_role');
-    if (saved) {
-        currentRole = saved;
-        hideRoleOverlay();
-        applyRole();
+    // Restore saved category
+    var saved = localStorage.getItem('medsnap_category');
+    if (saved && categoryNames[saved]) {
+        currentCategory = saved;
+        switchCategory(saved);
     }
     
     // Setup file inputs
