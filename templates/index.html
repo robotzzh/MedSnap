@@ -1278,10 +1278,10 @@ function handleQuantResult(data) {
 function showResults(results) {
     var sec = document.getElementById('resultsSection');
     sec.classList.add('active');
-    document.getElementById('resultsTitle').textContent = '&#9989; 分析结果 (' + results.length + ' 份)';
+    document.getElementById('resultsTitle').innerHTML = '&#9989; 分析结果 (' + results.length + ' 份)';
     var tabs = '';
     results.forEach(function(r, i) {
-        tabs += '<div class="results-tab' + (i === 0 ? ' active' : '') + '" onclick="showResultTab(' + i + ')">' + (r.case_number || '结果' + (i + 1)) + '</div>';
+        tabs += '<div class="results-tab' + (i === 0 ? ' active' : '') + '" onclick="showResultTab(' + i + ')">' + esc(r.case_number || '结果' + (i + 1)) + '</div>';
     });
     document.getElementById('resultsTabs').innerHTML = tabs;
     renderResult(results[0]);
