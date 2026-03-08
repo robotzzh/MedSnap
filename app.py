@@ -64,7 +64,11 @@ except ImportError:
 # ========== Flask 应用初始化 ==========
 app = Flask(__name__)
 app.secret_key = uuid.uuid4().hex
-app.json.ensure_ascii = False
+app.config['JSON_AS_ASCII'] = False
+try:
+    app.json.ensure_ascii = False
+except (AttributeError, TypeError):
+    pass
 
 UPLOAD_DIR = os.path.join(tempfile.gettempdir(), "medical_ocr_uploads")
 os.makedirs(UPLOAD_DIR, exist_ok=True)
