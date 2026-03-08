@@ -70,6 +70,9 @@ os.makedirs(UPLOAD_DIR, exist_ok=True)
 app.config['UPLOAD_FOLDER'] = UPLOAD_DIR
 app.config['MAX_CONTENT_LENGTH'] = 100 * 1024 * 1024
 
+from statistics_routes import stats_bp
+app.register_blueprint(stats_bp)
+
 DB_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'local_medical_data.db')
 
 # ========== 多模态大模型配置 ==========

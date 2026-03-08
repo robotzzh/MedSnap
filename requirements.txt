@@ -10,3 +10,4 @@ PyMuPDF
 dashscope
 pydub
 pytesseract
+scipy

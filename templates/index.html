@@ -198,6 +198,23 @@
         .toast.info { background: #eff6ff; color: #1e40af; border: 1px solid #bfdbfe; }
         @keyframes toastIn { from { opacity: 0; transform: translateX(40px); } to { opacity: 1; transform: translateX(0); } }
 
+        /* ===== Stats Entry Card ===== */
+        .stats-entry-card { margin-top: 20px; padding: 24px; border: 2px solid #a7f3d0; border-radius: 16px;
+                            background: linear-gradient(135deg, #ecfdf5, #f0fdf4); position: relative; overflow: hidden; }
+        .stats-entry-card::before { content: ''; position: absolute; top: -40px; right: -40px; width: 120px; height: 120px;
+                                     background: radial-gradient(circle, rgba(5,150,105,0.08) 0%, transparent 70%); border-radius: 50%; }
+        .stats-entry-header { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; }
+        .stats-entry-header .icon { font-size: 32px; }
+        .stats-entry-header h4 { font-size: 17px; font-weight: 700; color: #065f46; }
+        .stats-entry-desc { font-size: 13px; color: #047857; margin-bottom: 16px; line-height: 1.6; }
+        .stats-features { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 18px; }
+        .stats-feature-tag { font-size: 12px; padding: 4px 12px; border-radius: 20px; background: white;
+                             color: #059669; border: 1px solid #d1fae5; font-weight: 500; }
+        .stats-entry-btn { display: inline-flex; align-items: center; gap: 8px; padding: 12px 28px; border: none;
+                           border-radius: 12px; font-size: 15px; font-weight: 600; cursor: pointer; color: white;
+                           background: linear-gradient(135deg, #059669, #10b981); transition: all 0.3s; box-shadow: 0 4px 12px rgba(5,150,105,0.3); }
+        .stats-entry-btn:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(5,150,105,0.4); }
+
         /* ===== Responsive ===== */
         @media (max-width: 768px) {
             .role-cards { grid-template-columns: 1fr; }
@@ -438,6 +455,7 @@
                     <span id="roleLabel">临床科研</span>
                 </div>
                 <span class="record-count" id="recordCount">已处理: 0 份</span>
+                <button class="nav-btn" onclick="location.href='/statistics'">统计分析</button>
                 <button class="nav-btn" onclick="exportData()">导出数据</button>
                 <button class="nav-btn" onclick="cleanAll()">清空</button>
             </div>
@@ -516,6 +534,25 @@
                     <button class="btn-outline" onclick="previewFields('text')">&#128269; 预览可提取字段</button>
                     <button class="btn btn-primary" style="flex:1;padding:12px;border-radius:12px;" onclick="processQuantitative('text')">提取结构化数据</button>
                 </div>
+            </div>
+
+            <!-- Statistics Analysis Entry Card -->
+            <div class="stats-entry-card">
+                <div class="stats-entry-header">
+                    <span class="icon">&#128202;</span>
+                    <h4>数据统计分析平台</h4>
+                </div>
+                <p class="stats-entry-desc">对提取的结构化数据进行专业统计分析，支持从数据预处理到结果导出的完整分析流程。可直接导入已提取的病历记录进行分析。</p>
+                <div class="stats-features">
+                    <span class="stats-feature-tag">描述统计</span>
+                    <span class="stats-feature-tag">差异比较</span>
+                    <span class="stats-feature-tag">相关与回归</span>
+                    <span class="stats-feature-tag">正态性检验</span>
+                    <span class="stats-feature-tag">方差齐性检验</span>
+                    <span class="stats-feature-tag">可视化图表</span>
+                    <span class="stats-feature-tag">数据导出</span>
+                </div>
+                <button class="stats-entry-btn" onclick="location.href='/statistics'">&#128200; 进入统计分析平台 &#8594;</button>
             </div>
         </div>
 

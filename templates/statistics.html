@@ -1,0 +1,867 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MedSnap 统计分析平台</title>
+    <script src="https://cdn.jsdelivr.net/npm/echarts@5.5.1/dist/echarts.min.js"></script>
+    <style>
+        :root { --primary: #2563eb; --primary-light: #dbeafe; --purple: #7c3aed; --purple-light: #f5f3ff;
+                --success: #059669; --danger: #dc2626; --warning: #d97706;
+                --bg: #f0f4f8; --card: #ffffff; --border: #e2e8f0;
+                --text: #1e293b; --text-secondary: #64748b; }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;
+               background: var(--bg); color: var(--text); font-size: 14px; height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
+
+        /* Top bar */
+        .topbar { background: linear-gradient(135deg, #1e40af, #2563eb); color: white; padding: 0 24px; height: 52px;
+                  display: flex; align-items: center; gap: 16px; flex-shrink: 0; }
+        .topbar h1 { font-size: 16px; font-weight: 700; white-space: nowrap; }
+        .topbar .dataset-info { font-size: 13px; opacity: 0.85; margin-left: 16px; }
+        .topbar .spacer { flex: 1; }
+        .topbar-btn { background: rgba(255,255,255,0.15); border: 1px solid rgba(255,255,255,0.3); color: white;
+                      padding: 6px 16px; border-radius: 8px; font-size: 13px; cursor: pointer; transition: all .2s; }
+        .topbar-btn:hover { background: rgba(255,255,255,0.25); }
+
+        /* Layout */
+        .main-layout { display: flex; flex: 1; overflow: hidden; }
+
+        /* Sidebar */
+        .sidebar { width: 220px; background: white; border-right: 1px solid var(--border); overflow-y: auto; flex-shrink: 0; }
+        .sidebar-group { border-bottom: 1px solid var(--border); }
+        .sidebar-title { padding: 12px 16px; font-size: 13px; font-weight: 700; color: var(--text-secondary);
+                         background: #f8fafc; cursor: pointer; display: flex; justify-content: space-between; align-items: center; }
+        .sidebar-title:hover { background: #f1f5f9; }
+        .sidebar-title .arrow { font-size: 10px; transition: transform .2s; }
+        .sidebar-title .arrow.open { transform: rotate(90deg); }
+        .sidebar-items { display: none; }
+        .sidebar-items.open { display: block; }
+        .sidebar-item { padding: 9px 16px 9px 32px; font-size: 13px; cursor: pointer; color: var(--text);
+                        border-left: 3px solid transparent; transition: all .15s; }
+        .sidebar-item:hover { background: var(--primary-light); color: var(--primary); }
+        .sidebar-item.active { background: var(--primary-light); color: var(--primary); border-left-color: var(--primary); font-weight: 600; }
+        .sidebar-item.disabled { color: #cbd5e1; cursor: not-allowed; }
+
+        /* Center workspace */
+        .workspace { flex: 1; display: flex; flex-direction: column; overflow: hidden; min-width: 0; }
+
+        /* Data table area */
+        .data-table-area { flex-shrink: 0; max-height: 40%; overflow: auto; border-bottom: 2px solid var(--border); background: white; }
+        .data-table-area table { width: 100%; border-collapse: collapse; font-size: 13px; }
+        .data-table-area th { position: sticky; top: 0; background: #f1f5f9; padding: 8px 12px; text-align: left;
+                              font-weight: 600; font-size: 12px; color: var(--text-secondary); white-space: nowrap; border-bottom: 1px solid var(--border); z-index: 1; }
+        .data-table-area td { padding: 6px 12px; border-bottom: 1px solid #f8fafc; white-space: nowrap; max-width: 200px; overflow: hidden; text-overflow: ellipsis; }
+        .data-table-area tr:hover td { background: #fafbff; }
+        .type-tag { font-size: 10px; padding: 1px 6px; border-radius: 4px; margin-left: 4px; font-weight: 400; }
+        .type-tag.numeric { background: #dbeafe; color: #1d4ed8; }
+        .type-tag.categorical { background: #fef3c7; color: #92400e; }
+        .data-pager { display: flex; align-items: center; gap: 8px; padding: 6px 12px; background: #f8fafc; border-bottom: 1px solid var(--border); font-size: 12px; }
+        .data-pager button { padding: 3px 10px; border: 1px solid var(--border); border-radius: 6px; background: white; cursor: pointer; font-size: 12px; }
+        .data-pager button:disabled { opacity: 0.4; cursor: not-allowed; }
+
+        /* Config area */
+        .config-area { flex: 1; overflow-y: auto; padding: 20px; background: var(--bg); }
+        .config-card { background: white; border-radius: 12px; padding: 20px; border: 1px solid var(--border); }
+        .config-card h3 { font-size: 15px; margin-bottom: 16px; color: var(--text); display: flex; align-items: center; gap: 8px; }
+        .config-card p.desc { font-size: 12px; color: var(--text-secondary); margin-bottom: 14px; }
+
+        /* Variable selector */
+        .var-selector { display: flex; gap: 12px; margin-bottom: 16px; }
+        .var-pool { flex: 1; border: 1px solid var(--border); border-radius: 10px; padding: 10px; min-height: 120px; background: #fafbfc; }
+        .var-pool-title { font-size: 12px; font-weight: 600; color: var(--text-secondary); margin-bottom: 8px; }
+        .var-pool-list { display: flex; flex-wrap: wrap; gap: 6px; }
+        .var-chip { font-size: 12px; padding: 4px 10px; border-radius: 6px; cursor: pointer; border: 1px solid var(--border);
+                    background: white; transition: all .15s; display: flex; align-items: center; gap: 4px; }
+        .var-chip:hover { border-color: var(--primary); background: var(--primary-light); }
+        .var-chip.selected { background: var(--primary); color: white; border-color: var(--primary); }
+        .var-chip .remove { font-size: 14px; cursor: pointer; margin-left: 2px; opacity: 0.6; }
+        .var-chip .remove:hover { opacity: 1; }
+        .var-arrows { display: flex; flex-direction: column; justify-content: center; gap: 6px; }
+        .var-arrows button { padding: 6px 10px; border: 1px solid var(--border); border-radius: 6px; background: white; cursor: pointer; font-size: 14px; }
+        .var-arrows button:hover { background: var(--primary-light); }
+        .var-slot { flex: 1; }
+
+        /* Param options */
+        .param-row { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; }
+        .param-row label { font-size: 13px; font-weight: 500; min-width: 80px; }
+        .param-row select, .param-row input[type="text"], .param-row input[type="number"] {
+            padding: 7px 12px; border: 1px solid var(--border); border-radius: 8px; font-size: 13px; flex: 1; max-width: 250px; }
+        .execute-btn { background: linear-gradient(135deg, #2563eb, #3b82f6); color: white; border: none;
+                       padding: 10px 28px; border-radius: 10px; font-size: 14px; font-weight: 600; cursor: pointer;
+                       margin-top: 12px; transition: all .2s; }
+        .execute-btn:hover { background: linear-gradient(135deg, #1d4ed8, #2563eb); }
+        .execute-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+        /* Right panel */
+        .results-panel { width: 440px; background: white; border-left: 1px solid var(--border);
+                         display: flex; flex-direction: column; flex-shrink: 0; overflow: hidden; }
+        .results-tabs { display: flex; border-bottom: 1px solid var(--border); flex-shrink: 0; }
+        .results-tab { flex: 1; padding: 10px; text-align: center; font-size: 13px; font-weight: 600;
+                       cursor: pointer; color: var(--text-secondary); transition: all .15s; }
+        .results-tab.active { color: var(--primary); border-bottom: 2px solid var(--primary); }
+        .results-body { flex: 1; overflow-y: auto; padding: 16px; }
+        .result-empty { text-align: center; padding: 60px 20px; color: #94a3b8; font-size: 14px; }
+
+        /* Academic table (三线表) */
+        .academic-table { width: 100%; border-collapse: collapse; font-size: 13px;
+                          border-top: 2px solid #000; border-bottom: 2px solid #000; margin-bottom: 8px; }
+        .academic-table thead th { padding: 8px 10px; text-align: center; font-weight: 700; font-size: 12px;
+                                   border-bottom: 1px solid #000; }
+        .academic-table tbody td { padding: 6px 10px; text-align: center; font-size: 12px; }
+        .academic-table tbody tr:hover { background: #f8fafc; }
+        .table-footnotes { font-size: 11px; color: #6b7280; font-style: italic; margin-top: 4px; }
+        .table-footnotes p { margin: 2px 0; }
+        .interpretation { margin-top: 12px; padding: 10px 14px; background: #f0fdf4; border-left: 3px solid var(--success);
+                          border-radius: 0 8px 8px 0; font-size: 12px; color: #166534; }
+        .extra-table-title { font-size: 13px; font-weight: 600; margin: 14px 0 6px 0; }
+
+        /* Chart container */
+        .chart-container { width: 100%; height: 350px; margin-bottom: 12px; }
+
+        /* Export buttons */
+        .export-row { display: flex; gap: 8px; margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--border); }
+        .export-btn { padding: 6px 14px; border: 1px solid var(--border); border-radius: 8px; background: white;
+                      font-size: 12px; cursor: pointer; transition: all .15s; }
+        .export-btn:hover { background: #f1f5f9; }
+
+        /* Empty state */
+        .empty-state { display: flex; flex-direction: column; align-items: center; justify-content: center;
+                       height: 100%; color: #94a3b8; padding: 40px; text-align: center; }
+        .empty-state .icon { font-size: 48px; margin-bottom: 16px; }
+        .empty-state h3 { font-size: 16px; margin-bottom: 8px; color: #64748b; }
+        .empty-state p { font-size: 13px; }
+
+        /* Modal */
+        .modal-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.4);
+                         z-index: 1000; display: none; align-items: center; justify-content: center; }
+        .modal-overlay.show { display: flex; }
+        .modal { background: white; border-radius: 16px; width: 600px; max-height: 80vh; overflow: hidden;
+                 display: flex; flex-direction: column; }
+        .modal-header { padding: 16px 20px; border-bottom: 1px solid var(--border); font-weight: 700; font-size: 15px;
+                        display: flex; justify-content: space-between; align-items: center; }
+        .modal-body { padding: 16px 20px; overflow-y: auto; flex: 1; }
+        .modal-footer { padding: 12px 20px; border-top: 1px solid var(--border); display: flex; justify-content: flex-end; gap: 8px; }
+        .modal-close { background: none; border: none; font-size: 20px; cursor: pointer; color: #94a3b8; }
+        .modal-btn { padding: 8px 20px; border-radius: 8px; font-size: 13px; cursor: pointer; border: 1px solid var(--border); background: white; }
+        .modal-btn.primary { background: var(--primary); color: white; border-color: var(--primary); }
+
+        /* Record list for import */
+        .record-list-item { padding: 8px 12px; border: 1px solid var(--border); border-radius: 8px; margin-bottom: 6px;
+                            display: flex; align-items: center; gap: 10px; font-size: 13px; cursor: pointer; }
+        .record-list-item:hover { background: #f8fafc; }
+        .record-list-item input[type="checkbox"] { flex-shrink: 0; }
+
+        /* Toast */
+        .toast { position: fixed; top: 60px; right: 20px; padding: 10px 20px; border-radius: 10px;
+                 font-size: 13px; color: white; z-index: 2000; animation: fadeIn .3s; }
+        .toast.success { background: #059669; }
+        .toast.error { background: #dc2626; }
+        .toast.info { background: #2563eb; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
+
+        /* Spinner */
+        .spinner { display: inline-block; width: 16px; height: 16px; border: 2px solid rgba(255,255,255,0.3);
+                   border-top-color: white; border-radius: 50%; animation: spin .6s linear infinite; vertical-align: middle; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+    </style>
+</head>
+<body>
+
+<!-- Top Bar -->
+<div class="topbar">
+    <h1>&#9879; MedSnap 统计分析平台</h1>
+    <span class="dataset-info" id="datasetInfo">未加载数据集</span>
+    <span class="spacer"></span>
+    <button class="topbar-btn" onclick="document.getElementById('fileInput').click()">&#128194; 上传文件</button>
+    <button class="topbar-btn" onclick="showImportModal()">&#128203; 从病历导入</button>
+    <button class="topbar-btn" onclick="location.href='/'">&#8592; 返回主页</button>
+    <input type="file" id="fileInput" accept=".csv,.xlsx,.xls,.txt" style="display:none" onchange="handleFileUpload(this)">
+</div>
+
+<!-- Main Layout -->
+<div class="main-layout">
+
+    <!-- Left Sidebar -->
+    <div class="sidebar" id="sidebar">
+        <div class="sidebar-group" data-module="preprocess">
+            <div class="sidebar-title" onclick="toggleSidebarGroup(this)">
+                &#128295; 数据预处理 <span class="arrow open">&#9654;</span>
+            </div>
+            <div class="sidebar-items open">
+                <div class="sidebar-item disabled" onclick="selectMethod('preprocess','encode')">变量编码</div>
+                <div class="sidebar-item disabled" onclick="selectMethod('preprocess','detect_outliers')">异常值检测</div>
+                <div class="sidebar-item disabled" onclick="selectMethod('preprocess','handle_missing')">缺失值处理</div>
+                <div class="sidebar-item disabled" onclick="selectMethod('preprocess','filter_samples')">样本过滤</div>
+                <div class="sidebar-item disabled" onclick="selectMethod('preprocess','generate_variable')">生成变量</div>
+                <div class="sidebar-item disabled" onclick="selectMethod('preprocess','standardize')">无量纲化</div>
+            </div>
+        </div>
+        <div class="sidebar-group" data-module="descriptive">
+            <div class="sidebar-title" onclick="toggleSidebarGroup(this)">
+                &#128202; 描述性分析 <span class="arrow">&#9654;</span>
+            </div>
+            <div class="sidebar-items">
+                <div class="sidebar-item disabled" onclick="selectMethod('descriptive','frequency')">频数分析</div>
+                <div class="sidebar-item disabled" onclick="selectMethod('descriptive','descriptive_stats')">描述统计</div>
+                <div class="sidebar-item disabled" onclick="selectMethod('descriptive','cross_tabulation')">交叉卡方分析</div>
+            </div>
+        </div>
+        <div class="sidebar-group" data-module="comparison">
+            <div class="sidebar-title" onclick="toggleSidebarGroup(this)">
+                &#9878; 差异比较 <span class="arrow">&#9654;</span>
+            </div>
+            <div class="sidebar-items">
+                <div class="sidebar-item disabled" onclick="selectMethod('comparison','independent_ttest')">独立样本t检验</div>
+                <div class="sidebar-item disabled" onclick="selectMethod('comparison','paired_ttest')">配对t检验</div>
+                <div class="sidebar-item disabled" onclick="selectMethod('comparison','one_way_anova')">单因素方差分析</div>
+                <div class="sidebar-item disabled" onclick="selectMethod('comparison','mann_whitney')">Mann-Whitney U检验</div>
+                <div class="sidebar-item disabled" onclick="selectMethod('comparison','wilcoxon_test')">Wilcoxon符号秩检验</div>
+            </div>
+        </div>
+        <div class="sidebar-group" data-module="regression">
+            <div class="sidebar-title" onclick="toggleSidebarGroup(this)">
+                &#128200; 相关与回归 <span class="arrow">&#9654;</span>
+            </div>
+            <div class="sidebar-items">
+                <div class="sidebar-item disabled" onclick="selectMethod('regression','pearson_correlation')">Pearson相关分析</div>
+                <div class="sidebar-item disabled" onclick="selectMethod('regression','spearman_correlation')">Spearman秩相关</div>
+                <div class="sidebar-item disabled" onclick="selectMethod('regression','linear_regression')">线性回归</div>
+                <div class="sidebar-item disabled" onclick="selectMethod('regression','logistic_regression')">Logistic回归</div>
+            </div>
+        </div>
+        <div class="sidebar-group" data-module="prerequisite">
+            <div class="sidebar-title" onclick="toggleSidebarGroup(this)">
+                &#128300; 前提性检验 <span class="arrow">&#9654;</span>
+            </div>
+            <div class="sidebar-items">
+                <div class="sidebar-item disabled" onclick="selectMethod('prerequisite','normality')">正态性检验</div>
+                <div class="sidebar-item disabled" onclick="selectMethod('prerequisite','homogeneity')">方差齐性检验</div>
+            </div>
+        </div>
+        <div class="sidebar-group" data-module="chart">
+            <div class="sidebar-title" onclick="toggleSidebarGroup(this)">
+                &#128200; 可视化图表 <span class="arrow">&#9654;</span>
+            </div>
+            <div class="sidebar-items">
+                <div class="sidebar-item disabled" onclick="selectMethod('chart','histogram')">直方图</div>
+                <div class="sidebar-item disabled" onclick="selectMethod('chart','kde')">核密度图</div>
+                <div class="sidebar-item disabled" onclick="selectMethod('chart','boxplot')">箱线图</div>
+                <div class="sidebar-item disabled" onclick="selectMethod('chart','bar')">柱状图</div>
+                <div class="sidebar-item disabled" onclick="selectMethod('chart','scatter')">散点图</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Center Workspace -->
+    <div class="workspace">
+        <!-- Data Table -->
+        <div class="data-table-area" id="dataTableArea">
+            <div class="empty-state" id="tableEmpty">
+                <div class="icon">&#128202;</div>
+                <h3>请先导入数据</h3>
+                <p>点击上方「上传文件」或「从病历导入」加载数据集</p>
+            </div>
+            <table id="dataTable" style="display:none"></table>
+        </div>
+        <div class="data-pager" id="dataPager" style="display:none">
+            <button onclick="changePage(-1)" id="prevBtn" disabled>&#9664; 上一页</button>
+            <span id="pageInfo">第 1 页 / 共 1 页</span>
+            <button onclick="changePage(1)" id="nextBtn" disabled>下一页 &#9654;</button>
+            <span class="spacer" style="flex:1"></span>
+            <span id="rowInfo"></span>
+        </div>
+
+        <!-- Config Area -->
+        <div class="config-area" id="configArea">
+            <div class="config-card" id="configCard" style="display:none"></div>
+        </div>
+    </div>
+
+    <!-- Right Results Panel -->
+    <div class="results-panel">
+        <div class="results-tabs">
+            <div class="results-tab active" onclick="switchResultTab('table')">&#128203; 结果表格</div>
+            <div class="results-tab" onclick="switchResultTab('chart')">&#128200; 可视化图表</div>
+        </div>
+        <div class="results-body" id="resultsBody">
+            <div class="result-empty" id="resultEmpty">执行分析后，结果将显示在这里</div>
+            <div id="resultTableView"></div>
+            <div id="resultChartView" style="display:none"></div>
+        </div>
+    </div>
+</div>
+
+<!-- Import Modal -->
+<div class="modal-overlay" id="importModal">
+    <div class="modal">
+        <div class="modal-header">
+            <span>从病历记录导入数据</span>
+            <button class="modal-close" onclick="closeImportModal()">&times;</button>
+        </div>
+        <div class="modal-body">
+            <div class="param-row" style="margin-bottom:12px">
+                <label>按角色筛选:</label>
+                <select id="importRoleFilter" onchange="filterImportRecords()">
+                    <option value="">全部</option>
+                    <option value="doctor">临床医生</option>
+                    <option value="nurse">护士</option>
+                    <option value="researcher">临床科研</option>
+                </select>
+                <label style="margin-left:8px"><input type="checkbox" id="importSelectAll" onchange="toggleImportAll()"> 全选</label>
+            </div>
+            <div id="importRecordList" style="max-height:400px;overflow-y:auto"></div>
+        </div>
+        <div class="modal-footer">
+            <button class="modal-btn" onclick="closeImportModal()">取消</button>
+            <button class="modal-btn primary" onclick="executeImport()">导入选中记录</button>
+        </div>
+    </div>
+</div>
+
+<script>
+// ========== 全局状态 ==========
+var currentDatasetId = null;
+var currentPage = 1;
+var totalPages = 1;
+var columnInfo = { numeric: [], categorical: [], all: [] };
+var currentModule = '';
+var currentMethod = '';
+var lastResult = null;
+var chartInstance = null;
+var allImportRecords = [];
+
+// ========== 工具函数 ==========
+function esc(s) { var d = document.createElement('div'); d.textContent = s; return d.innerHTML; }
+
+function showToast(msg, type) {
+    var t = document.createElement('div');
+    t.className = 'toast ' + (type || 'info');
+    t.textContent = msg;
+    document.body.appendChild(t);
+    setTimeout(function() { t.remove(); }, 3000);
+}
+
+function api(url, opts) {
+    opts = opts || {};
+    return fetch(url, opts).then(function(r) { return r.json(); });
+}
+
+// ========== 文件上传 ==========
+function handleFileUpload(input) {
+    if (!input.files || !input.files[0]) return;
+    var fd = new FormData();
+    fd.append('file', input.files[0]);
+    showToast('正在解析文件...', 'info');
+    api('/api/stats/upload', { method: 'POST', body: fd }).then(function(data) {
+        if (data.status === 'success') {
+            currentDatasetId = data.dataset_id;
+            onDatasetLoaded(data.info);
+            showToast('数据集加载成功', 'success');
+        } else {
+            showToast(data.msg || '上传失败', 'error');
+        }
+    }).catch(function(e) { showToast('上传失败: ' + e.message, 'error'); });
+    input.value = '';
+}
+
+// ========== 病历导入 ==========
+function showImportModal() {
+    document.getElementById('importModal').classList.add('show');
+    api('/api/stats/records_list').then(function(data) {
+        if (data.status === 'success') {
+            allImportRecords = data.records || [];
+            filterImportRecords();
+        }
+    });
+}
+
+function closeImportModal() { document.getElementById('importModal').classList.remove('show'); }
+
+function filterImportRecords() {
+    var role = document.getElementById('importRoleFilter').value;
+    var list = document.getElementById('importRecordList');
+    var filtered = role ? allImportRecords.filter(function(r) { return r.role_id === role; }) : allImportRecords;
+    var html = '';
+    if (filtered.length === 0) { html = '<p style="color:#94a3b8;text-align:center;padding:20px">暂无记录</p>'; }
+    filtered.forEach(function(r) {
+        html += '<div class="record-list-item"><input type="checkbox" value="' + esc(r.id) + '" class="import-cb">' +
+                '<span>' + esc(r.case_number || r.id) + '</span>' +
+                '<span style="color:#94a3b8;font-size:11px">' + esc(r.role_id || '') + '</span>' +
+                '<span style="color:#94a3b8;font-size:11px;margin-left:auto">' + esc(r.create_time || '') + '</span></div>';
+    });
+    list.innerHTML = html;
+}
+
+function toggleImportAll() {
+    var checked = document.getElementById('importSelectAll').checked;
+    document.querySelectorAll('.import-cb').forEach(function(cb) { cb.checked = checked; });
+}
+
+function executeImport() {
+    var ids = [];
+    document.querySelectorAll('.import-cb:checked').forEach(function(cb) { ids.push(cb.value); });
+    if (ids.length === 0) { showToast('请选择至少一条记录', 'error'); return; }
+    showToast('正在导入...', 'info');
+    api('/api/stats/import_records', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ record_ids: ids })
+    }).then(function(data) {
+        if (data.status === 'success') {
+            currentDatasetId = data.dataset_id;
+            onDatasetLoaded(data.info);
+            closeImportModal();
+            showToast('导入成功', 'success');
+        } else { showToast(data.msg, 'error'); }
+    });
+}
+
+// ========== 数据集加载后 ==========
+function onDatasetLoaded(info) {
+    document.getElementById('datasetInfo').textContent = info.name + ' (' + info.rows + ' 行 x ' + info.cols + ' 列)';
+    // 加载列类型
+    api('/api/stats/columns/' + currentDatasetId).then(function(d) {
+        if (d.status === 'success') columnInfo = d.columns;
+    });
+    // 启用侧边栏
+    document.querySelectorAll('.sidebar-item').forEach(function(el) { el.classList.remove('disabled'); });
+    // 加载数据预览
+    currentPage = 1;
+    loadDataPreview();
+}
+
+function loadDataPreview() {
+    api('/api/stats/dataset/' + currentDatasetId + '/preview?page=' + currentPage + '&page_size=50').then(function(d) {
+        if (d.status !== 'success') return;
+        var p = d.preview;
+        totalPages = p.total_pages;
+        renderDataTable(p.columns, p.data);
+        document.getElementById('dataPager').style.display = 'flex';
+        document.getElementById('prevBtn').disabled = currentPage <= 1;
+        document.getElementById('nextBtn').disabled = currentPage >= totalPages;
+        document.getElementById('pageInfo').textContent = '第 ' + currentPage + ' 页 / 共 ' + totalPages + ' 页';
+        document.getElementById('rowInfo').textContent = '共 ' + p.total_rows + ' 行';
+    });
+}
+
+function renderDataTable(columns, data) {
+    var table = document.getElementById('dataTable');
+    document.getElementById('tableEmpty').style.display = 'none';
+    table.style.display = 'table';
+    var html = '<thead><tr>';
+    columns.forEach(function(col) {
+        var isNum = columnInfo.numeric && columnInfo.numeric.indexOf(col) >= 0;
+        html += '<th>' + esc(col) + '<span class="type-tag ' + (isNum ? 'numeric' : 'categorical') + '">' +
+                (isNum ? '数值' : '分类') + '</span></th>';
+    });
+    html += '</tr></thead><tbody>';
+    data.forEach(function(row) {
+        html += '<tr>';
+        columns.forEach(function(col) {
+            var v = row[col];
+            html += '<td>' + (v === null || v === undefined ? '<span style="color:#cbd5e1">-</span>' : esc(String(v))) + '</td>';
+        });
+        html += '</tr>';
+    });
+    html += '</tbody>';
+    table.innerHTML = html;
+}
+
+function changePage(delta) {
+    currentPage += delta;
+    if (currentPage < 1) currentPage = 1;
+    if (currentPage > totalPages) currentPage = totalPages;
+    loadDataPreview();
+}
+
+// ========== 侧边栏导航 ==========
+function toggleSidebarGroup(el) {
+    var items = el.nextElementSibling;
+    var arrow = el.querySelector('.arrow');
+    if (items.classList.contains('open')) {
+        items.classList.remove('open');
+        arrow.classList.remove('open');
+    } else {
+        items.classList.add('open');
+        arrow.classList.add('open');
+    }
+}
+
+function selectMethod(module, method) {
+    if (!currentDatasetId) { showToast('请先加载数据集', 'error'); return; }
+    // 高亮
+    document.querySelectorAll('.sidebar-item').forEach(function(el) { el.classList.remove('active'); });
+    event.target.classList.add('active');
+    currentModule = module;
+    currentMethod = method;
+    renderConfigPanel(module, method);
+}
+
+// ========== 配置面板渲染 ==========
+function renderConfigPanel(module, method) {
+    var card = document.getElementById('configCard');
+    card.style.display = 'block';
+    var html = '';
+
+    var configs = {
+        // 预处理
+        'preprocess.encode': { title: '变量编码', desc: '将分类变量转换为数字编码', slots: [{ id: 'col', label: '编码变量', type: 'single', accept: 'categorical' }], params: [] },
+        'preprocess.detect_outliers': { title: '异常值检测', desc: '基于3σ或IQR法检测异常值', slots: [{ id: 'cols', label: '检测变量', type: 'multi', accept: 'numeric' }],
+            params: [{ id: 'method', label: '检测方法', type: 'select', options: [['iqr','IQR箱线图法'],['3sigma','3σ原则']] }] },
+        'preprocess.handle_missing': { title: '缺失值处理', desc: '对缺失数据进行插补或删除', slots: [{ id: 'cols', label: '处理变量', type: 'multi', accept: 'all' }],
+            params: [{ id: 'method', label: '处理方法', type: 'select', options: [['delete','删除缺失行'],['mean','均值插补'],['median','中位数插补'],['mode','众数插补']] }] },
+        'preprocess.filter_samples': { title: '样本过滤', desc: '按条件过滤无效样本', slots: [{ id: 'col', label: '筛选变量', type: 'single', accept: 'all' }],
+            params: [{ id: 'condition', label: '条件', type: 'select', options: [['isna','删除空值'],['ne','不等于']] },
+                     { id: 'value', label: '值', type: 'text' }] },
+        'preprocess.generate_variable': { title: '生成变量', desc: '基于已有变量算术运算生成新变量', slots: [{ id: 'source_cols', label: '源变量', type: 'multi', accept: 'numeric' }],
+            params: [{ id: 'operation', label: '运算', type: 'select', options: [['sum','求和'],['mean','均值'],['ratio','比值(A/B)'],['diff','差值(A-B)']] },
+                     { id: 'new_name', label: '新变量名', type: 'text' }] },
+        'preprocess.standardize': { title: '无量纲化处理', desc: '对变量进行标准化/归一化', slots: [{ id: 'cols', label: '处理变量', type: 'multi', accept: 'numeric' }],
+            params: [{ id: 'method', label: '方法', type: 'select', options: [['zscore','Z-score标准化'],['center','中心化'],['minmax','Min-Max归一化']] }] },
+        // 描述分析
+        'descriptive.frequency': { title: '频数分析', desc: '计算分类变量的频次和占比', slots: [{ id: 'col', label: '分析变量', type: 'single', accept: 'all' }], params: [] },
+        'descriptive.descriptive_stats': { title: '描述统计', desc: '计算均值、标准差、中位数等', slots: [{ id: 'cols', label: '分析变量', type: 'multi', accept: 'numeric' }, { id: 'group_var', label: '分组变量(可选)', type: 'single', accept: 'categorical', optional: true }], params: [] },
+        'descriptive.cross_tabulation': { title: '交叉卡方分析', desc: '两个分类变量的交叉表和卡方检验', slots: [{ id: 'row_var', label: '行变量', type: 'single', accept: 'categorical' }, { id: 'col_var', label: '列变量', type: 'single', accept: 'categorical' }], params: [] },
+        // 前提检验
+        'prerequisite.normality': { title: '正态性检验', desc: 'Shapiro-Wilk/K-S检验', slots: [{ id: 'cols', label: '检验变量', type: 'multi', accept: 'numeric' }], params: [] },
+        'prerequisite.homogeneity': { title: '方差齐性检验', desc: 'Levene检验', slots: [{ id: 'value_col', label: '检验变量', type: 'single', accept: 'numeric' }, { id: 'group_col', label: '分组变量', type: 'single', accept: 'categorical' }], params: [] },
+        // 可视化
+        'chart.histogram': { title: '直方图', desc: '连续变量频率分布', slots: [{ id: 'col', label: '变量', type: 'single', accept: 'numeric' }], params: [{ id: 'title', label: '标题', type: 'text' }] },
+        'chart.kde': { title: '核密度图', desc: '平滑密度估计曲线', slots: [{ id: 'col', label: '变量', type: 'single', accept: 'numeric' }], params: [{ id: 'title', label: '标题', type: 'text' }] },
+        'chart.boxplot': { title: '箱线图', desc: '数据分布和异常值', slots: [{ id: 'cols', label: '变量', type: 'multi', accept: 'numeric' }, { id: 'group_var', label: '分组变量(可选)', type: 'single', accept: 'categorical', optional: true }], params: [{ id: 'title', label: '标题', type: 'text' }] },
+        'chart.bar': { title: '柱状图', desc: '分类数据频次', slots: [{ id: 'col', label: '变量', type: 'single', accept: 'all' }], params: [{ id: 'title', label: '标题', type: 'text' }] },
+        'chart.scatter': { title: '散点图', desc: '双变量关系', slots: [{ id: 'x_col', label: 'X轴变量', type: 'single', accept: 'numeric' }, { id: 'y_col', label: 'Y轴变量', type: 'single', accept: 'numeric' }], params: [{ id: 'title', label: '标题', type: 'text' }] },
+        // 差异比较
+        'comparison.independent_ttest': { title: '独立样本t检验', desc: '比较两组独立样本的均值差异（参数检验，自动判断方差齐性）',
+            slots: [{ id: 'value_col', label: '连续变量', type: 'single', accept: 'numeric' }, { id: 'group_col', label: '分组变量(二分类)', type: 'single', accept: 'categorical' }], params: [] },
+        'comparison.paired_ttest': { title: '配对t检验', desc: '比较配对样本（前后测量）的均值差异',
+            slots: [{ id: 'col1', label: '前测变量', type: 'single', accept: 'numeric' }, { id: 'col2', label: '后测变量', type: 'single', accept: 'numeric' }], params: [] },
+        'comparison.one_way_anova': { title: '单因素方差分析', desc: '比较三组及以上独立样本的均值差异',
+            slots: [{ id: 'value_col', label: '连续变量', type: 'single', accept: 'numeric' }, { id: 'group_col', label: '分组变量', type: 'single', accept: 'categorical' }],
+            params: [{ id: 'post_hoc', label: '事后检验', type: 'select', options: [['','不进行'],['bonferroni','Bonferroni'],['tukey','Tukey HSD']] }] },
+        'comparison.mann_whitney': { title: 'Mann-Whitney U检验', desc: '两组独立样本的非参数检验（不要求正态分布）',
+            slots: [{ id: 'value_col', label: '连续变量', type: 'single', accept: 'numeric' }, { id: 'group_col', label: '分组变量(二分类)', type: 'single', accept: 'categorical' }], params: [] },
+        'comparison.wilcoxon_test': { title: 'Wilcoxon符号秩检验', desc: '配对样本的非参数检验（不要求正态分布）',
+            slots: [{ id: 'col1', label: '变量1', type: 'single', accept: 'numeric' }, { id: 'col2', label: '变量2', type: 'single', accept: 'numeric' }], params: [] },
+        // 相关与回归
+        'regression.pearson_correlation': { title: 'Pearson相关分析', desc: '计算变量间的线性相关系数及显著性',
+            slots: [{ id: 'cols', label: '分析变量(≥2个)', type: 'multi', accept: 'numeric' }], params: [] },
+        'regression.spearman_correlation': { title: 'Spearman秩相关', desc: '计算变量间的秩相关系数（不要求正态分布）',
+            slots: [{ id: 'cols', label: '分析变量(≥2个)', type: 'multi', accept: 'numeric' }], params: [] },
+        'regression.linear_regression': { title: '线性回归分析', desc: '多元线性回归：分析自变量对连续因变量的线性影响',
+            slots: [{ id: 'y_col', label: '因变量Y', type: 'single', accept: 'numeric' }, { id: 'x_cols', label: '自变量X', type: 'multi', accept: 'numeric' }], params: [] },
+        'regression.logistic_regression': { title: 'Logistic回归', desc: '二分类因变量的回归分析，输出OR值及95%CI',
+            slots: [{ id: 'y_col', label: '因变量Y(二分类)', type: 'single', accept: 'categorical' }, { id: 'x_cols', label: '自变量X', type: 'multi', accept: 'numeric' }],
+            params: [{ id: 'max_iter', label: '最大迭代次数', type: 'select', options: [['100','100'],['200','200'],['500','500']] }] }
+    };
+
+    var key = module + '.' + method;
+    var cfg = configs[key];
+    if (!cfg) { card.innerHTML = '<p>未知功能</p>'; return; }
+
+    html += '<h3>' + cfg.title + '</h3>';
+    html += '<p class="desc">' + cfg.desc + '</p>';
+
+    // 变量选择器
+    cfg.slots.forEach(function(slot) {
+        var acceptList = slot.accept === 'all' ? columnInfo.all : (slot.accept === 'numeric' ? columnInfo.numeric : columnInfo.categorical);
+        html += '<div class="var-selector">';
+        html += '<div class="var-pool"><div class="var-pool-title">可用变量</div><div class="var-pool-list">';
+        (acceptList || []).forEach(function(v) {
+            var isNum = columnInfo.numeric && columnInfo.numeric.indexOf(v) >= 0;
+            html += '<div class="var-chip" data-var="' + esc(v) + '" data-slot="' + slot.id + '" onclick="addVarToSlot(this)">' +
+                    '<span class="type-tag ' + (isNum ? 'numeric' : 'categorical') + '" style="margin:0">' + (isNum ? '#' : 'A') + '</span> ' +
+                    esc(v) + '</div>';
+        });
+        html += '</div></div>';
+        html += '<div class="var-arrows"><button onclick="clearSlot(\'' + slot.id + '\')">&#10005;</button></div>';
+        html += '<div class="var-pool var-slot"><div class="var-pool-title">' + slot.label + (slot.optional ? '' : ' *') + '</div>' +
+                '<div class="var-pool-list" id="slot_' + slot.id + '"></div></div>';
+        html += '</div>';
+    });
+
+    // 参数选项
+    cfg.params.forEach(function(p) {
+        html += '<div class="param-row"><label>' + p.label + ':</label>';
+        if (p.type === 'select') {
+            html += '<select id="param_' + p.id + '">';
+            p.options.forEach(function(o) { html += '<option value="' + o[0] + '">' + o[1] + '</option>'; });
+            html += '</select>';
+        } else {
+            html += '<input type="text" id="param_' + p.id + '" placeholder="' + (p.label || '') + '">';
+        }
+        html += '</div>';
+    });
+
+    var isPreprocess = module === 'preprocess';
+    html += '<button class="execute-btn" onclick="executeCurrentAnalysis()">' + (isPreprocess ? '&#9881; 执行预处理' : '&#9654; 执行分析') + '</button>';
+    if (isPreprocess) {
+        html += ' <button class="execute-btn" style="background:linear-gradient(135deg,#6b7280,#9ca3af);margin-left:8px" onclick="undoPreprocess()">&#8630; 撤销</button>';
+    }
+    card.innerHTML = html;
+}
+
+// ========== 变量选择交互 ==========
+function addVarToSlot(el) {
+    var varName = el.getAttribute('data-var');
+    var slotId = el.getAttribute('data-slot');
+    var slot = document.getElementById('slot_' + slotId);
+    if (!slot) return;
+    // 检查单选槽位
+    var cfgKey = currentModule + '.' + currentMethod;
+    var slotCfg = null;
+    // 简单判断：如果 slot id 不含 cols/source_cols 则为单选
+    var isMulti = slotId.indexOf('cols') >= 0;
+    if (!isMulti) {
+        slot.innerHTML = '';
+    }
+    // 检查重复
+    var existing = slot.querySelectorAll('.var-chip');
+    for (var i = 0; i < existing.length; i++) {
+        if (existing[i].getAttribute('data-var') === varName) return;
+    }
+    var chip = document.createElement('div');
+    chip.className = 'var-chip selected';
+    chip.setAttribute('data-var', varName);
+    chip.innerHTML = esc(varName) + ' <span class="remove" onclick="this.parentElement.remove()">&times;</span>';
+    slot.appendChild(chip);
+}
+
+function clearSlot(slotId) {
+    var slot = document.getElementById('slot_' + slotId);
+    if (slot) slot.innerHTML = '';
+}
+
+function getSlotVars(slotId) {
+    var slot = document.getElementById('slot_' + slotId);
+    if (!slot) return [];
+    var vars = [];
+    slot.querySelectorAll('.var-chip').forEach(function(c) { vars.push(c.getAttribute('data-var')); });
+    return vars;
+}
+
+function getParam(id) {
+    var el = document.getElementById('param_' + id);
+    return el ? el.value : '';
+}
+
+// ========== 执行分析/预处理 ==========
+function executeCurrentAnalysis() {
+    if (!currentDatasetId) { showToast('请先加载数据集', 'error'); return; }
+
+    var body = { dataset_id: currentDatasetId, module: currentModule, method: currentMethod, variables: {}, options: {} };
+
+    // 收集变量
+    document.querySelectorAll('.var-slot .var-pool-list').forEach(function(pool) {
+        var slotId = pool.id.replace('slot_', '');
+        var vars = getSlotVars(slotId);
+        if (vars.length === 1 && slotId.indexOf('cols') < 0 && slotId.indexOf('source_cols') < 0) {
+            body.variables[slotId] = vars[0];
+        } else {
+            body.variables[slotId] = vars;
+        }
+    });
+
+    // 收集参数
+    document.querySelectorAll('[id^="param_"]').forEach(function(el) {
+        var key = el.id.replace('param_', '');
+        body.options[key] = el.value;
+    });
+
+    if (currentModule === 'preprocess') {
+        // 预处理走单独路由
+        var ppBody = { dataset_id: currentDatasetId, operation: currentMethod, params: {} };
+        // 合并 variables 和 options 到 params
+        for (var k in body.variables) ppBody.params[k] = body.variables[k];
+        for (var k2 in body.options) ppBody.params[k2] = body.options[k2];
+
+        api('/api/stats/preprocess', {
+            method: 'POST', headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(ppBody)
+        }).then(function(data) {
+            if (data.status === 'success') {
+                showToast(data.result.msg || data.result[0] && data.result[0].msg || '操作成功', 'success');
+                // 刷新数据和列
+                api('/api/stats/columns/' + currentDatasetId).then(function(d) { if (d.status === 'success') columnInfo = d.columns; });
+                loadDataPreview();
+                // 如果是检测异常值，显示结果
+                if (Array.isArray(data.result)) {
+                    lastResult = { method_name: '异常值检测', summary_table: data.result,
+                        columns: Object.keys(data.result[0] || {}), footnotes: [], charts: [], interpretation: '' };
+                    renderResultTable(lastResult);
+                }
+            } else { showToast(data.msg, 'error'); }
+        }).catch(function(e) { showToast('操作失败: ' + e.message, 'error'); });
+    } else {
+        // 分析走 analyze 路由
+        api('/api/stats/analyze', {
+            method: 'POST', headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(body)
+        }).then(function(data) {
+            if (data.status === 'success') {
+                lastResult = data.result;
+                if (data.result.summary_table) renderResultTable(data.result);
+                if (data.result.charts && data.result.charts.length > 0) renderResultCharts(data.result.charts);
+                showToast('分析完成', 'success');
+            } else { showToast(data.msg, 'error'); }
+        }).catch(function(e) { showToast('分析失败: ' + e.message, 'error'); });
+    }
+}
+
+function undoPreprocess() {
+    api('/api/stats/preprocess/undo', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ dataset_id: currentDatasetId })
+    }).then(function(data) {
+        if (data.status === 'success') {
+            showToast('已撤销', 'success');
+            api('/api/stats/columns/' + currentDatasetId).then(function(d) { if (d.status === 'success') columnInfo = d.columns; });
+            loadDataPreview();
+        } else { showToast(data.msg, 'error'); }
+    });
+}
+
+// ========== 结果渲染 ==========
+function switchResultTab(tab) {
+    document.querySelectorAll('.results-tab').forEach(function(t) { t.classList.remove('active'); });
+    event.target.classList.add('active');
+    document.getElementById('resultTableView').style.display = tab === 'table' ? 'block' : 'none';
+    document.getElementById('resultChartView').style.display = tab === 'chart' ? 'block' : 'none';
+    document.getElementById('resultEmpty').style.display = 'none';
+}
+
+function renderResultTable(result) {
+    document.getElementById('resultEmpty').style.display = 'none';
+    document.getElementById('resultTableView').style.display = 'block';
+    var html = '';
+    if (result.method_name) html += '<h4 style="margin-bottom:10px;font-size:14px">' + esc(result.method_name) + '</h4>';
+
+    // 主表
+    html += buildAcademicTable(result.summary_table, result.columns);
+
+    // 额外表格
+    if (result.extra_tables) {
+        result.extra_tables.forEach(function(et) {
+            html += '<div class="extra-table-title">' + esc(et.title || '') + '</div>';
+            html += buildAcademicTable(et.rows, et.columns);
+        });
+    }
+
+    // 脚注
+    if (result.footnotes && result.footnotes.length > 0) {
+        html += '<div class="table-footnotes">';
+        result.footnotes.forEach(function(fn) { html += '<p>' + esc(fn) + '</p>'; });
+        html += '</div>';
+    }
+
+    // 自动解读
+    if (result.interpretation) {
+        html += '<div class="interpretation">' + esc(result.interpretation) + '</div>';
+    }
+
+    // 导出按钮
+    html += '<div class="export-row">';
+    html += '<button class="export-btn" onclick="exportResultCSV()">&#128190; 导出 CSV</button>';
+    html += '<button class="export-btn" onclick="exportResultExcel()">&#128196; 导出 Excel</button>';
+    html += '</div>';
+
+    document.getElementById('resultTableView').innerHTML = html;
+    // 自动切换到表格 tab
+    document.querySelectorAll('.results-tab').forEach(function(t) { t.classList.remove('active'); });
+    document.querySelectorAll('.results-tab')[0].classList.add('active');
+    document.getElementById('resultChartView').style.display = 'none';
+}
+
+function buildAcademicTable(rows, columns) {
+    if (!rows || !rows.length || !columns || !columns.length) return '';
+    var html = '<table class="academic-table"><thead><tr>';
+    columns.forEach(function(c) { html += '<th>' + esc(c) + '</th>'; });
+    html += '</tr></thead><tbody>';
+    rows.forEach(function(row) {
+        html += '<tr>';
+        columns.forEach(function(c) {
+            var v = row[c];
+            if (v === undefined || v === null) v = '-';
+            html += '<td>' + esc(String(v)) + '</td>';
+        });
+        html += '</tr>';
+    });
+    html += '</tbody></table>';
+    return html;
+}
+
+function renderResultCharts(charts) {
+    var view = document.getElementById('resultChartView');
+    view.innerHTML = '';
+    view.style.display = 'block';
+    charts.forEach(function(opt, i) {
+        if (opt.error) { view.innerHTML += '<p style="color:var(--danger)">' + esc(opt.error) + '</p>'; return; }
+        var div = document.createElement('div');
+        div.className = 'chart-container';
+        div.id = 'chart_' + i;
+        view.appendChild(div);
+        var chart = echarts.init(div);
+        chart.setOption(opt);
+        chartInstance = chart;
+    });
+    // 导出按钮
+    var exportDiv = document.createElement('div');
+    exportDiv.className = 'export-row';
+    exportDiv.innerHTML = '<button class="export-btn" onclick="exportChartPNG()">&#128247; 导出 PNG</button>' +
+                          '<button class="export-btn" onclick="exportChartSVG()">&#128196; 导出 SVG</button>';
+    view.appendChild(exportDiv);
+    // 切到图表 tab
+    document.querySelectorAll('.results-tab').forEach(function(t) { t.classList.remove('active'); });
+    document.querySelectorAll('.results-tab')[1].classList.add('active');
+    document.getElementById('resultTableView').style.display = 'none';
+}
+
+// ========== 导出 ==========
+function exportResultCSV() {
+    if (!lastResult) return;
+    var fd = new FormData();
+    fetch('/api/stats/export/table', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ format: 'csv', result: lastResult })
+    }).then(function(r) { return r.blob(); }).then(function(blob) {
+        var a = document.createElement('a');
+        a.href = URL.createObjectURL(blob);
+        a.download = '统计结果.csv';
+        a.click();
+    });
+}
+
+function exportResultExcel() {
+    if (!lastResult) return;
+    fetch('/api/stats/export/table', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ format: 'excel', result: lastResult })
+    }).then(function(r) { return r.blob(); }).then(function(blob) {
+        var a = document.createElement('a');
+        a.href = URL.createObjectURL(blob);
+        a.download = '统计结果.xlsx';
+        a.click();
+    });
+}
+
+function exportChartPNG() {
+    if (!chartInstance) return;
+    var url = chartInstance.getDataURL({ type: 'png', pixelRatio: 2, backgroundColor: '#fff' });
+    var a = document.createElement('a');
+    a.href = url; a.download = '图表.png'; a.click();
+}
+
+function exportChartSVG() {
+    if (!chartInstance) return;
+    var url = chartInstance.getDataURL({ type: 'svg' });
+    var a = document.createElement('a');
+    a.href = url; a.download = '图表.svg'; a.click();
+}
+
+// ========== 窗口 resize ==========
+window.addEventListener('resize', function() {
+    if (chartInstance) chartInstance.resize();
+});
+</script>
+</body>
+</html>
