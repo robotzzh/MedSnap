@@ -78,5 +78,58 @@ git push origin master
 
 git push origin main
 
-# 切换分支
-git checkout -b dev——XXX
+Git 分支使用说明
+1 查看当前分支
+
+先查看当前所在分支：
+
+git branch
+
+当前分支前面会有 * 标记，例如：
+
+* master
+2 创建新的开发分支
+
+从当前分支创建一个新的开发分支：
+
+git checkout -b dev_XXX
+
+例如：
+
+git checkout -b dev_XXX
+
+执行后会自动切换到该分支。
+
+3 再次确认当前分支
+git branch
+
+输出示例：
+
+  master
+* dev_XXX
+
+说明当前正在 dev_XXX 分支开发。
+
+4 推送分支到 GitHub
+
+第一次需要建立远程分支：
+
+git push --set-upstream origin dev_XXX
+
+例如：
+
+git push --set-upstream origin dev_XXX
+
+执行后：
+
+GitHub 会创建 dev_XXX 分支
+
+本地分支会自动关联远程分支
+
+5 之后的提交
+
+以后提交代码只需要：
+
+git add .
+git commit -m "your commit message"
+git push
