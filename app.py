@@ -1072,6 +1072,184 @@ def extract_from_transcript(transcript_text, ai_prompt):
     return parsed, raw_text
 
 
+# ========== qwen3omni 同一功能 ==========
+SYSTEM_PROMPT = """你是一个专业的临床科研助手，拥有极强的医疗文档识别与多模态理解能力。
+你的任务是：从用户提供的图片、PDF或音频中提取结构化信息。
+要求：
+1. 严格输出有效的 JSON 格式，不包含解释性文字。
+2. 遵守医疗隐私保护，自动忽略或掩盖姓名、电话、具体住址。
+3. 如果是医学检验单，请提取项目名称、数值、单位及参考范围。
+4. 如果是医患对话，请总结临床表现、初步诊断及后续计划。
+"""
+
+
+def build_multimodal_conversation(system_prompt, assistant_instruct, user_text, file_path=None):
+    """
+    构建 Qwen3-Omni 多模态消息结构
+    """
+
+    messages = [
+        {
+            "role": "system",
+            "content": system_prompt
+        },
+        {
+            "role": "user",
+            "content": []
+        }
+    ]
+
+    # 1 用户文本
+    if user_text:
+        messages[1]["content"].append({
+            "type": "text",
+            "text": user_text
+        })
+
+    # 2 如果没有文件
+    if not file_path or not os.path.exists(file_path):
+        return messages
+
+    ext = os.path.splitext(file_path)[1].lower()
+
+    # ----------------------
+    # IMAGE
+    # ----------------------
+
+    if ext in ('.jpg', '.jpeg', '.png', '.bmp'):
+
+        b64_image = image_to_base64(file_path)
+
+        mime = "image/jpeg" if ext in ('.jpg', '.jpeg') else f"image/{ext[1:]}"
+
+        messages[1]["content"].append({
+            "type": "image_url",
+            "image_url": {
+                "url": f"data:{mime};base64,{b64_image}"
+            }
+        })
+
+    # ----------------------
+    # AUDIO
+    # ----------------------
+
+    elif ext in ('.wav', '.mp3', '.m4a', '.amr', '.flac'):
+
+        messages[1]["content"].append({
+            "type": "audio_url",
+            "audio_url": {
+                "url": f"file://{file_path}"
+            },
+
+            # Cookbook 推荐 metadata
+            "audio_metadata": {
+                "task_hint": "speech_recognition",
+                "language_hint": "auto",
+                "sample_rate": 16000
+            }
+        })
+
+    # ----------------------
+    # VIDEO
+    # ----------------------
+
+    elif ext in ('.mp4', '.mov', '.avi', '.mkv'):
+
+        messages[1]["content"].append({
+            "type": "video_url",
+            "video_url": {
+                "url": f"file://{file_path}"
+            },
+
+            # 视频理解提示
+            "video_metadata": {
+                "task_hint": "video_understanding",
+                "frame_sampling": "auto"
+            }
+        })
+
+    # 3 instruction 单独放最后
+    if assistant_instruct:
+        messages[1]["content"].append({
+            "type": "text",
+            "text": assistant_instruct
+        })
+
+    return messages
+
+def extract_medical_omni(file_path, ai_prompt, role_id="doctor",task_type="ASR" , few_shots=PROMPT_DOCTOR_LAB_RESULTS):
+
+    system_prompt = f"""
+        你是医疗AI助手。
+        当前角色：{role_id}
+
+        这是你之后工作的一些例子。好好学习，与人的生命有关{few_shots}。
+
+        任务：
+        从提供的多模态素材中提取结构化医学信息。
+        确保输出严格为 JSON。
+    """
+
+    enhencing_object = "化验单，"
+
+    assistant_instructs = {
+        "OCR": "请提取图片中的文字。",
+        "ASR": "请将这段中文语音转换为纯文本。",
+        "object_grounding": f"请从图片中提取{enhencing_object}这些东西",
+        "CLASSFICATION_FROMAUDIO": "请判断说话人来自哪个科室，需要记录什么东西",
+        "CLASSFICATION_FROMIMAGE": "请这张图片来自哪个科室，需要记录什么东西",
+        "QA": "请回答以上问题，务必真实可靠"
+    }
+
+    messages = build_multimodal_conversation(
+        system_prompt=system_prompt,
+        assistant_instruct=assistant_instructs[task_type],
+        user_text=ai_prompt,
+        file_path=file_path
+    )
+
+    ext = os.path.splitext(file_path)[1].lower()
+
+    # -------- 模型自动选择 --------
+
+    if ext in ('.wav', '.mp3', '.m4a', '.flac'):
+        target_model = "qwen-audio-turbo"
+
+    elif ext in ('.mp4', '.mov', '.avi', '.mkv'):
+        target_model = "qwen-vl-max"
+
+    else:
+        target_model = "qwen-vl-max"
+
+    try:
+
+        response = client.chat.completions.create(
+            model=target_model,
+            messages=messages,
+
+            temperature=0.1,
+            max_tokens=2048,
+
+            # JSON强制
+            response_format={
+                "type": "json_object"
+            }
+        )
+
+        raw_content = response.choices[0].message.content
+
+        parsed_data = parse_ai_response(raw_content)
+
+        from desensitizer import desensitize_structured_data
+
+        return desensitize_structured_data(parsed_data), raw_content
+
+    except Exception as e:
+
+        print(f"Omni 提取失败: {str(e)}")
+
+        return {"error": str(e)}, ""
+
 # ========== 质性研究分析（科研角色专用） ==========
 
 PROMPT_QUALITATIVE_ANALYSIS = """你是临床定性研究专家。请对以下医疗访谈转录文本进行定性分析。
