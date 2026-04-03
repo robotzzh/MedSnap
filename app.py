@@ -23,7 +23,8 @@ from datetime import datetime
 from flask import Flask, render_template, request, send_file, jsonify
 
 # ========== 各功能模块导入 ==========
-from model import client, MODEL_NAME, parse_ai_response, get_model_config, set_model_config
+import model
+from model import parse_ai_response, get_model_config, set_model_config
 from template import (
     CATEGORY_CONFIGS,
     TEMPLATE_FIELDS,
@@ -319,8 +320,8 @@ def api_extract_fields_from_text():
             role_hint=role_hints[role_id],
             text_content=masked_text
         )
-        response = client.chat.completions.create(
-            model=MODEL_NAME,
+        response = model.client.chat.completions.create(
+            model=model.MODEL_NAME,
             messages=[{'role': 'user', 'content': prompt}],
             temperature=0.1,
             max_tokens=2048
@@ -364,8 +365,8 @@ def api_preview_fields():
     try:
         if text_content:
             prompt = PROMPT_FIELD_PREVIEW_TEXT.format(text_content=text_content)
-            response = client.chat.completions.create(
-                model=MODEL_NAME,
+            response = model.client.chat.completions.create(
+                model=model.MODEL_NAME,
                 messages=[{'role': 'user', 'content': prompt}],
                 temperature=0.1,
                 max_tokens=4096
@@ -383,8 +384,8 @@ def api_preview_fields():
                 if is_audio_file(file.filename):
                     transcript_result = transcribe_audio(file_path)
                     prompt = PROMPT_FIELD_PREVIEW_TEXT.format(text_content=transcript_result['text'])
-                    response = client.chat.completions.create(
-                        model=MODEL_NAME,
+                    response = model.client.chat.completions.create(
+                        model=model.MODEL_NAME,
                         messages=[{'role': 'user', 'content': prompt}],
                         temperature=0.1,
                         max_tokens=4096
@@ -394,8 +395,8 @@ def api_preview_fields():
                     raw_file_text = parse_text_file(file_path)
                     processed_text = preprocess_text(raw_file_text)
                     prompt = PROMPT_FIELD_PREVIEW_TEXT.format(text_content=processed_text)
-                    response = client.chat.completions.create(
-                        model=MODEL_NAME,
+                    response = model.client.chat.completions.create(
+                        model=model.MODEL_NAME,
                         messages=[{'role': 'user', 'content': prompt}],
                         temperature=0.1,
                         max_tokens=4096
