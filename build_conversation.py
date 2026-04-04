@@ -10,7 +10,8 @@ import numpy as np
 import pandas as pd
 from datetime import datetime
 
-from model import client, MODEL_NAME, parse_ai_response
+import model
+from model import parse_ai_response
 from desensitizer import desensitize_text
 from template import CATEGORY_CONFIGS
 
@@ -33,8 +34,8 @@ def extract_from_ocr_text(ocr_text, ai_prompt):
         + "\n\n以下是通过OCR识别出的医疗文档文本，请按上述要求提取结构化信息：\n\n"
         + masked_text
     )
-    response = client.chat.completions.create(
-        model=MODEL_NAME,
+    response = model.client.chat.completions.create(
+        model=model.MODEL_NAME,
         messages=[{'role': 'user', 'content': combined_prompt}],
         temperature=0.1,
         max_tokens=4096

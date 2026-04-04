@@ -483,6 +483,7 @@
                 <div class="source-tab active" onclick="switchSource('quantitative', 'image')">&#128248; 图片/PDF上传</div>
                 <div class="source-tab" onclick="switchSource('quantitative', 'voice')">&#127908; 语音上传</div>
                 <div class="source-tab" onclick="switchSource('quantitative', 'text')">&#128221; 文本输入</div>
+                <div class="source-tab" onclick="switchSource('quantitative', 'batch')">&#128228; 批量队列上传</div>
             </div>
 
             <div class="source-panel active" id="quant-image">
@@ -518,6 +519,31 @@
                 <div class="btn-group">
                     <button class="btn-outline" onclick="previewFields('text')">&#128269; 预览可提取字段</button>
                     <button class="btn btn-primary" style="flex:1;padding:12px;border-radius:12px;" onclick="processQuantitative('text')">提取结构化数据</button>
+                </div>
+            </div>
+
+            <!-- Batch Queue Upload Panel -->
+            <div class="source-panel" id="quant-batch">
+                <input type="file" id="batchFileInput" class="file-input" multiple accept=".jpg,.jpeg,.png,.bmp,.tiff,.pdf,.wav,.mp3,.m4a,.aac,.flac,.amr,.opus">
+                <div class="dropzone" id="batchDropzone" onclick="document.getElementById('batchFileInput').click()">
+                    <div class="drop-icon">&#128228;</div>
+                    <h4>批量上传文件（最多 100 个）</h4>
+                    <p>支持图片 / PDF / 音频格式，文件将进入队列异步处理</p>
+                </div>
+                <div class="file-list" id="batchFileList"></div>
+                <div class="btn-group" style="margin-top:12px;">
+                    <button class="btn btn-primary" style="flex:1;padding:12px;border-radius:12px;" onclick="submitBatchUpload()" id="batchSubmitBtn" disabled>&#128228; 提交到处理队列</button>
+                </div>
+
+                <!-- 批次进度查询 -->
+                <div style="margin-top:20px;border-top:1px solid var(--border);padding-top:16px;">
+                    <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;">
+                        <span style="font-weight:600;color:var(--text-primary);">&#128203; 批次进度查询</span>
+                        <button class="btn-outline" style="padding:4px 12px;font-size:12px;" onclick="loadBatchList()">刷新列表</button>
+                    </div>
+                    <div id="batchListContainer" style="display:flex;flex-direction:column;gap:8px;max-height:320px;overflow-y:auto;">
+                        <p style="color:var(--text-secondary);font-size:13px;text-align:center;padding:20px 0;">暂无批次记录，点击「刷新列表」查看</p>
+                    </div>
                 </div>
             </div>
 
@@ -2262,6 +2288,42 @@ document.addEventListener('DOMContentLoaded', function() {
     setupFileInput('qualImageInput', 'qualImageList', 'qualImageBtn', 'qualImage');
     setupFileInput('quantImageInput', 'quantImageList', 'quantImageBtn', 'quantImage');
     setupFileInput('quantVoiceInput', 'quantVoiceList', 'quantVoiceBtn', 'quantVoice');
+
+    // Setup batch file input
+    (function() {
+        var batchInput = document.getElementById('batchFileInput');
+        var batchList = document.getElementById('batchFileList');
+        var batchBtn = document.getElementById('batchSubmitBtn');
+        var batchZone = document.getElementById('batchDropzone');
+
+        function renderBatchFiles(files) {
+            batchList.innerHTML = '';
+            if (!files || !files.length) { batchBtn.disabled = true; return; }
+            if (files.length > 100) {
+                showToast('最多只能选择 100 个文件，当前选择了 ' + files.length + ' 个', 'error');
+                batchBtn.disabled = true;
+                return;
+            }
+            for (var i = 0; i < files.length; i++) {
+                var item = document.createElement('div');
+                item.className = 'file-item';
+                item.innerHTML = '<span class="file-name">' + esc(files[i].name) + '</span>';
+                batchList.appendChild(item);
+            }
+            batchBtn.disabled = false;
+        }
+
+        batchInput.addEventListener('change', function() { renderBatchFiles(this.files); });
+
+        batchZone.addEventListener('dragover', function(e) { e.preventDefault(); batchZone.classList.add('drag-over'); });
+        batchZone.addEventListener('dragleave', function(e) { e.preventDefault(); batchZone.classList.remove('drag-over'); });
+        batchZone.addEventListener('drop', function(e) {
+            e.preventDefault();
+            batchZone.classList.remove('drag-over');
+            batchInput.files = e.dataTransfer.files;
+            renderBatchFiles(batchInput.files);
+        });
+    })();
     
     // Load templates
     loadTemplates();
@@ -2271,6 +2333,87 @@ document.addEventListener('DOMContentLoaded', function() {
     // Show guide every time the app loads
     setTimeout(function() { showGuide(); }, 800);
 });
+
+// ========== 批量队列上传 ==========
+
+function submitBatchUpload() {
+    var batchInput = document.getElementById('batchFileInput');
+    var files = batchInput.files;
+    if (!files || !files.length) { showToast('请先选择文件', 'error'); return; }
+    if (files.length > 100) { showToast('最多 100 个文件', 'error'); return; }
+
+    var templateId = document.getElementById('quantTemplate') ? document.getElementById('quantTemplate').value : '';
+    var roleId = currentCategory || 'other';
+
+    var formData = new FormData();
+    formData.append('role_id', roleId);
+    if (templateId) formData.append('template_id', templateId);
+    for (var i = 0; i < files.length; i++) {
+        formData.append('files', files[i]);
+    }
+
+    var btn = document.getElementById('batchSubmitBtn');
+    btn.disabled = true;
+    btn.textContent = '提交中...';
+
+    fetch('/api/batch_upload', { method: 'POST', body: formData })
+        .then(function(r) { return r.json(); })
+        .then(function(data) {
+            btn.disabled = false;
+            btn.textContent = '📨 提交到处理队列';
+            if (data.status === 'success') {
+                showToast('已提交 ' + data.total + ' 个文件，batch_id: ' + data.batch_id, 'success');
+                document.getElementById('batchFileList').innerHTML = '';
+                batchInput.value = '';
+                loadBatchList();
+            } else {
+                showToast(data.msg || '提交失败', 'error');
+            }
+        })
+        .catch(function(err) {
+            btn.disabled = false;
+            btn.textContent = '📨 提交到处理队列';
+            showToast('请求失败: ' + err.message, 'error');
+        });
+}
+
+function loadBatchList() {
+    var container = document.getElementById('batchListContainer');
+    container.innerHTML = '<p style="color:var(--text-secondary);font-size:13px;text-align:center;padding:12px 0;">加载中...</p>';
+
+    fetch('/api/batch_list')
+        .then(function(r) { return r.json(); })
+        .then(function(data) {
+            if (!data.batches || !data.batches.length) {
+                container.innerHTML = '<p style="color:var(--text-secondary);font-size:13px;text-align:center;padding:20px 0;">暂无批次记录</p>';
+                return;
+            }
+            container.innerHTML = data.batches.map(function(batch) {
+                var statusColor = { queued: '#f59e0b', processing: '#3b82f6', done: '#10b981' }[batch.status] || '#6b7280';
+                var statusLabel = { queued: '排队中', processing: '处理中', done: '已完成' }[batch.status] || batch.status;
+                var progressPct = batch.total > 0 ? Math.round((batch.success + batch.failed) / batch.total * 100) : 0;
+                return '<div style="background:var(--bg-secondary);border:1px solid var(--border);border-radius:10px;padding:12px 14px;">' +
+                    '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">' +
+                        '<span style="font-size:12px;color:var(--text-secondary);font-family:monospace;">' + batch.batch_id.slice(0, 12) + '...</span>' +
+                        '<span style="font-size:12px;font-weight:600;color:' + statusColor + ';">● ' + statusLabel + '</span>' +
+                    '</div>' +
+                    '<div style="display:flex;gap:12px;font-size:12px;color:var(--text-secondary);margin-bottom:8px;">' +
+                        '<span>共 <b>' + batch.total + '</b> 个</span>' +
+                        '<span style="color:#10b981;">成功 <b>' + batch.success + '</b></span>' +
+                        '<span style="color:#ef4444;">失败 <b>' + batch.failed + '</b></span>' +
+                        '<span>待处理 <b>' + batch.pending + '</b></span>' +
+                    '</div>' +
+                    '<div style="background:var(--border);border-radius:4px;height:6px;overflow:hidden;">' +
+                        '<div style="background:' + statusColor + ';height:100%;width:' + progressPct + '%;transition:width 0.3s;"></div>' +
+                    '</div>' +
+                    '<div style="font-size:11px;color:var(--text-secondary);margin-top:6px;">' + batch.create_time + (batch.finish_time ? ' → ' + batch.finish_time : '') + '</div>' +
+                '</div>';
+            }).join('');
+        })
+        .catch(function(err) {
+            container.innerHTML = '<p style="color:#ef4444;font-size:13px;text-align:center;padding:12px 0;">加载失败: ' + err.message + '</p>';
+        });
+}
 </script>
 </body>
 </html>

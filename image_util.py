@@ -12,7 +12,8 @@ import os
 import base64
 from PIL import Image, ImageFilter, ImageEnhance, ImageOps
 
-from model import client, MODEL_NAME, MODEL_NAME_OMNI, parse_ai_response
+import model
+from model import parse_ai_response
 from desensitizer import desensitize_structured_data
 
 # ========== 可选依赖检测 ==========
@@ -211,8 +212,8 @@ def extract_medical_data_multimodal(image_path, ai_prompt, upload_folder):
     }
     mime_type = mime_map.get(ext, 'image/jpeg')
 
-    response = client.chat.completions.create(
-        model=MODEL_NAME_OMNI,
+    response = model.client.chat.completions.create(
+        model=model.MODEL_NAME_OMNI,
         messages=[{
             'role': 'user',
             'content': [

@@ -14,6 +14,17 @@ import json
 import base64
 from openai import OpenAI
 
+# ========== 模型配置 ==========
+
+API_KEY = os.environ.get("MODELSCOPE_API_KEY", "")
+if not API_KEY:
+    print("[WARN] 环境变量 MODELSCOPE_API_KEY 未设置，AI识别功能将不可用")
+
+client = OpenAI(
+    base_url='https://api-inference.modelscope.cn/v1',
+    api_key=API_KEY
+)
+
 # 主力文本结构化提取模型
 MODEL_NAME = "Qwen/Qwen3-VL-235B-A22B-Instruct"
 
@@ -92,3 +103,6 @@ def parse_ai_response(raw_text):
         "error": "AI返回结果解析失败，请重试或检查图片质量",
         "raw_response": raw_text[:500]
     }
+
+
+

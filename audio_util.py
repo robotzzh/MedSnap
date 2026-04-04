@@ -11,7 +11,8 @@ ASR 策略：
 import os
 import re
 
-from model import client, MODEL_NAME, MODEL_NAME_OMNI, parse_ai_response, audio_to_base64
+import model
+from model import parse_ai_response, audio_to_base64
 from desensitizer import desensitize_text
 
 # ========== 可选依赖检测（格式转换用） ==========
@@ -213,8 +214,8 @@ def transcribe_audio(audio_path):
         print(f"[ASR] Qwen2.5-Omni 语音识别：{os.path.basename(actual_path)}")
         b64_audio = audio_to_base64(actual_path)
 
-        response = client.chat.completions.create(
-            model=MODEL_NAME_OMNI,
+        response = model.client.chat.completions.create(
+            model=model.MODEL_NAME_OMNI,
             messages=[{
                 'role': 'user',
                 'content': [
@@ -262,8 +263,8 @@ def extract_from_transcript(transcript_text, ai_prompt):
         + "\n\n以下是语音转录文本，请按上述要求提取结构化信息：\n\n"
         + masked_text
     )
-    response = client.chat.completions.create(
-        model=MODEL_NAME,
+    response = model.client.chat.completions.create(
+        model=model.MODEL_NAME,
         messages=[{'role': 'user', 'content': combined_prompt}],
         temperature=0.1,
         max_tokens=4096
@@ -287,8 +288,8 @@ def qualitative_analysis(transcript_text):
     """
     masked_text, _report = desensitize_text(transcript_text)
     prompt = PROMPT_QUALITATIVE_ANALYSIS.format(transcript=masked_text)
-    response = client.chat.completions.create(
-        model=MODEL_NAME,
+    response = model.client.chat.completions.create(
+        model=model.MODEL_NAME,
         messages=[{'role': 'user', 'content': prompt}],
         temperature=0.3,
         max_tokens=3000
@@ -316,8 +317,8 @@ def qualitative_analysis_enhanced(transcript_text, analysis_type='interview'):
         coding_categories=type_info['coding'],
         transcript=masked_text
     )
-    response = client.chat.completions.create(
-        model=MODEL_NAME,
+    response = model.client.chat.completions.create(
+        model=model.MODEL_NAME,
         messages=[{'role': 'user', 'content': prompt}],
         temperature=0.3,
         max_tokens=4000
