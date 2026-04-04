@@ -195,6 +195,7 @@ def api_get_template_detail(template_id):
             "template_name": row['template_name'],
             "template_type": row['template_type'],
             "display_layout": row['display_layout'],
+            "ai_prompt": row['ai_prompt'] or "",
             "fields": fields,
             "include_score": include_score,
             "create_time": row['create_time']
