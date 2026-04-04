@@ -202,6 +202,52 @@ def api_get_template_detail(template_id):
     })
 
 
+@app.route('/api/templates/builtin', methods=['POST'])
+def api_create_builtin_template():
+    """
+    新增内置 Prompt 模板（template_type='fixed'）。
+    调用方直接提供完整的 ai_prompt 文本，系统不做二次生成。
+
+    请求体示例:
+      {
+        "template_name": "心内科病历模板",
+        "role_id": "diagnosis",
+        "ai_prompt": "你是临床医生数据提取专家……（完整 Prompt）"
+      }
+    """
+    data = request.get_json(silent=True) or {}
+    template_name = data.get('template_name', '').strip()
+    role_id = data.get('role_id', 'diagnosis').strip()
+    ai_prompt = data.get('ai_prompt', '').strip()
+
+    if not template_name:
+        return jsonify({"status": "error", "msg": "请填写模板名称"}), 400
+    if role_id not in CATEGORY_CONFIGS:
+        return jsonify({"status": "error", "msg": f"无效的角色分类，可选值：{list(CATEGORY_CONFIGS.keys())}"}), 400
+    if not ai_prompt:
+        return jsonify({"status": "error", "msg": "请填写 Prompt 内容"}), 400
+
+    template_id = f"tpl_builtin_{uuid.uuid4().hex[:8]}"
+    now = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+
+    conn = get_db()
+    cursor = conn.cursor()
+    cursor.execute(
+        '''INSERT INTO extraction_templates
+           (template_id, role_id, template_name, template_type, ai_prompt, display_layout, is_active, create_time)
+           VALUES (?, ?, ?, 'fixed', ?, '[]', 1, ?)''',
+        (template_id, role_id, template_name, ai_prompt, now)
+    )
+    conn.commit()
+    conn.close()
+
+    return jsonify({
+        "status": "success",
+        "template_id": template_id,
+        "msg": f"内置模板「{template_name}」创建成功",
+    })
+
+
 @app.route('/api/templates', methods=['POST'])
 def api_create_template():
     """创建自定义模板。"""

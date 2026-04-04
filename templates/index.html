@@ -484,6 +484,7 @@
                 <div class="source-tab" onclick="switchSource('quantitative', 'voice')">&#127908; 语音上传</div>
                 <div class="source-tab" onclick="switchSource('quantitative', 'text')">&#128221; 文本输入</div>
                 <div class="source-tab" onclick="switchSource('quantitative', 'batch')">&#128228; 批量队列上传</div>
+                <div class="source-tab" onclick="switchSource('quantitative', 'builtin')">&#128196; 新增内置模板</div>
             </div>
 
             <div class="source-panel active" id="quant-image">
@@ -543,6 +544,55 @@
                     </div>
                     <div id="batchListContainer" style="display:flex;flex-direction:column;gap:8px;max-height:320px;overflow-y:auto;">
                         <p style="color:var(--text-secondary);font-size:13px;text-align:center;padding:20px 0;">暂无批次记录，点击「刷新列表」查看</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 新增内置模板面板 -->
+            <div class="source-panel" id="quant-builtin">
+                <div style="background:#f8fafc;border:1px solid var(--border);border-radius:14px;padding:24px;">
+                    <h4 style="font-size:16px;font-weight:600;margin-bottom:4px;color:var(--text);">&#128196; 新增内置 Prompt 模板</h4>
+                    <p style="font-size:13px;color:var(--text-secondary);margin-bottom:20px;">直接填写完整的 Prompt 文本，创建后可在识别模板列表中选用。</p>
+
+                    <div style="display:flex;flex-direction:column;gap:14px;">
+                        <div style="display:flex;gap:12px;flex-wrap:wrap;">
+                            <div style="flex:1;min-width:180px;">
+                                <label style="font-size:13px;font-weight:500;color:var(--text);display:block;margin-bottom:6px;">模板名称 <span style="color:#ef4444;">*</span></label>
+                                <input type="text" id="builtinTplName" placeholder="如：心内科病历提取模板"
+                                    style="width:100%;padding:10px 12px;border:1px solid var(--border);border-radius:10px;font-size:14px;box-sizing:border-box;">
+                            </div>
+                            <div style="flex:1;min-width:140px;">
+                                <label style="font-size:13px;font-weight:500;color:var(--text);display:block;margin-bottom:6px;">角色分类 <span style="color:#ef4444;">*</span></label>
+                                <select id="builtinTplRole"
+                                    style="width:100%;padding:10px 12px;border:1px solid var(--border);border-radius:10px;font-size:14px;box-sizing:border-box;background:#fff;">
+                                    <option value="diagnosis">临床医生</option>
+                                    <option value="nursing">护士</option>
+                                    <option value="other">临床科研人员</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div>
+                            <label style="font-size:13px;font-weight:500;color:var(--text);display:block;margin-bottom:6px;">
+                                Prompt 内容 <span style="color:#ef4444;">*</span>
+                                <span style="font-weight:400;color:var(--text-secondary);margin-left:8px;">（完整的 AI 提取指令，支持 JSON 格式要求、提取规则等）</span>
+                            </label>
+                            <textarea id="builtinTplPrompt" rows="14" placeholder="在此粘贴完整的 Prompt 文本……&#10;&#10;示例：&#10;你是临床医生数据提取专家。请仔细识别该病历图片中的所有文本内容，并严格按照以下JSON格式输出结构化数据。&#10;&#10;## 输出格式要求&#10;请直接输出合法的JSON对象……"
+                                style="width:100%;padding:12px;border:1px solid var(--border);border-radius:10px;font-size:13px;font-family:monospace;resize:vertical;box-sizing:border-box;line-height:1.6;"></textarea>
+                            <div style="text-align:right;margin-top:4px;">
+                                <span id="builtinPromptCharCount" style="font-size:12px;color:var(--text-secondary);">0 字符</span>
+                            </div>
+                        </div>
+
+                        <div style="display:flex;align-items:center;gap:12px;">
+                            <button class="btn btn-primary" style="padding:12px 28px;border-radius:12px;font-size:15px;" onclick="submitBuiltinTemplate()">
+                                &#128190; 保存内置模板
+                            </button>
+                            <button class="btn-outline" style="padding:12px 20px;border-radius:12px;font-size:14px;" onclick="clearBuiltinTemplateForm()">
+                                清空
+                            </button>
+                            <span id="builtinTplMsg" style="font-size:13px;"></span>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -2413,6 +2463,67 @@ function loadBatchList() {
         .catch(function(err) {
             container.innerHTML = '<p style="color:#ef4444;font-size:13px;text-align:center;padding:12px 0;">加载失败: ' + err.message + '</p>';
         });
+}
+
+// ========== 新增内置 Prompt 模板 ==========
+
+(function setupBuiltinTemplateForm() {
+    var promptTextarea = document.getElementById('builtinTplPrompt');
+    var charCount = document.getElementById('builtinPromptCharCount');
+    if (promptTextarea && charCount) {
+        promptTextarea.addEventListener('input', function() {
+            charCount.textContent = promptTextarea.value.length + ' 字符';
+        });
+    }
+})();
+
+function submitBuiltinTemplate() {
+    var templateName = (document.getElementById('builtinTplName').value || '').trim();
+    var roleId = document.getElementById('builtinTplRole').value;
+    var aiPrompt = (document.getElementById('builtinTplPrompt').value || '').trim();
+    var msgEl = document.getElementById('builtinTplMsg');
+
+    if (!templateName) { showToast('请填写模板名称', 'error'); return; }
+    if (!aiPrompt) { showToast('请填写 Prompt 内容', 'error'); return; }
+
+    msgEl.textContent = '保存中…';
+    msgEl.style.color = 'var(--text-secondary)';
+
+    fetch('/api/templates/builtin', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ template_name: templateName, role_id: roleId, ai_prompt: aiPrompt }),
+    })
+    .then(function(r) { return r.json(); })
+    .then(function(data) {
+        if (data.status === 'success') {
+            msgEl.textContent = '✅ ' + data.msg;
+            msgEl.style.color = '#10b981';
+            showToast(data.msg, 'success');
+            // 清空表单
+            document.getElementById('builtinTplName').value = '';
+            document.getElementById('builtinTplPrompt').value = '';
+            document.getElementById('builtinPromptCharCount').textContent = '0 字符';
+            // 刷新模板下拉列表
+            if (typeof loadTemplates === 'function') { loadTemplates(); }
+        } else {
+            msgEl.textContent = '❌ ' + (data.msg || '保存失败');
+            msgEl.style.color = '#ef4444';
+            showToast(data.msg || '保存失败', 'error');
+        }
+    })
+    .catch(function(err) {
+        msgEl.textContent = '❌ 请求失败: ' + err.message;
+        msgEl.style.color = '#ef4444';
+        showToast('请求失败: ' + err.message, 'error');
+    });
+}
+
+function clearBuiltinTemplateForm() {
+    document.getElementById('builtinTplName').value = '';
+    document.getElementById('builtinTplPrompt').value = '';
+    document.getElementById('builtinPromptCharCount').textContent = '0 字符';
+    document.getElementById('builtinTplMsg').textContent = '';
 }
 </script>
 </body>
