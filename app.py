@@ -1399,6 +1399,180 @@ def data_analysis_analyze():
     except Exception as e:
         return jsonify({"status": "error", "msg": f"分析失败: {str(e)}"})
 
+# ========== 路由: 批量上传队列 API ==========
+
+from batch_queue import submit_batch, get_batch_status, list_all_batches
+
+def _build_batch_processor(role_id, template_id, template_name, display_layout, ai_prompt, upload_folder):
+    """
+    构造单文件处理函数，供批量队列消费使用。
+    闭包捕获 role_id、template_id、ai_prompt、upload_folder 等上下文。
+    """
+    def processor(file_task: dict) -> dict:
+        file_path = file_task['file_path']
+        filename = file_task['filename']
+        source_type = file_task.get('source_type', 'image')
+        collected_results = []
+
+        try:
+            if source_type == 'audio':
+                _process_audio_file(
+                    file_path, filename, role_id, template_id,
+                    ai_prompt, template_name, display_layout,
+                )
+                # 音频处理结果由 _process_audio_file 内部写库，此处构造返回
+                return {
+                    'filename': filename,
+                    'status': 'success',
+                    'source_type': 'audio',
+                }
+            else:
+                # 图片 / PDF
+                extracted_data, raw_text = _process_single_image(
+                    file_path, filename, ai_prompt, upload_folder
+                )
+                if 'error' in extracted_data:
+                    raise Exception(extracted_data['error'])
+                _save_image_record(
+                    extracted_data, raw_text, filename, role_id, template_id,
+                    template_name, display_layout, 'image_ocr', collected_results
+                )
+                result = collected_results[0] if collected_results else {}
+                result['status'] = 'success'
+                return result
+        finally:
+            if os.path.exists(file_path):
+                try:
+                    os.remove(file_path)
+                except Exception:
+                    pass
+
+    return processor
+
+
+def _process_single_image(file_path, filename, ai_prompt, upload_folder):
+    """提取单张图片/PDF 的结构化数据，返回 (extracted_data, raw_text)。"""
+    file_ext = os.path.splitext(filename)[1].lower()
+    if file_ext == '.pdf':
+        # PDF: 优先嵌入文本，其次 OCR，最后多模态
+        embedded_text = extract_pdf_embedded_text(file_path)
+        if embedded_text and len(embedded_text) >= 10:
+            data, raw = extract_from_ocr_text(embedded_text, ai_prompt)
+            if 'error' not in data:
+                return data, raw
+        try:
+            from image_util import HAS_TESSERACT
+            if HAS_TESSERACT:
+                ocr_text = local_ocr_pdf(file_path, upload_folder)
+                if ocr_text and len(ocr_text) >= 10:
+                    data, raw = extract_from_ocr_text(ocr_text, ai_prompt)
+                    if 'error' not in data:
+                        return data, raw
+        except Exception:
+            pass
+        image_paths = pdf_to_images(file_path, upload_folder)
+        for img_path in image_paths:
+            data, raw = extract_medical_data_multimodal(img_path, ai_prompt, upload_folder)
+            if 'error' not in data:
+                return data, raw
+        return {'error': 'PDF 处理失败'}, ''
+    else:
+        data, raw = extract_medical_data_multimodal(file_path, ai_prompt, upload_folder)
+        return data, raw
+
+
+@app.route('/api/batch_upload', methods=['POST'])
+def api_batch_upload():
+    """
+    批量上传接口，支持图片/PDF/音频，每批最多 100 个文件。
+    文件保存后提交到消费队列异步处理，立即返回 batch_id。
+
+    请求: multipart/form-data
+      files      - 文件列表（必填）
+      role_id    - 角色 ID（必填）
+      template_id - 模板 ID（可选）
+    """
+    uploaded_files = request.files.getlist('files')
+    role_id = request.form.get('role_id', '').strip()
+    template_id = request.form.get('template_id', '').strip()
+
+    if not uploaded_files or not uploaded_files[0].filename:
+        return jsonify({"status": "error", "msg": "请上传至少一个文件"}), 400
+    if not role_id:
+        return jsonify({"status": "error", "msg": "role_id 不能为空"}), 400
+    if len(uploaded_files) > 100:
+        return jsonify({"status": "error", "msg": f"每批最多 100 个文件，当前 {len(uploaded_files)} 个"}), 400
+
+    # 获取模板 prompt、名称、布局
+    conn = get_db()
+    cursor = conn.cursor()
+    if template_id:
+        cursor.execute(
+            "SELECT ai_prompt, template_name, display_layout FROM extraction_templates WHERE template_id=? AND is_active=1",
+            (template_id,)
+        )
+        row = cursor.fetchone()
+        ai_prompt = row['ai_prompt'] if row else ''
+        template_name = row['template_name'] if row else ''
+        display_layout = row['display_layout'] if row else 'table'
+    else:
+        cursor.execute(
+            "SELECT template_id, ai_prompt, template_name, display_layout FROM extraction_templates WHERE role_id=? AND is_active=1 LIMIT 1",
+            (role_id,)
+        )
+        row = cursor.fetchone()
+        ai_prompt = row['ai_prompt'] if row else ''
+        template_name = row['template_name'] if row else ''
+        display_layout = row['display_layout'] if row else 'table'
+        template_id = row['template_id'] if row else ''
+    conn.close()
+
+    # 保存文件到临时目录，构造 file_task 列表
+    file_tasks = []
+    for uploaded_file in uploaded_files:
+        filename = uploaded_file.filename
+        file_ext = os.path.splitext(filename)[1].lower()
+        temp_name = f"{uuid.uuid4().hex}{file_ext}"
+        file_path = os.path.join(app.config['UPLOAD_FOLDER'], temp_name)
+        uploaded_file.save(file_path)
+
+        source_type = 'audio' if is_audio_file(filename) else 'image'
+        file_tasks.append({
+            'filename': filename,
+            'file_path': file_path,
+            'source_type': source_type,
+        })
+
+    processor = _build_batch_processor(
+        role_id, template_id, template_name, display_layout, ai_prompt, app.config['UPLOAD_FOLDER']
+    )
+    batch_id, error_message = submit_batch(file_tasks, processor)
+    if error_message:
+        return jsonify({"status": "error", "msg": error_message}), 400
+
+    return jsonify({
+        "status": "success",
+        "batch_id": batch_id,
+        "total": len(file_tasks),
+        "msg": f"已提交 {len(file_tasks)} 个文件到处理队列，使用 /api/batch_status/{batch_id} 查询进度",
+    })
+
+
+@app.route('/api/batch_status/<batch_id>', methods=['GET'])
+def api_batch_status(batch_id):
+    """查询指定批次的处理进度和结果。"""
+    batch = get_batch_status(batch_id)
+    if batch is None:
+        return jsonify({"status": "error", "msg": f"batch_id {batch_id} 不存在"}), 404
+    return jsonify({"status": "success", "batch": batch})
+
+
+@app.route('/api/batch_list', methods=['GET'])
+def api_batch_list():
+    """查询所有批次的摘要列表（不含详细结果）。"""
+    return jsonify({"status": "success", "batches": list_all_batches()})
+
+
 # ========== 启动入口 ==========
 
 if __name__ == '__main__':
